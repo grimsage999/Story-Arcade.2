@@ -23,55 +23,34 @@ function Router() {
 }
 
 function App() {
-  const [showIntro, setShowIntro] = useState(false);
-  const [introChecked, setIntroChecked] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
+  const [introChecked, setIntroChecked] = useState(true);
 
   useEffect(() => {
     try {
       // Check for URL parameters
       const urlParams = new URLSearchParams(window.location.search);
-      const shouldReplay = urlParams.get('replay') === 'intro';
-      const forceIntro = urlParams.get('intro') === 'force';
       const skipIntro = urlParams.get('intro') === 'skip';
       
-      // Skip intro if explicitly requested
+      // Skip intro only if explicitly requested
       if (skipIntro) {
         console.log('[LogoStinger] Skip intro via URL');
         localStorage.setItem(INTRO_SEEN_KEY, 'true');
         window.history.replaceState({}, '', window.location.pathname);
         setShowIntro(false);
-        setIntroChecked(true);
         return;
       }
       
-      // Force intro bypasses all checks
-      if (forceIntro) {
-        console.log('[LogoStinger] Force intro triggered via URL');
-        window.history.replaceState({}, '', window.location.pathname);
-        setShowIntro(true);
-        setIntroChecked(true);
-        return;
-      }
+      // Check if already seen (but always show for now to debug)
+      const hasSeenIntro = localStorage.getItem(INTRO_SEEN_KEY);
+      console.log('[LogoStinger] Checking intro, has seen:', hasSeenIntro);
       
-      if (shouldReplay) {
-        // Clear the flag and remove the URL parameter
-        console.log('[LogoStinger] Replay intro triggered');
-        localStorage.removeItem(INTRO_SEEN_KEY);
-        window.history.replaceState({}, '', window.location.pathname);
-        setShowIntro(true);
-      } else {
-        const hasSeenIntro = localStorage.getItem(INTRO_SEEN_KEY);
-        console.log('[LogoStinger] Has seen intro:', hasSeenIntro);
-        if (!hasSeenIntro) {
-          setShowIntro(true);
-        }
-      }
+      // ALWAYS show intro for now until user confirms it's working
+      setShowIntro(true);
     } catch (e) {
-      // If localStorage is blocked, show intro
-      console.log('[LogoStinger] localStorage error, showing intro:', e);
+      console.log('[LogoStinger] localStorage error:', e);
       setShowIntro(true);
     }
-    setIntroChecked(true);
   }, []);
 
   const handleIntroComplete = () => {
