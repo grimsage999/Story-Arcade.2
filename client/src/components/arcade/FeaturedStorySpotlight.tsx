@@ -108,7 +108,7 @@ export function FeaturedStorySpotlight({
                 <div className="flex items-center gap-4">
                   <Button
                     onClick={() => onViewStory(currentStory)}
-                    className="gap-2 bg-primary/90 hover:bg-primary"
+                    className="gap-2"
                     data-testid={`button-view-featured-${currentStory.id}`}
                   >
                     <Play className="w-4 h-4" />
@@ -128,15 +128,17 @@ export function FeaturedStorySpotlight({
           <>
             <button
               onClick={goToPrev}
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white/80 hover:text-white hover:bg-black/70 transition-all opacity-0 group-hover:opacity-100 md:opacity-100"
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white/80 transition-all opacity-0 group-hover:opacity-100 md:opacity-100 hover-elevate"
               aria-label="Previous story"
+              data-testid="button-spotlight-prev"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={goToNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white/80 hover:text-white hover:bg-black/70 transition-all opacity-0 group-hover:opacity-100 md:opacity-100"
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white/80 transition-all opacity-0 group-hover:opacity-100 md:opacity-100 hover-elevate"
               aria-label="Next story"
+              data-testid="button-spotlight-next"
             >
               <ChevronRight className="w-5 h-5" />
             </button>

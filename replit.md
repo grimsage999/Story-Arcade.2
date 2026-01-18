@@ -53,6 +53,12 @@ Drizzle ORM with a PostgreSQL dialect defines the schema for `users`, `sessions`
   - `OrbitalRings`: Targeting circle animations with coordinate displays for the forging experience
   - `HUDOverlay`: Corner brackets and tech readouts for sci-fi HUD aesthetic
   - `TVWallGallery`: Multi-screen TV wall effect with geometric stripe patterns and rotating CRT glow colors (cyan, pink, fuchsia, teal, amber, violet)
+- **Visual Story Gallery:** Immersive poster-focused gallery showcasing community stories:
+  - `StarfieldBackground`: Animated canvas-based starfield with twinkling stars, falling animation, and radial glow effects
+  - `StaticStarfield`: CSS-based decorative stars with pulse animations and nebula-like gradient effects
+  - `FeaturedStorySpotlight`: Auto-cycling carousel (6s intervals) showcasing stories with completed posters, navigation controls, and progress dots
+  - `StoryGalleryCard`: Poster-focused cards with hover effects revealing title, logline, author, and neighborhood; CRT scanline overlays; track-based gradient placeholders for pending posters
+  - `StoryGallery`: Responsive grid layout with search functionality (searches title, logline, author, track, neighborhood), track filtering (Origin/Legend/Future/All), grid/masonry layout toggle, and staggered entrance animations
 
 **Progression Database Entities:**
 - `badges` - Badge definitions (id, name, description, icon, category, requirement, xpReward, rarity)

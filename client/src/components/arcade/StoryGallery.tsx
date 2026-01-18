@@ -28,12 +28,14 @@ export function StoryGallery({
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('grid');
 
   const filteredStories = stories.filter((story) => {
+    const query = searchQuery.toLowerCase();
     const matchesSearch = searchQuery === '' || 
-      story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      story.logline.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      story.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      story.trackTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      story.neighborhood.toLowerCase().includes(searchQuery.toLowerCase());
+      (story.title?.toLowerCase() || '').includes(query) ||
+      (story.logline?.toLowerCase() || '').includes(query) ||
+      (story.author?.toLowerCase() || '').includes(query) ||
+      (story.trackTitle?.toLowerCase() || '').includes(query) ||
+      (story.trackId?.toLowerCase() || '').includes(query) ||
+      (story.neighborhood?.toLowerCase() || '').includes(query);
     
     const matchesTrack = trackFilter === 'all' || story.trackId === trackFilter;
     
@@ -104,6 +106,7 @@ export function StoryGallery({
                   layoutMode === 'grid' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                 }`}
                 aria-label="Grid layout"
+                data-testid="layout-toggle-grid"
               >
                 <Grid3X3 className="w-4 h-4" />
               </button>
@@ -113,6 +116,7 @@ export function StoryGallery({
                   layoutMode === 'masonry' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                 }`}
                 aria-label="Masonry layout"
+                data-testid="layout-toggle-masonry"
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
