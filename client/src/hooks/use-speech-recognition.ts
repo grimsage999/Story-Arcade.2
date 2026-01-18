@@ -49,6 +49,7 @@ export function useSpeechRecognition(
   
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const isStoppingRef = useRef(false);
+  const shouldRestartRef = useRef(false);
 
   const SpeechRecognitionAPI =
     typeof window !== 'undefined'
@@ -70,6 +71,7 @@ export function useSpeechRecognition(
       setIsListening(true);
       setError(null);
       isStoppingRef.current = false;
+      shouldRestartRef.current = true;
     };
 
     recognition.onresult = (event) => {
@@ -107,10 +109,19 @@ export function useSpeechRecognition(
     };
 
     recognition.onend = () => {
-      setIsListening(false);
-      if (!isStoppingRef.current && continuous) {
-        // Auto-restart if not manually stopped
-        // Disabled for now - let user control restart
+      if (!isStoppingRef.current && shouldRestartRef.current && continuous) {
+        // Auto-restart if not manually stopped - keeps listening longer
+        try {
+          setTimeout(() => {
+            if (shouldRestartRef.current && !isStoppingRef.current) {
+              recognition.start();
+            }
+          }, 100);
+        } catch {
+          setIsListening(false);
+        }
+      } else {
+        setIsListening(false);
       }
     };
 
@@ -142,6 +153,7 @@ export function useSpeechRecognition(
     if (!recognitionRef.current) return;
     
     isStoppingRef.current = true;
+    shouldRestartRef.current = false;
     recognitionRef.current.stop();
     setInterimTranscript('');
   }, []);
