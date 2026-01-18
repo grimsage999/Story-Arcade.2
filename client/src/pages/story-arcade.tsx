@@ -29,6 +29,10 @@ import { OrbitalRings } from '@/components/arcade/OrbitalRings';
 import { HUDOverlay } from '@/components/arcade/HUDOverlay';
 import { TVWallGallery } from '@/components/arcade/TVWallGallery';
 import { AttractScreensaver } from '@/components/arcade/AttractScreensaver';
+import { StarfieldBackground, StaticStarfield } from '@/components/arcade/StarfieldBackground';
+import { FeaturedStorySpotlight } from '@/components/arcade/FeaturedStorySpotlight';
+import { StoryGallery } from '@/components/arcade/StoryGallery';
+import { StoryGalleryCard } from '@/components/arcade/StoryGalleryCard';
 import { useIdleTimer } from '@/hooks/useIdleTimer';
 import { checkContentSafety, getFallbackStory } from '@/lib/contentSafety';
 import { arcadeSounds } from '@/lib/arcadeSounds';
@@ -680,9 +684,14 @@ export default function StoryArcade() {
   };
 
   if (view === 'ATTRACT') {
+    const storiesWithPosters = gallery.filter(s => s.posterUrl && s.posterStatus === 'ready');
+    const hasFeaturedStories = storiesWithPosters.length > 0;
+    
     return (
-      <div className="min-h-screen bg-background flex flex-col font-sans text-foreground relative">
+      <div className="min-h-screen bg-background flex flex-col font-sans text-foreground relative overflow-hidden">
         <SkipLink />
+        <StarfieldBackground starCount={80} />
+        <StaticStarfield />
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
         
@@ -694,8 +703,8 @@ export default function StoryArcade() {
           />
         )}
         
-        <main id="main-content" className="relative flex-1 flex flex-col justify-center items-center px-6 text-center pt-20 md:pt-0" role="main">
-          <div className="z-10 max-w-5xl space-y-8 animate-fade-in">
+        <main id="main-content" className="relative flex-1 flex flex-col px-6 pt-24 md:pt-32" role="main">
+          <div className="z-10 max-w-5xl mx-auto space-y-8 animate-fade-in text-center mb-12">
             <button
               onClick={handleSecretDemoTrigger}
               className="inline-block px-4 py-1.5 border border-primary/20 rounded-full bg-primary/10 text-primary font-mono text-[10px] md:text-xs tracking-[0.2em] mb-4 backdrop-blur-sm hover-elevate cursor-pointer"
@@ -734,20 +743,57 @@ export default function StoryArcade() {
                 Quick Start: Origin
               </Button>
             </div>
-            
-            <div className="pt-12">
-              <button 
-                onClick={() => setView('GALLERY')}
-                className="text-muted-foreground hover-elevate font-mono text-xs tracking-widest flex items-center gap-2 mx-auto"
-                data-testid="link-explore-gallery"
-              >
-                <Eye className="w-4 h-4" /> EXPLORE {gallery.length} COMMUNITY STORIES
-              </button>
+          </div>
+          
+          {hasFeaturedStories && (
+            <div className="w-full max-w-6xl mx-auto mb-16">
+              <FeaturedStorySpotlight 
+                stories={gallery} 
+                onViewStory={(story) => setGalleryModalStory(story)}
+              />
             </div>
+          )}
+          
+          <div className="w-full max-w-7xl mx-auto pb-20">
+            <div className="text-center mb-8">
+              <h2 className="font-display text-2xl md:text-3xl text-foreground mb-2">Community Gallery</h2>
+              <p className="text-muted-foreground font-mono text-xs tracking-widest">EXPLORE {gallery.length} STORIES FROM OUR COMMUNITY</p>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {gallery.slice(0, 10).map((story, index) => (
+                <StoryGalleryCard 
+                  key={story.id}
+                  story={story}
+                  index={index}
+                  onView={(s) => setGalleryModalStory(s)}
+                />
+              ))}
+            </div>
+            
+            {gallery.length > 10 && (
+              <div className="text-center mt-8">
+                <Button 
+                  variant="outline"
+                  onClick={() => setView('GALLERY')}
+                  className="font-mono uppercase tracking-widest"
+                  data-testid="link-explore-gallery"
+                >
+                  <Eye className="w-4 h-4 mr-2" /> View All {gallery.length} Stories
+                </Button>
+              </div>
+            )}
           </div>
         </main>
         
         <Toast message={toast} />
+        
+        {galleryModalStory && (
+          <StoryModal 
+            story={galleryModalStory} 
+            onClose={() => setGalleryModalStory(null)} 
+          />
+        )}
         
         <AttractScreensaver 
           stories={gallery}
@@ -1211,16 +1257,17 @@ export default function StoryArcade() {
 
   if (view === 'GALLERY') {
     return (
-      <div className="min-h-screen bg-background flex flex-col font-sans relative">
+      <div className="min-h-screen bg-background flex flex-col font-sans relative overflow-hidden">
         <SkipLink />
+        <StaticStarfield />
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
         
         <main id="main-content" className="flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-7xl mx-auto w-full" data-testid="view-gallery" role="main">
-          <div className="mb-10 md:mb-16 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <h2 className="text-3xl md:text-5xl text-foreground font-display uppercase mb-3">Community Archive</h2>
-              <p className="text-muted-foreground font-mono text-xs md:text-sm tracking-widest">{gallery.length} STORIES IN THE VAULT</p>
+              <h2 className="text-3xl md:text-5xl text-foreground font-display uppercase mb-3">Community Gallery</h2>
+              <p className="text-muted-foreground font-mono text-xs md:text-sm tracking-widest">{gallery.length} STORIES IN THE ARCHIVE</p>
             </div>
             <Button 
               onClick={() => setView('TRACK_SELECT')}
@@ -1231,37 +1278,27 @@ export default function StoryArcade() {
             </Button>
           </div>
 
-          <TVWallGallery showStripes={true}>
-            {gallery.length === 0 ? (
-              <div className="text-center py-20">
-                <p className="text-muted-foreground font-mono text-sm mb-6">No stories yet. Be the first to create one!</p>
-                <Button 
-                  onClick={() => setView('TRACK_SELECT')}
-                  className="bg-primary text-primary-foreground font-display uppercase tracking-widest"
-                >
-                  Create First Story
-                </Button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 pb-20">
-                {gallery.map((story, index) => (
-                  <StoryCard 
-                    key={story.id} 
-                    story={story} 
-                    onView={(s) => setGalleryModalStory(s)}
-                    glowVariant={(['cyan', 'pink', 'fuchsia', 'teal', 'amber', 'violet'] as const)[index % 6]}
-                  />
-                ))}
-              </div>
-            )}
-          </TVWallGallery>
+          {gallery.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-muted-foreground font-mono text-sm mb-6">No stories yet. Be the first to create one!</p>
+              <Button 
+                onClick={() => setView('TRACK_SELECT')}
+                className="bg-primary text-primary-foreground font-display uppercase tracking-widest"
+              >
+                Create First Story
+              </Button>
+            </div>
+          ) : (
+            <StoryGallery 
+              stories={gallery}
+              title=""
+              subtitle=""
+              showFilters={true}
+            />
+          )}
         </main>
 
         <BackToTop />
-
-        {galleryModalStory && (
-          <StoryModal story={galleryModalStory} onClose={() => setGalleryModalStory(null)} />
-        )}
         
         <Toast message={toast} />
       </div>
