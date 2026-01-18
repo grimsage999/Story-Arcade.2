@@ -662,7 +662,7 @@ export default function StoryArcade() {
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
         
-        <main id="main-content" className="flex-1 p-6 md:p-12 pt-28 max-w-7xl mx-auto w-full" role="main">
+        <main id="main-content" className="flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-7xl mx-auto w-full" role="main">
           <div className="mb-10 md:mb-16">
             <h2 className="text-3xl md:text-5xl text-foreground font-display uppercase mb-3" data-testid="text-page-title">Select a Cartridge</h2>
             <p className="text-muted-foreground font-mono text-xs md:text-sm tracking-widest">CHOOSE THE THEME OF YOUR NARRATIVE</p>
@@ -884,7 +884,7 @@ export default function StoryArcade() {
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
         
-        <main id="main-content" className="flex-1 p-6 md:p-12 pt-28 max-w-4xl mx-auto w-full" data-testid="view-reveal" role="main">
+        <main id="main-content" className="flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-4xl mx-auto w-full" data-testid="view-reveal" role="main">
           <div className="mb-8 text-center animate-fade-in">
             <p className="text-primary font-mono text-xs tracking-widest mb-4">YOUR STORY IS READY</p>
             <h1 className="font-display text-3xl md:text-5xl text-foreground mb-4" data-testid="text-story-title">
