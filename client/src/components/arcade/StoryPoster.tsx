@@ -33,10 +33,17 @@ export function StoryPoster({ storyId, storyTitle, autoGenerate = true }: StoryP
   const generateMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", `/api/stories/${storyId}/poster`);
+      if (!res.ok && res.status !== 202) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to generate poster");
+      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/stories", storyId, "poster"] });
+    },
+    onError: (error) => {
+      console.error("Poster generation error:", error);
     },
   });
 

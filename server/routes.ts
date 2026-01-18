@@ -145,7 +145,25 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/stories/:id/poster", async (req, res) => {
+  const posterGenerationTimestamps = new Map<string, number[]>();
+  const RATE_LIMIT_WINDOW_MS = 60000;
+  const MAX_REQUESTS_PER_WINDOW = 5;
+  
+  function checkRateLimit(identifier: string): boolean {
+    const now = Date.now();
+    const timestamps = posterGenerationTimestamps.get(identifier) || [];
+    const recentTimestamps = timestamps.filter(t => now - t < RATE_LIMIT_WINDOW_MS);
+    
+    if (recentTimestamps.length >= MAX_REQUESTS_PER_WINDOW) {
+      return false;
+    }
+    
+    recentTimestamps.push(now);
+    posterGenerationTimestamps.set(identifier, recentTimestamps);
+    return true;
+  }
+
+  app.post("/api/stories/:id/poster", async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
@@ -157,28 +175,48 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Story not found" });
       }
       
+      const userId = req.user?.claims?.sub;
+      if (story.userId && story.userId !== userId) {
+        return res.status(403).json({ error: "Not authorized to generate poster for this story" });
+      }
+      
+      const rateLimitKey = userId || req.ip || "anonymous";
+      if (!checkRateLimit(rateLimitKey)) {
+        return res.status(429).json({ error: "Too many poster generation requests. Please try again later." });
+      }
+      
       if (story.posterUrl && story.posterStatus === "ready") {
         return res.json({ posterUrl: story.posterUrl, status: "ready" });
       }
       
-      await storage.updateStoryPoster(id, null, "generating");
-      
-      const posterUrl = await generatePosterImage({
-        title: story.title,
-        logline: story.logline,
-        trackId: story.trackId,
-        trackTitle: story.trackTitle,
-        themes: story.themes,
-        p1: story.p1,
-      });
-      
-      if (posterUrl) {
-        await storage.updateStoryPoster(id, posterUrl, "ready");
-        res.json({ posterUrl, status: "ready" });
-      } else {
-        await storage.updateStoryPoster(id, null, "failed");
-        res.status(500).json({ error: "Failed to generate poster", status: "failed" });
+      if (story.posterStatus === "generating") {
+        return res.status(202).json({ status: "generating", message: "Poster generation already in progress" });
       }
+      
+      await storage.updateStoryPoster(id, null, "generating");
+      res.status(202).json({ status: "generating", message: "Poster generation started" });
+      
+      (async () => {
+        try {
+          const posterUrl = await generatePosterImage({
+            title: story.title,
+            logline: story.logline,
+            trackId: story.trackId,
+            trackTitle: story.trackTitle,
+            themes: story.themes,
+            p1: story.p1,
+          });
+          
+          if (posterUrl) {
+            await storage.updateStoryPoster(id, posterUrl, "ready");
+          } else {
+            await storage.updateStoryPoster(id, null, "failed");
+          }
+        } catch (error) {
+          console.error("Background poster generation error:", error);
+          await storage.updateStoryPoster(id, null, "failed");
+        }
+      })();
     } catch (error) {
       console.error("Poster generation error:", error);
       res.status(500).json({ error: "Failed to generate poster" });
