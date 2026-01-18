@@ -22,6 +22,7 @@ import { BackToTop } from '@/components/arcade/BackToTop';
 import { SkipLink } from '@/components/arcade/SkipLink';
 import { StoryModal } from '@/components/arcade/StoryModal';
 import { AchievementPopup, LevelUpPopup } from '@/components/arcade/AchievementPopup';
+import { StoryPoster } from '@/components/arcade/StoryPoster';
 import { Button } from '@/components/ui/button';
 import type { Badge, ProgressionReward } from '@/hooks/use-progression';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -888,26 +889,39 @@ export default function StoryArcade() {
             </p>
           </div>
           
-          <div className="bg-card border border-card-border rounded-md p-6 md:p-10 mb-8 animate-fade-in">
-            <p className="text-xl md:text-2xl text-primary font-display italic mb-8 border-l-4 border-primary pl-6">
-              "{generatedStory.logline}"
-            </p>
-            
-            <div className="space-y-6 text-foreground leading-relaxed text-base md:text-lg">
-              <p data-testid="text-story-p1">{generatedStory.p1}</p>
-              <p data-testid="text-story-p2">{generatedStory.p2}</p>
-              <p data-testid="text-story-p3">{generatedStory.p3}</p>
+          <div className="grid md:grid-cols-[1fr_auto] gap-6 md:gap-8 mb-8">
+            <div className="bg-card border border-card-border rounded-md p-6 md:p-10 animate-fade-in">
+              <p className="text-xl md:text-2xl text-primary font-display italic mb-8 border-l-4 border-primary pl-6">
+                "{generatedStory.logline}"
+              </p>
+              
+              <div className="space-y-6 text-foreground leading-relaxed text-base md:text-lg">
+                <p data-testid="text-story-p1">{generatedStory.p1}</p>
+                <p data-testid="text-story-p2">{generatedStory.p2}</p>
+                <p data-testid="text-story-p3">{generatedStory.p3}</p>
+              </div>
+              
+              <div className="flex items-center gap-2 mt-8 pt-6 border-t border-border flex-wrap">
+                {generatedStory.themes.map((theme) => (
+                  <span 
+                    key={theme}
+                    className="px-3 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-mono"
+                  >
+                    {theme}
+                  </span>
+                ))}
+              </div>
             </div>
             
-            <div className="flex items-center gap-2 mt-8 pt-6 border-t border-border flex-wrap">
-              {generatedStory.themes.map((theme) => (
-                <span 
-                  key={theme}
-                  className="px-3 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-mono"
-                >
-                  {theme}
-                </span>
-              ))}
+            <div className="animate-fade-in md:sticky md:top-24 self-start">
+              <div className="text-center mb-4">
+                <p className="text-xs font-mono text-muted-foreground tracking-widest">CINEMATIC POSTER</p>
+              </div>
+              <StoryPoster 
+                storyId={generatedStory.id} 
+                storyTitle={generatedStory.title}
+                autoGenerate={true}
+              />
             </div>
           </div>
           

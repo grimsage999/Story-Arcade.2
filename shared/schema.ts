@@ -21,6 +21,8 @@ export const stories = pgTable("stories", {
   p3: text("p3").notNull(),
   timestamp: text("timestamp").notNull(),
   answers: jsonb("answers"),
+  posterUrl: text("poster_url"),
+  posterStatus: text("poster_status").default("pending"),
 });
 
 const baseInsertStorySchema = createInsertSchema(stories, {

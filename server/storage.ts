@@ -10,6 +10,7 @@ export interface IStorage {
   getStoryByShareableId(shareableId: string): Promise<Story | undefined>;
   createStory(story: InsertStory, userId?: string): Promise<Story>;
   deleteStory(id: number, userId: string): Promise<boolean>;
+  updateStoryPoster(id: number, posterUrl: string | null, status: string): Promise<Story | undefined>;
 }
 
 function generateShareableId(): string {
@@ -48,6 +49,14 @@ export class DatabaseStorage implements IStorage {
   async deleteStory(id: number, userId: string): Promise<boolean> {
     const result = await db.delete(stories).where(and(eq(stories.id, id), eq(stories.userId, userId))).returning();
     return result.length > 0;
+  }
+
+  async updateStoryPoster(id: number, posterUrl: string | null, status: string): Promise<Story | undefined> {
+    const [story] = await db.update(stories)
+      .set({ posterUrl, posterStatus: status })
+      .where(eq(stories.id, id))
+      .returning();
+    return story || undefined;
   }
 }
 

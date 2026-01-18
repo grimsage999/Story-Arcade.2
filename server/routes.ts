@@ -11,6 +11,7 @@ import {
   seedBadges,
   LEVEL_THRESHOLDS 
 } from "./progression";
+import { generatePosterImage } from "./posterGenerator";
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   const user = (req as any).user;
@@ -141,6 +142,67 @@ export async function registerRoutes(
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete story" });
+    }
+  });
+
+  app.post("/api/stories/:id/poster", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid story ID" });
+      }
+      
+      const story = await storage.getStory(id);
+      if (!story) {
+        return res.status(404).json({ error: "Story not found" });
+      }
+      
+      if (story.posterUrl && story.posterStatus === "ready") {
+        return res.json({ posterUrl: story.posterUrl, status: "ready" });
+      }
+      
+      await storage.updateStoryPoster(id, null, "generating");
+      
+      const posterUrl = await generatePosterImage({
+        title: story.title,
+        logline: story.logline,
+        trackId: story.trackId,
+        trackTitle: story.trackTitle,
+        themes: story.themes,
+        p1: story.p1,
+      });
+      
+      if (posterUrl) {
+        await storage.updateStoryPoster(id, posterUrl, "ready");
+        res.json({ posterUrl, status: "ready" });
+      } else {
+        await storage.updateStoryPoster(id, null, "failed");
+        res.status(500).json({ error: "Failed to generate poster", status: "failed" });
+      }
+    } catch (error) {
+      console.error("Poster generation error:", error);
+      res.status(500).json({ error: "Failed to generate poster" });
+    }
+  });
+
+  app.get("/api/stories/:id/poster", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid story ID" });
+      }
+      
+      const story = await storage.getStory(id);
+      if (!story) {
+        return res.status(404).json({ error: "Story not found" });
+      }
+      
+      res.json({ 
+        posterUrl: story.posterUrl, 
+        status: story.posterStatus || "pending" 
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch poster status" });
     }
   });
 
