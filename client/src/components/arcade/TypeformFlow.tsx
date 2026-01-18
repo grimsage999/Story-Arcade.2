@@ -160,8 +160,8 @@ export function TypeformFlow({
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col bg-background relative overflow-hidden">
-      <div className="absolute top-4 left-6 right-6 flex justify-between items-center z-40">
-        <div className="w-full bg-secondary h-1 rounded-full overflow-hidden mr-4">
+      <header className="px-6 pt-4 pb-2 space-y-3">
+        <div className="w-full bg-secondary h-1 rounded-full overflow-hidden">
           <motion.div
             className="h-full bg-primary shadow-[0_0_20px_rgba(34,211,238,0.6)]"
             initial="initial"
@@ -170,45 +170,45 @@ export function TypeformFlow({
             variants={progressVariants}
           />
         </div>
-      </div>
 
-      <div className="absolute top-12 left-6 right-6 flex justify-between items-center z-40">
-        <div className="flex items-center gap-3">
-          <span className={`px-3 py-1.5 border ${track.border} ${track.accent} bg-opacity-10 rounded-sm text-[10px] font-mono uppercase tracking-widest`}>
-            {track.title}
-          </span>
-          <span className="text-muted-foreground font-mono text-xs tracking-widest hidden md:block">
-            {currentIndex + 1} / {questions.length}
-          </span>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <span className={`px-3 py-1.5 border ${track.border} ${track.accent} bg-opacity-10 rounded-sm text-[10px] font-mono uppercase tracking-widest`}>
+              {track.title}
+            </span>
+            <span className="text-muted-foreground font-mono text-xs tracking-widest hidden md:block">
+              {currentIndex + 1} / {questions.length}
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {questions.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => {
+                  if (i < currentIndex || (i <= currentIndex && isValid)) {
+                    setDirection(i > currentIndex ? 1 : -1);
+                    setIsTransitioning(true);
+                    updateIndex(i);
+                    setTimeout(() => setIsTransitioning(false), 400);
+                  }
+                }}
+                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                  i === currentIndex 
+                    ? 'bg-primary scale-125 shadow-[0_0_10px_rgba(34,211,238,0.8)]'
+                    : i < currentIndex || (answers[questions[i].id]?.length ?? 0) >= 5
+                      ? 'bg-primary/60'
+                      : 'bg-secondary'
+                }`}
+                aria-label={`Go to question ${i + 1}`}
+                disabled={i > currentIndex && !isValid}
+              />
+            ))}
+          </div>
         </div>
-        
-        <div className="flex items-center gap-2">
-          {questions.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => {
-                if (i < currentIndex || (i <= currentIndex && isValid)) {
-                  setDirection(i > currentIndex ? 1 : -1);
-                  setIsTransitioning(true);
-                  updateIndex(i);
-                  setTimeout(() => setIsTransitioning(false), 400);
-                }
-              }}
-              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                i === currentIndex 
-                  ? 'bg-primary scale-125 shadow-[0_0_10px_rgba(34,211,238,0.8)]'
-                  : i < currentIndex || (answers[questions[i].id]?.length ?? 0) >= 5
-                    ? 'bg-primary/60'
-                    : 'bg-secondary'
-              }`}
-              aria-label={`Go to question ${i + 1}`}
-              disabled={i > currentIndex && !isValid}
-            />
-          ))}
-        </div>
-      </div>
+      </header>
 
-      <div className="flex-1 flex items-center justify-center px-6 py-24">
+      <div className="flex-1 flex items-center justify-center px-6 py-8">
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={currentIndex}
