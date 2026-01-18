@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ChevronRight, ChevronLeft, ArrowRight, Download, Shuffle, Share2, Eye, RefreshCw, X } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ArrowRight, Shuffle, Share2, Eye, RefreshCw, X } from 'lucide-react';
 import type { Track, Story } from '@shared/schema';
 import { TRACKS, MOTIVATIONS, SEED_STORIES } from '@/lib/tracks';
 import { CRTOverlay } from '@/components/arcade/CRTOverlay';
@@ -9,8 +9,20 @@ import { Toast } from '@/components/arcade/Toast';
 import { Navbar } from '@/components/arcade/Navbar';
 import { TrackCard } from '@/components/arcade/TrackCard';
 import { StoryCard } from '@/components/arcade/StoryCard';
+import { DraftRecoveryBanner } from '@/components/arcade/DraftRecoveryBanner';
+import { UnsavedStoryModal } from '@/components/arcade/UnsavedStoryModal';
+import { DraftsList } from '@/components/arcade/DraftsList';
+import { AutoSaveIndicator } from '@/components/arcade/AutoSaveIndicator';
 import { Button } from '@/components/ui/button';
 import { queryClient, apiRequest } from '@/lib/queryClient';
+import { 
+  type Draft, 
+  getAllDrafts, 
+  getDraft, 
+  saveDraft, 
+  deleteDraft, 
+  generateDraftId 
+} from '@/lib/draftStorage';
 
 type View = 'ATTRACT' | 'TRACK_SELECT' | 'QUESTIONS' | 'FORGING' | 'REVEAL' | 'GALLERY';
 
@@ -21,6 +33,8 @@ const LOADING_STEPS = [
   "ADDING CINEMATIC POLISH...",
   "STORY COMPLETE!"
 ];
+
+const AUTO_SAVE_INTERVAL = 10000;
 
 export default function StoryArcade() {
   const [view, setView] = useState<View>('ATTRACT');
@@ -35,6 +49,15 @@ export default function StoryArcade() {
   const [streak, setStreak] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const [inputError, setInputError] = useState(false);
+
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [recoveryDraft, setRecoveryDraft] = useState<Draft | null>(null);
+  const [showUnsavedModal, setShowUnsavedModal] = useState(false);
+
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: apiGallery, isLoading: isLoadingGallery, isError: isGalleryError } = useQuery<Story[]>({
     queryKey: ['/api/stories'],
@@ -52,12 +75,66 @@ export default function StoryArcade() {
     },
   });
 
+  const isCreating = view === 'QUESTIONS' || view === 'FORGING';
+  const currentScene = currentQuestionIndex + 1;
+  const totalScenes = activeTrack?.questions.length || 5;
+
   useEffect(() => {
     const savedStreak = localStorage.getItem('story_arcade_streak');
     if (savedStreak) {
       setStreak(parseInt(savedStreak));
     }
+
+    const allDrafts = getAllDrafts();
+    setDrafts(allDrafts);
+
+    if (allDrafts.length > 0) {
+      setRecoveryDraft(allDrafts[0]);
+    }
   }, []);
+
+  useEffect(() => {
+    if (isCreating && activeTrack && Object.keys(answers).length > 0) {
+      if (autoSaveTimerRef.current) {
+        clearInterval(autoSaveTimerRef.current);
+      }
+
+      autoSaveTimerRef.current = setInterval(() => {
+        performAutoSave();
+      }, AUTO_SAVE_INTERVAL);
+
+      return () => {
+        if (autoSaveTimerRef.current) {
+          clearInterval(autoSaveTimerRef.current);
+        }
+      };
+    }
+  }, [isCreating, activeTrack, answers, currentQuestionIndex]);
+
+  const performAutoSave = useCallback(() => {
+    if (!activeTrack) return;
+
+    const draftId = currentDraftId || generateDraftId();
+    const draft: Draft = {
+      id: draftId,
+      trackId: activeTrack.id,
+      trackTitle: activeTrack.title,
+      sceneNumber: currentQuestionIndex + 1,
+      userInputs: answers,
+      createdAt: currentDraftId ? (getDraft(draftId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+      lastSavedAt: new Date().toISOString(),
+    };
+
+    const success = saveDraft(draft);
+    if (success) {
+      setCurrentDraftId(draftId);
+      setLastSavedAt(draft.lastSavedAt);
+      setSaveFailed(false);
+      setDrafts(getAllDrafts());
+    } else {
+      setSaveFailed(true);
+    }
+  }, [activeTrack, currentQuestionIndex, answers, currentDraftId]);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -68,6 +145,9 @@ export default function StoryArcade() {
     setActiveTrack(track);
     setAnswers({});
     setCurrentQuestionIndex(0);
+    setCurrentDraftId(null);
+    setLastSavedAt(null);
+    setSaveFailed(false);
     setView('QUESTIONS');
   };
 
@@ -152,6 +232,12 @@ export default function StoryArcade() {
       setGeneratedStory(newStory);
     }
 
+    if (currentDraftId) {
+      deleteDraft(currentDraftId);
+      setCurrentDraftId(null);
+      setDrafts(getAllDrafts());
+    }
+
     const newStreak = streak + 1;
     setStreak(newStreak);
     localStorage.setItem('story_arcade_streak', newStreak.toString());
@@ -181,6 +267,9 @@ export default function StoryArcade() {
     setAnswers({});
     setCurrentQuestionIndex(0);
     setGeneratedStory(null);
+    setCurrentDraftId(null);
+    setLastSavedAt(null);
+    setSaveFailed(false);
     setView('TRACK_SELECT');
   };
 
@@ -198,11 +287,83 @@ export default function StoryArcade() {
     }
   };
 
+  const handleLogoClickDuringCreation = () => {
+    setShowUnsavedModal(true);
+  };
+
+  const handleSaveDraftAndLeave = () => {
+    performAutoSave();
+    setShowUnsavedModal(false);
+    setActiveTrack(null);
+    setAnswers({});
+    setCurrentQuestionIndex(0);
+    setCurrentDraftId(null);
+    setLastSavedAt(null);
+    setSaveFailed(false);
+    setView('ATTRACT');
+    showToast("Draft saved!");
+  };
+
+  const handleDiscardAndLeave = () => {
+    if (currentDraftId) {
+      deleteDraft(currentDraftId);
+      setDrafts(getAllDrafts());
+    }
+    setShowUnsavedModal(false);
+    setActiveTrack(null);
+    setAnswers({});
+    setCurrentQuestionIndex(0);
+    setCurrentDraftId(null);
+    setLastSavedAt(null);
+    setSaveFailed(false);
+    setView('ATTRACT');
+  };
+
+  const handleContinueCreating = () => {
+    setShowUnsavedModal(false);
+  };
+
+  const handleResumeDraft = (draft: Draft) => {
+    const track = TRACKS.find(t => t.id === draft.trackId);
+    if (track) {
+      setActiveTrack(track);
+      setAnswers(draft.userInputs);
+      setCurrentQuestionIndex(draft.sceneNumber - 1);
+      setCurrentDraftId(draft.id);
+      setLastSavedAt(draft.lastSavedAt);
+      setSaveFailed(false);
+      setRecoveryDraft(null);
+      setView('QUESTIONS');
+    }
+  };
+
+  const handleDiscardRecoveryDraft = () => {
+    if (recoveryDraft) {
+      deleteDraft(recoveryDraft.id);
+      setDrafts(getAllDrafts());
+    }
+    setRecoveryDraft(null);
+  };
+
+  const handleDeleteDraft = (draftId: string) => {
+    deleteDraft(draftId);
+    setDrafts(getAllDrafts());
+    showToast("Draft deleted");
+  };
+
   if (view === 'ATTRACT') {
     return (
       <div className="min-h-screen bg-background flex flex-col font-sans text-foreground relative">
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
+        
+        {recoveryDraft && (
+          <DraftRecoveryBanner 
+            draft={recoveryDraft}
+            onResume={() => handleResumeDraft(recoveryDraft)}
+            onDiscard={handleDiscardRecoveryDraft}
+          />
+        )}
         
         <div className="relative flex-1 flex flex-col justify-center items-center px-6 text-center pt-20 md:pt-0">
           <div className="z-10 max-w-5xl space-y-8 animate-fade-in">
@@ -272,6 +433,14 @@ export default function StoryArcade() {
             <p className="text-muted-foreground font-mono text-xs md:text-sm tracking-widest">CHOOSE THE THEME OF YOUR NARRATIVE</p>
           </div>
 
+          {drafts.length > 0 && (
+            <DraftsList 
+              drafts={drafts}
+              onContinue={handleResumeDraft}
+              onDelete={handleDeleteDraft}
+            />
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
             {TRACKS.map(track => (
               <TrackCard key={track.id} track={track} onSelect={handleTrackSelect} />
@@ -295,7 +464,24 @@ export default function StoryArcade() {
       <div className="min-h-screen bg-background flex flex-col font-sans relative overflow-hidden">
         <CRTOverlay />
         <Confetti active={showConfetti} />
-        <Navbar onViewChange={setView} currentView={view} streak={streak} />
+        <Navbar 
+          onViewChange={setView} 
+          currentView={view} 
+          streak={streak}
+          isCreating={true}
+          currentScene={currentScene}
+          totalScenes={totalScenes}
+          onLogoClick={handleLogoClickDuringCreation}
+        />
+        
+        {showUnsavedModal && (
+          <UnsavedStoryModal
+            scenesCompleted={currentQuestionIndex + 1}
+            onSaveDraft={handleSaveDraftAndLeave}
+            onDiscard={handleDiscardAndLeave}
+            onContinue={handleContinueCreating}
+          />
+        )}
         
         <div className="flex-1 flex flex-col pt-24 pb-32 px-6 md:p-12 md:pt-28 max-w-6xl mx-auto w-full">
           <div className="w-full flex justify-between items-center mb-8 md:mb-16 border-b border-border pb-6 gap-4 flex-wrap">
@@ -361,6 +547,10 @@ export default function StoryArcade() {
                   <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
+
+              <div className="mt-4 flex justify-end">
+                <AutoSaveIndicator lastSavedAt={lastSavedAt} saveFailed={saveFailed} />
+              </div>
             </div>
           </div>
         </div>
@@ -374,7 +564,14 @@ export default function StoryArcade() {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center font-sans relative">
         <CRTOverlay />
-        <Navbar onViewChange={setView} currentView={view} streak={streak} />
+        <Navbar 
+          onViewChange={setView} 
+          currentView={view} 
+          streak={streak}
+          isCreating={true}
+          currentScene={totalScenes}
+          totalScenes={totalScenes}
+        />
         
         <div className="text-center space-y-8 px-6 animate-fade-in" data-testid="view-forging">
           <div className="w-24 h-24 mx-auto relative">

@@ -76,7 +76,8 @@ export const SEED_STORIES = [
     p2: "The shift wasn't accidental. It took years of community organizing, block by block, until the old warehouses became greenhouses.",
     p3: "Now, a new ritual anchors the day: the Evening Market, where every vendor knows your name and the tomatoes taste like summer.",
     timestamp: new Date().toISOString(),
-    trackTitle: "Future NYC"
+    trackTitle: "Future NYC",
+    answers: null
   },
   {
     id: 2,
@@ -91,7 +92,8 @@ export const SEED_STORIES = [
     p2: "The challenge wasn't external—it was the voice in my head telling me I wasn't enough to try something new.",
     p3: "Today, I teach kids that the scariest doors lead to the brightest rooms. That subway ride was my first step through.",
     timestamp: new Date().toISOString(),
-    trackTitle: "Origin Story"
+    trackTitle: "Origin Story",
+    answers: null
   },
   {
     id: 3,
@@ -106,7 +108,8 @@ export const SEED_STORIES = [
     p2: "The landlord tried to tear it down three times. Each time, his tools would go missing, only to reappear arranged in dance formations.",
     p3: "Now there's only one rule on 173rd Street: if you hear the music, you dance. The building won't have it any other way.",
     timestamp: new Date().toISOString(),
-    trackTitle: "Neighborhood Legend"
+    trackTitle: "Neighborhood Legend",
+    answers: null
   }
 ];
 
