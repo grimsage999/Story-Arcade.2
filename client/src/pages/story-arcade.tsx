@@ -33,6 +33,7 @@ import { StarfieldBackground, StaticStarfield } from '@/components/arcade/Starfi
 import { FeaturedStorySpotlight } from '@/components/arcade/FeaturedStorySpotlight';
 import { StoryGallery } from '@/components/arcade/StoryGallery';
 import { StoryGalleryCard } from '@/components/arcade/StoryGalleryCard';
+import { TypeformFlow } from '@/components/arcade/TypeformFlow';
 import { useIdleTimer } from '@/hooks/useIdleTimer';
 import { checkContentSafety, getFallbackStory } from '@/lib/contentSafety';
 import { arcadeSounds } from '@/lib/arcadeSounds';
@@ -838,12 +839,30 @@ export default function StoryArcade() {
   }
 
   if (view === 'QUESTIONS' && activeTrack) {
-    const question = activeTrack.questions[currentQuestionIndex];
-    const currentInput = answers[question.id] || '';
-    const charCount = currentInput.length;
-    const isValid = charCount >= 5;
-    const motivation = MOTIVATIONS[currentQuestionIndex % MOTIVATIONS.length];
-    
+    const handleTypeformAnswerChange = (questionId: string, value: string) => {
+      setAnswers(prev => ({ ...prev, [questionId]: value }));
+      setHasTyped(true);
+    };
+
+    const handleTypeformComplete = () => {
+      setView('FORGING');
+      setForgeStatus('running');
+      generateStory();
+    };
+
+    const handleTypeformBack = () => {
+      setView('TRACK_SELECT');
+    };
+
+    const handleQuestionIndexChange = (index: number) => {
+      setCurrentQuestionIndex(index);
+    };
+
+    const handleContentWarningChange = (warning: string | null) => {
+      setContentWarning(warning);
+      setContentBlocked(warning !== null);
+    };
+
     return (
       <div className="min-h-screen bg-background flex flex-col font-sans relative overflow-hidden">
         <SkipLink />
@@ -868,126 +887,25 @@ export default function StoryArcade() {
           />
         )}
         
-        <main id="main-content" className="flex-1 flex flex-col pt-24 pb-32 px-6 md:p-12 md:pt-28 max-w-6xl mx-auto w-full" role="main">
-          <div className="w-full flex justify-between items-center mb-8 md:mb-16 border-b border-border pb-6 gap-4 flex-wrap">
-            <div className="flex items-center gap-4 flex-wrap">
-              <span className={`px-3 py-1 border ${activeTrack.border} ${activeTrack.accent} bg-opacity-10 rounded-sm text-[10px] font-mono uppercase tracking-widest`} data-testid="badge-track">
-                {activeTrack.title}
-              </span>
-              <span className="text-muted-foreground font-mono text-xs tracking-widest hidden md:inline">
-                SCENE {currentQuestionIndex + 1}/{activeTrack.questions.length}
-              </span>
-            </div>
-            <div className="flex gap-2">
-              {activeTrack.questions.map((_, i) => (
-                <div 
-                  key={i} 
-                  className={`h-1.5 w-8 md:w-12 rounded-full transition-all duration-500 ${i <= currentQuestionIndex ? 'bg-primary shadow-[0_0_8px_rgba(34,211,238,0.6)]' : 'bg-secondary'}`}
-                  data-testid={`progress-step-${i}`}
-                />
-              ))}
-            </div>
-          </div>
+        <div className="flex-1 pt-16">
+          <TypeformFlow
+            track={activeTrack}
+            answers={answers}
+            onAnswerChange={handleTypeformAnswerChange}
+            onComplete={handleTypeformComplete}
+            onBack={handleTypeformBack}
+            inspireUsage={inspireUsage}
+            onInspireUse={handleInspireUse}
+            onInspireClick={handleInspireClick}
+            currentQuestionIndex={currentQuestionIndex}
+            onQuestionIndexChange={handleQuestionIndexChange}
+            onContentWarningChange={handleContentWarningChange}
+          />
+        </div>
 
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
-            <div className="lg:col-span-5 flex flex-col justify-center">
-              <p className="text-muted-foreground font-mono text-[10px] md:text-xs tracking-widest mb-4">{question.guidance.toUpperCase()}</p>
-              <h2 className="font-display text-xl md:text-4xl text-foreground leading-tight mb-4 md:mb-6" data-testid="text-question-prompt">
-                {question.prompt}
-              </h2>
-              <p className="text-muted-foreground font-mono text-xs italic">{motivation}</p>
-              
-              <SceneExamples 
-                sceneNumber={currentQuestionIndex + 1}
-                trackId={activeTrack.id}
-                onExampleClick={handleExampleClick}
-              />
-            </div>
-
-            <div className="lg:col-span-7 flex flex-col justify-center">
-              <fieldset className="border-0 p-0 m-0">
-                <legend className="sr-only">Scene {currentQuestionIndex + 1} of {activeTrack.questions.length}: {question.prompt}</legend>
-                <div className={`relative group flex-1 ${inputError ? 'animate-shake' : ''}`}>
-                  <TextareaTooltip 
-                    isVisible={showTooltip} 
-                    onDismiss={() => setShowTooltip(false)} 
-                  />
-                  <label htmlFor="scene-input" className="sr-only">
-                    {question.prompt} (minimum 5 characters, maximum 300 characters, currently {charCount} characters)
-                  </label>
-                  <textarea
-                    id="scene-input"
-                    value={currentInput}
-                    onChange={(e) => handleAnswerChange(e.target.value)}
-                    onFocus={handleTextareaFocus}
-                    placeholder={question.placeholder}
-                    className="w-full h-full min-h-[120px] md:min-h-[240px] bg-card border border-card-border rounded-md p-4 md:p-6 text-[16px] md:text-lg leading-relaxed placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all resize-none"
-                    data-testid="input-answer"
-                    aria-required="true"
-                    aria-describedby="scene-helper"
-                    aria-invalid={inputError}
-                  />
-                  <div id="scene-helper" className="sr-only" aria-live="polite">
-                    {charCount} of 300 characters entered. Minimum 5 characters required.
-                  </div>
-                </div>
-              </fieldset>
-              
-              <div className="mt-3">
-                <CharacterProgress charCount={charCount} />
-              </div>
-              
-              {contentWarning && (
-                <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-md">
-                  <p className="text-amber-400 text-xs font-mono flex items-center gap-2">
-                    <span className="text-amber-500">⚠</span>
-                    {contentWarning}
-                  </p>
-                </div>
-              )}
-              
-              <InspireMe
-                sceneNumber={currentQuestionIndex + 1}
-                trackTitle={activeTrack.title}
-                prompt={question.prompt}
-                currentInput={currentInput}
-                onSuggestionClick={handleInspireClick}
-                usageCount={inspireUsage[currentQuestionIndex + 1] || 0}
-                onUse={handleInspireUse}
-              />
-
-              <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center mt-6 gap-3 md:gap-4">
-                <Button 
-                  variant="outline" 
-                  onClick={prevQuestion}
-                  className="font-mono uppercase tracking-widest w-full md:w-auto order-2 md:order-1"
-                  data-testid="button-prev"
-                  aria-label={currentQuestionIndex === 0 ? 'Return to track selection' : `Return to scene ${currentQuestionIndex}`}
-                >
-                  <ChevronLeft className="w-4 h-4 mr-2" aria-hidden="true" />
-                  {currentQuestionIndex === 0 ? 'Back' : 'Prev'}
-                </Button>
-                <Button 
-                  onClick={nextQuestion}
-                  disabled={!isValid}
-                  className="bg-primary text-primary-foreground font-display uppercase tracking-widest shadow-[0_0_15px_rgba(34,211,238,0.5)] disabled:opacity-50 w-full md:w-auto order-1 md:order-2"
-                  data-testid="button-next"
-                  aria-label={currentQuestionIndex === activeTrack.questions.length - 1 
-                    ? 'Complete story and generate narrative' 
-                    : `Proceed to scene ${currentQuestionIndex + 2} (currently scene ${currentQuestionIndex + 1} of ${activeTrack.questions.length})`}
-                  aria-disabled={!isValid}
-                >
-                  {currentQuestionIndex === activeTrack.questions.length - 1 ? 'Forge Story' : 'Next'}
-                  <ChevronRight className="w-4 h-4 ml-2" aria-hidden="true" />
-                </Button>
-              </div>
-
-              <div className="mt-4 flex justify-end">
-                <AutoSaveIndicator lastSavedAt={lastSavedAt} saveFailed={saveFailed} />
-              </div>
-            </div>
-          </div>
-        </main>
+        <div className="fixed bottom-4 right-4 z-30">
+          <AutoSaveIndicator lastSavedAt={lastSavedAt} saveFailed={saveFailed} />
+        </div>
         
         <Toast message={toast} />
       </div>
