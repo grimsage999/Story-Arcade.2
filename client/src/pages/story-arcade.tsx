@@ -1064,7 +1064,7 @@ export default function StoryArcade() {
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
         
-        <main id="main-content" className="flex-1 p-6 md:p-12 pt-28 max-w-7xl mx-auto w-full" data-testid="view-gallery" role="main">
+        <main id="main-content" className="flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-7xl mx-auto w-full" data-testid="view-gallery" role="main">
           <div className="mb-10 md:mb-16 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <h2 className="text-3xl md:text-5xl text-foreground font-display uppercase mb-3">Community Archive</h2>
