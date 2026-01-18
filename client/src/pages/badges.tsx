@@ -197,7 +197,7 @@ export function BadgesPage({ onBack }: BadgesPageProps) {
     );
   }
 
-  if (isLoading || isLoadingBadges) {
+  if (isLoading || isLoadingBadges || allBadges.length === 0) {
     return (
       <main 
         id="main-content" 

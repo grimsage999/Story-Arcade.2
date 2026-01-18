@@ -16,9 +16,10 @@ export function XPProgressBar() {
     return null;
   }
 
+  const isMaxLevel = progress.level >= 20;
   const xpInCurrentLevel = progress.xp - progress.xpForCurrentLevel;
-  const xpNeededForLevel = progress.xpForNextLevel - progress.xpForCurrentLevel;
-  const progressPercent = Math.min((xpInCurrentLevel / xpNeededForLevel) * 100, 100);
+  const xpNeededForLevel = Math.max(progress.xpForNextLevel - progress.xpForCurrentLevel, 1);
+  const progressPercent = isMaxLevel ? 100 : Math.min((xpInCurrentLevel / xpNeededForLevel) * 100, 100);
 
   return (
     <Tooltip>
@@ -90,9 +91,13 @@ export function XPProgressBar() {
       <TooltipContent side="bottom" className="bg-card border-primary/30">
         <div className="text-sm space-y-1">
           <p className="font-bold text-foreground">Level {progress.level}</p>
-          <p className="text-muted-foreground">
-            {xpInCurrentLevel} / {xpNeededForLevel} XP to next level
-          </p>
+          {isMaxLevel ? (
+            <p className="text-yellow-400 font-bold">MAX LEVEL ACHIEVED</p>
+          ) : (
+            <p className="text-muted-foreground">
+              {xpInCurrentLevel} / {xpNeededForLevel} XP to next level
+            </p>
+          )}
           <p className="text-xs text-muted-foreground">
             Total XP: {progress.xp}
           </p>
