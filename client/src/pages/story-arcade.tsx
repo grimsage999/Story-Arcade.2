@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ChevronRight, ChevronLeft, ArrowRight, Shuffle, Share2, Eye, RefreshCw, Copy, Check, Link, Twitter, Facebook, MessageCircle } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ArrowRight, Shuffle, Share2, Eye, RefreshCw, Copy, Check, Link, Twitter, Facebook, MessageCircle, Sparkles, Download } from 'lucide-react';
 import type { Track, Story } from '@shared/schema';
 import { TRACKS, MOTIVATIONS, SEED_STORIES } from '@/lib/tracks';
 import { CRTOverlay } from '@/components/arcade/CRTOverlay';
@@ -111,6 +111,17 @@ export default function StoryArcade() {
   const { data: apiGallery, isLoading: isLoadingGallery, isError: isGalleryError } = useQuery<Story[]>({
     queryKey: ['/api/stories'],
     retry: 1,
+  });
+
+  // Query for poster status to enable prominent download button
+  const { data: posterStatus } = useQuery<{ posterUrl: string | null; status: string }>({
+    queryKey: ['/api/stories', generatedStory?.id, 'poster'],
+    enabled: !!generatedStory?.id && view === 'REVEAL',
+    refetchInterval: (query) => {
+      const data = query.state.data;
+      if (data?.status === 'generating') return 3000;
+      return false;
+    },
   });
 
   // Prioritize real user stories, supplement with seeds only if no real stories exist
@@ -625,6 +636,18 @@ export default function StoryArcade() {
     window.open(url, '_blank');
   };
 
+  const handlePosterDownload = () => {
+    if (!posterStatus?.posterUrl || !generatedStory) return;
+    
+    const link = document.createElement("a");
+    link.href = posterStatus.posterUrl;
+    link.download = `${generatedStory.title.replace(/[^a-z0-9]/gi, "_")}_poster.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast("Poster downloaded!");
+  };
+
   const handleLogoClickDuringCreation = () => {
     setShowUnsavedModal(true);
   };
@@ -1022,6 +1045,42 @@ export default function StoryArcade() {
                     trackId={generatedStory.trackId}
                     autoGenerate={true}
                   />
+                  
+                  {/* Poster Footer - Download, Branding, Tags */}
+                  <div className="mt-4 space-y-3 max-w-xs mx-auto">
+                    {/* Prominent Download Button */}
+                    <Button
+                      onClick={handlePosterDownload}
+                      disabled={posterStatus?.status !== 'ready' || !posterStatus?.posterUrl}
+                      className="w-full font-mono text-sm gap-2"
+                      data-testid="button-download-poster-prominent"
+                    >
+                      <Download className="w-4 h-4" />
+                      {posterStatus?.status === 'generating' ? 'Creating Poster...' : 
+                       posterStatus?.status === 'ready' ? 'Download Poster' : 'Poster Pending'}
+                    </Button>
+                    
+                    {/* Track & Neighborhood Tags */}
+                    <div className="flex items-center justify-center gap-2 flex-wrap">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-mono tracking-wide border ${
+                        generatedStory.trackId === 'origin' ? 'border-amber-500/50 bg-amber-500/10 text-amber-400' :
+                        generatedStory.trackId === 'future' ? 'border-cyan-500/50 bg-cyan-500/10 text-cyan-400' :
+                        'border-purple-500/50 bg-purple-500/10 text-purple-400'
+                      }`}>
+                        {generatedStory.trackTitle}
+                      </span>
+                      <span className="text-muted-foreground/50">•</span>
+                      <span className="text-xs font-mono text-muted-foreground">
+                        {generatedStory.neighborhood}
+                      </span>
+                    </div>
+                    
+                    {/* Created with Story Arcade Badge */}
+                    <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground/70">
+                      <Sparkles className="w-3 h-3" />
+                      <span className="font-mono tracking-wide">Created with Story Arcade</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </HUDOverlay>
