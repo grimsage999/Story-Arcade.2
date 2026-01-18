@@ -1019,6 +1019,7 @@ export default function StoryArcade() {
                   <StoryPoster 
                     storyId={generatedStory.id} 
                     storyTitle={generatedStory.title}
+                    trackId={generatedStory.trackId}
                     autoGenerate={true}
                   />
                 </div>
