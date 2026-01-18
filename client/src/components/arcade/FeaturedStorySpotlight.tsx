@@ -48,7 +48,7 @@ export function FeaturedStorySpotlight({
 
   return (
     <div 
-      className="relative w-full max-w-4xl mx-auto"
+      className="relative w-full max-w-4xl mx-auto group"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
@@ -126,22 +126,26 @@ export function FeaturedStorySpotlight({
         
         {featuredStories.length > 1 && (
           <>
-            <button
+            <Button
+              size="icon"
+              variant="outline"
               onClick={goToPrev}
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white/80 transition-all opacity-0 group-hover:opacity-100 md:opacity-100 hover-elevate"
+              className="absolute left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity bg-black/50 backdrop-blur-sm border-white/20 text-white"
               aria-label="Previous story"
               data-testid="button-spotlight-prev"
             >
               <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
               onClick={goToNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white/80 transition-all opacity-0 group-hover:opacity-100 md:opacity-100 hover-elevate"
+              className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity bg-black/50 backdrop-blur-sm border-white/20 text-white"
               aria-label="Next story"
               data-testid="button-spotlight-next"
             >
               <ChevronRight className="w-5 h-5" />
-            </button>
+            </Button>
           </>
         )}
         
