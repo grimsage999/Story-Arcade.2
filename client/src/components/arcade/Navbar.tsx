@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Sparkles, Menu, Trophy, Home, Compass, FileText, BookOpen, Settings, LogIn, LogOut, User, Award } from 'lucide-react';
+import { SoundToggle } from './SoundToggle';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
@@ -365,6 +366,8 @@ export function Navbar({
 
         <XPProgressBar />
 
+        <SoundToggle />
+
         <button 
           onClick={() => handleNavClick('BADGES')} 
           className={`${currentView === 'BADGES' ? 'text-foreground' : ''} ${navButtonClass} flex items-center gap-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 rounded-sm`}
@@ -428,6 +431,7 @@ export function Navbar({
       </div>
 
       <div className="md:hidden flex items-center gap-2">
+        <SoundToggle />
         {isCreating && (
           <div 
             className="flex items-center gap-1 text-cyan-400 text-xs font-mono" 

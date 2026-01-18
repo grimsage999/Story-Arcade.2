@@ -23,6 +23,7 @@ import { SkipLink } from '@/components/arcade/SkipLink';
 import { StoryModal } from '@/components/arcade/StoryModal';
 import { AchievementPopup, LevelUpPopup } from '@/components/arcade/AchievementPopup';
 import { StoryPoster } from '@/components/arcade/StoryPoster';
+import { arcadeSounds } from '@/lib/arcadeSounds';
 import { Button } from '@/components/ui/button';
 import type { Badge, ProgressionReward } from '@/hooks/use-progression';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -320,6 +321,10 @@ export default function StoryArcade() {
       timestamp: new Date().toISOString(),
       trackTitle: activeTrack.title,
       answers: answers,
+      shareableId: "",
+      userId: null,
+      posterUrl: null,
+      posterStatus: "pending",
     };
 
     try {
@@ -390,6 +395,7 @@ export default function StoryArcade() {
       localStorage.setItem('story_arcade_streak', newStreak.toString());
 
       setShowConfetti(true);
+      arcadeSounds.storyComplete();
       setTimeout(() => {
         setShowConfetti(false);
         setView('REVEAL');
@@ -1011,6 +1017,10 @@ export default function StoryArcade() {
         themes: story.themes,
         timestamp: story.createdAt,
         answers: story.userInputs,
+        shareableId: story.shareableId || '',
+        userId: null,
+        posterUrl: null,
+        posterStatus: 'pending',
       };
       setGalleryModalStory(storyForView);
     };

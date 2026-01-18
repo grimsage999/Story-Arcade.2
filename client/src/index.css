@@ -368,3 +368,240 @@
   height: 1px;
   overflow: hidden;
 }
+
+/* ========================================
+   RETRO ARCADE VISUAL EFFECTS
+   ======================================== */
+
+/* Neon glow pulse animation */
+@keyframes neon-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 20px currentColor;
+    filter: brightness(1);
+  }
+  50% { 
+    box-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor;
+    filter: brightness(1.1);
+  }
+}
+
+@keyframes scanline-shimmer {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 4px; }
+}
+
+@keyframes pixel-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.95; }
+  75% { opacity: 0.98; }
+}
+
+@keyframes arcade-glow-breathe {
+  0%, 100% { 
+    text-shadow: 0 0 4px currentColor;
+    filter: drop-shadow(0 0 2px currentColor);
+  }
+  50% { 
+    text-shadow: 0 0 8px currentColor, 0 0 12px currentColor;
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+}
+
+@keyframes attract-mode-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.02); opacity: 0.95; }
+}
+
+/* Arcade hover effect - applies neon glow on interactive elements */
+.arcade-hover {
+  transition: all 0.15s ease-out;
+  position: relative;
+}
+
+.arcade-hover::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    hsl(var(--primary) / 0.1) 50%,
+    transparent 70%
+  );
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.arcade-hover:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+}
+
+.arcade-hover:hover::before {
+  opacity: 1;
+  animation: scanline-shimmer 0.3s linear infinite;
+}
+
+/* Arcade glow - stronger neon effect for buttons and CTAs */
+.arcade-glow {
+  transition: all 0.2s ease-out;
+}
+
+.arcade-glow:hover {
+  box-shadow: 
+    0 0 8px hsl(var(--primary) / 0.4),
+    0 0 16px hsl(var(--primary) / 0.2),
+    inset 0 0 4px hsl(var(--primary) / 0.1);
+  filter: brightness(1.05);
+}
+
+.arcade-glow:active {
+  transform: scale(0.98);
+  box-shadow: 
+    0 0 4px hsl(var(--primary) / 0.6),
+    inset 0 0 8px hsl(var(--primary) / 0.2);
+}
+
+/* Scanline overlay for retro CRT effect */
+.arcade-scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    hsl(0 0% 0% / 0.03) 1px,
+    hsl(0 0% 0% / 0.03) 2px
+  );
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.arcade-scanlines:hover::after {
+  opacity: 1;
+  animation: scanline-shimmer 0.15s linear infinite;
+}
+
+/* Pixel border effect */
+.arcade-pixel-border {
+  position: relative;
+}
+
+.arcade-pixel-border::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease;
+  pointer-events: none;
+}
+
+.arcade-pixel-border:hover::after {
+  border-color: hsl(var(--primary) / 0.5);
+  animation: pixel-flicker 0.1s ease infinite;
+}
+
+/* Text glow effect for headings and labels */
+.arcade-text-glow {
+  transition: text-shadow 0.2s ease-out, filter 0.2s ease-out;
+}
+
+.arcade-text-glow:hover {
+  text-shadow: 
+    0 0 4px hsl(var(--primary) / 0.8),
+    0 0 8px hsl(var(--primary) / 0.4);
+}
+
+/* Attract mode - subtle idle animation */
+.arcade-attract {
+  animation: attract-mode-pulse 3s ease-in-out infinite;
+}
+
+/* Insert coin animation */
+@keyframes insert-coin {
+  0% { transform: translateY(-10px); opacity: 0; }
+  30% { transform: translateY(0); opacity: 1; }
+  70% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(10px); opacity: 0; }
+}
+
+.arcade-coin-insert {
+  animation: insert-coin 0.4s ease-out;
+}
+
+/* Retro button press effect */
+.arcade-button-press:active {
+  transform: translateY(2px) scale(0.98);
+  filter: brightness(0.9);
+  transition: all 0.05s ease-out;
+}
+
+/* Card highlight on hover */
+.arcade-card-hover {
+  transition: all 0.2s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.arcade-card-hover::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    hsl(var(--primary) / 0.1) 0%,
+    transparent 50%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.arcade-card-hover:hover::before {
+  opacity: 1;
+}
+
+.arcade-card-hover:hover {
+  border-color: hsl(var(--primary) / 0.5);
+  box-shadow: 
+    0 4px 20px hsl(var(--primary) / 0.15),
+    0 0 0 1px hsl(var(--primary) / 0.2);
+}
+
+/* Joystick wiggle for interactive feedback */
+@keyframes joystick-wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-3deg); }
+  75% { transform: rotate(3deg); }
+}
+
+.arcade-wiggle:hover {
+  animation: joystick-wiggle 0.3s ease-in-out;
+}
+
+/* Disabled reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .arcade-hover,
+  .arcade-glow,
+  .arcade-scanlines::after,
+  .arcade-attract,
+  .arcade-card-hover::before,
+  .arcade-wiggle {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .arcade-hover:hover,
+  .arcade-glow:hover,
+  .arcade-card-hover:hover {
+    transform: none;
+  }
+}

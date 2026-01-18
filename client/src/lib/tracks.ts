@@ -77,7 +77,11 @@ export const SEED_STORIES = [
     p3: "Now, a new ritual anchors the day: the Evening Market, where every vendor knows your name and the tomatoes taste like summer.",
     timestamp: new Date().toISOString(),
     trackTitle: "Future NYC",
-    answers: null
+    answers: null,
+    shareableId: "seed001a",
+    userId: null,
+    posterUrl: null,
+    posterStatus: "pending"
   },
   {
     id: 2,
@@ -93,7 +97,11 @@ export const SEED_STORIES = [
     p3: "Today, I teach kids that the scariest doors lead to the brightest rooms. That subway ride was my first step through.",
     timestamp: new Date().toISOString(),
     trackTitle: "Origin Story",
-    answers: null
+    answers: null,
+    shareableId: "seed002b",
+    userId: null,
+    posterUrl: null,
+    posterStatus: "pending"
   },
   {
     id: 3,
@@ -109,7 +117,11 @@ export const SEED_STORIES = [
     p3: "Now there's only one rule on 173rd Street: if you hear the music, you dance. The building won't have it any other way.",
     timestamp: new Date().toISOString(),
     trackTitle: "Neighborhood Legend",
-    answers: null
+    answers: null,
+    shareableId: "seed003c",
+    userId: null,
+    posterUrl: null,
+    posterStatus: "pending"
   }
 ];
 

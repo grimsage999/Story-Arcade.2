@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge as BadgeType } from "@/hooks/use-progression";
+import { arcadeSounds } from "@/lib/arcadeSounds";
 import { 
   Star, Book, Scroll, Crown, Trophy,
   Flame, Zap, Award, Medal,
@@ -74,6 +75,7 @@ export function AchievementPopup({ badge, xpAwarded, onClose }: AchievementPopup
   useEffect(() => {
     if (badge) {
       setShow(true);
+      arcadeSounds.achievement();
       const timer = setTimeout(() => {
         setShow(false);
         setTimeout(onClose, 500);
@@ -255,6 +257,7 @@ export function LevelUpPopup({ newLevel, onClose }: LevelUpPopupProps) {
   useEffect(() => {
     if (newLevel) {
       setShow(true);
+      arcadeSounds.levelUp();
       const timer = setTimeout(() => {
         setShow(false);
         setTimeout(onClose, 500);
