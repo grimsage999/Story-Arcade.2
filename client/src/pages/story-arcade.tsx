@@ -710,7 +710,7 @@ export default function StoryArcade() {
               className="inline-block px-4 py-1.5 border border-primary/20 rounded-full bg-primary/10 text-primary font-mono text-[10px] md:text-xs tracking-[0.2em] mb-4 backdrop-blur-sm hover-elevate cursor-pointer"
               data-testid="badge-version"
             >
-              COMMUNITY MYTHOLOGY ENGINE v1.0
+              COME SHARE YOUR WORLD
             </button>
             <h1 className="text-[28px] md:text-7xl lg:text-8xl font-display leading-[0.95] md:leading-[0.9] tracking-tight cursor-default">
               TURN YOUR STORY INTO <br />
