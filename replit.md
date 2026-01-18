@@ -184,3 +184,59 @@ Preferred communication style: Simple, everyday language.
 
 **Gallery Layout:**
 - grid-cols-1 md:grid-cols-2 lg:grid-cols-3 for responsive card layout
+
+### Drafts Management
+
+**Pages:**
+- `client/src/pages/drafts.tsx` - Dedicated DRAFTS page component
+- `client/src/pages/my-stories.tsx` - Personal library component
+
+**DRAFTS Page Features:**
+- List view with sorting (recent/oldest/alphabetical)
+- Pagination for large draft collections
+- Inline renaming with editable title field
+- Duplicate draft functionality
+- Delete confirmation with warning
+- Empty state with "CREATE YOUR FIRST STORY" CTA
+
+**MY STORIES Page Features:**
+- Search by title functionality
+- Filter by theme tags
+- Sorting (newest/oldest/alphabetical)
+- Pagination with configurable page size
+- Story viewing modal integration
+- Export options: download as text, copy to clipboard, copy shareable link
+- Empty state prompting story creation
+
+**Storage Interface** (`client/src/lib/draftStorage.ts`):
+```typescript
+interface CompletedStory {
+  id: string;              // Unique: story_[timestamp]_[random]
+  title: string;
+  trackId: string;
+  trackTitle: string;
+  content: string[];       // [p1, p2, p3]
+  themes: string[];
+  createdAt: string;
+  userInputs: Record<string, string>;
+  insight?: string;
+  logline?: string;
+  author?: string;
+  neighborhood?: string;
+}
+```
+
+**Storage Limits:**
+- Maximum 10 drafts (oldest auto-deleted when limit reached)
+- Maximum 100 completed stories
+- 30-day draft expiry with auto-cleanup
+- All data stored in localStorage
+
+**Navigation:**
+- View type: `'ATTRACT' | 'TRACK_SELECT' | 'QUESTIONS' | 'FORGING' | 'REVEAL' | 'GALLERY' | 'DRAFTS' | 'MY_STORIES'`
+- Navigation items in both desktop navbar and mobile drawer
+- Disabled during story creation (with tooltip explanation)
+
+**Auto-Save on Completion:**
+- Completed stories automatically saved to localStorage after successful forging
+- Includes all story content, themes, user inputs, and metadata
