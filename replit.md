@@ -36,6 +36,7 @@ Drizzle ORM with a PostgreSQL dialect defines the schema for `users`, `sessions`
 - **Cross-Device Story Persistence:** Stories are saved to PostgreSQL and associated with authenticated users via userId, enabling access from any device after login.
 - **Draft Auto-Save System:** Stories are automatically saved to `localStorage` every 10 seconds during creation, with a maximum of 5 drafts, auto-cleanup of older drafts, and UI components for recovery and navigation protection.
 - **Shareable Story Links:** Each story receives a unique 8-character base64url shareable ID, enabling public sharing via dedicated `/story/:shareableId` URLs.
+- **Social Sharing System:** Comprehensive sharing across the app with Twitter, Facebook, WhatsApp share buttons and copy link functionality. Features include Open Graph meta tags for rich social previews, share buttons on story reveal page, public story page, StoryCard, and StoryModal components. Native Web Share API with fallback to clipboard copy.
 - **Interactive Guidance System:** Includes "Scene Examples" for pre-written prompts, a "Character Progress" indicator with visual feedback, and "AI-Powered Inspire Me" suggestions generated via the Gemini API.
 - **Forge Progress System:** Provides real-time feedback during story generation with progress bars, stage messages, and options for retrying or saving drafts in case of errors.
 - **My Stories Management:** Authenticated users can view, search, filter, sort, and manage their completed stories from the "My Stories" page, with options for export and deletion.
