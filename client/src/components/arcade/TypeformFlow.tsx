@@ -6,6 +6,7 @@ import type { Track } from '@shared/schema';
 import { MOTIVATIONS } from '@/lib/tracks';
 import { checkContentSafety } from '@/lib/contentSafety';
 import { OnboardingOverlay } from './OnboardingOverlay';
+import { VoiceMicButton } from './VoiceMicButton';
 
 interface TypeformFlowProps {
   track: Track;
@@ -71,6 +72,7 @@ export function TypeformFlow({
   const [inputError, setInputError] = useState(false);
   const [contentWarning, setContentWarning] = useState<string | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [interimVoiceText, setInterimVoiceText] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const questions = track.questions;
@@ -139,6 +141,18 @@ export function TypeformFlow({
     onAnswerChange(currentQuestion.id, value);
     setInputError(false);
   };
+
+  const handleVoiceTranscript = useCallback((text: string, isFinal: boolean) => {
+    if (isFinal) {
+      const newValue = currentAnswer + (currentAnswer.length > 0 ? ' ' : '') + text;
+      if (newValue.length <= 300) {
+        handleAnswerInput(newValue);
+      }
+      setInterimVoiceText('');
+    } else {
+      setInterimVoiceText(text);
+    }
+  }, [currentAnswer, handleAnswerInput]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -271,15 +285,40 @@ export function TypeformFlow({
               </div>
 
               <div className={`relative ${inputError ? 'animate-shake' : ''}`}>
-                <textarea
-                  ref={textareaRef}
-                  value={currentAnswer}
-                  onChange={(e) => handleAnswerInput(e.target.value)}
-                  placeholder={currentQuestion.placeholder}
-                  className="w-full min-h-[180px] md:min-h-[220px] bg-transparent border-0 border-b-2 border-border focus:border-primary text-lg md:text-xl leading-relaxed placeholder:text-muted-foreground/50 focus:outline-none resize-none transition-colors py-4"
-                  data-testid="input-typeform-answer"
-                  aria-label={currentQuestion.prompt}
-                />
+                <div className="relative">
+                  <textarea
+                    ref={textareaRef}
+                    value={currentAnswer}
+                    onChange={(e) => handleAnswerInput(e.target.value)}
+                    placeholder={currentQuestion.placeholder}
+                    className="w-full min-h-[180px] md:min-h-[220px] bg-transparent border-0 border-b-2 border-border focus:border-primary text-lg md:text-xl leading-relaxed placeholder:text-muted-foreground/50 focus:outline-none resize-none transition-colors py-4 pr-14"
+                    data-testid="input-typeform-answer"
+                    aria-label={currentQuestion.prompt}
+                  />
+                  
+                  <div className="absolute top-4 right-0">
+                    <VoiceMicButton
+                      onTranscript={handleVoiceTranscript}
+                      disabled={isTransitioning}
+                    />
+                  </div>
+                </div>
+                
+                <AnimatePresence>
+                  {interimVoiceText && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="mt-2 px-3 py-2 bg-primary/5 border border-primary/20 rounded-md"
+                    >
+                      <p className="text-primary/70 text-sm font-mono italic">
+                        <span className="animate-pulse mr-2">...</span>
+                        {interimVoiceText}
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 
                 <div className="absolute bottom-2 right-0 flex items-center gap-4">
                   <span className={`font-mono text-xs transition-colors ${
