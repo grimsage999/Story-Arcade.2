@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import type { Track } from '@shared/schema';
 import { MOTIVATIONS } from '@/lib/tracks';
 import { checkContentSafety } from '@/lib/contentSafety';
+import { OnboardingOverlay } from './OnboardingOverlay';
 
 interface TypeformFlowProps {
   track: Track;
@@ -64,6 +65,7 @@ export function TypeformFlow({
   onQuestionIndexChange,
   onContentWarningChange,
 }: TypeformFlowProps) {
+  const [showOnboarding, setShowOnboarding] = useState(currentQuestionIndex === 0);
   const [currentIndex, setCurrentIndex] = useState(currentQuestionIndex);
   const [direction, setDirection] = useState(0);
   const [inputError, setInputError] = useState(false);
@@ -158,8 +160,35 @@ export function TypeformFlow({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleNext, handlePrev, isTransitioning]);
 
+  const handleDismissOnboarding = useCallback(() => {
+    setShowOnboarding(false);
+    setTimeout(() => textareaRef.current?.focus(), 100);
+  }, []);
+
+  useEffect(() => {
+    if (showOnboarding) {
+      const handleEnter = (e: KeyboardEvent) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleDismissOnboarding();
+        }
+      };
+      window.addEventListener('keydown', handleEnter);
+      return () => window.removeEventListener('keydown', handleEnter);
+    }
+  }, [showOnboarding, handleDismissOnboarding]);
+
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col bg-background relative overflow-hidden">
+      <AnimatePresence>
+        {showOnboarding && (
+          <OnboardingOverlay
+            trackTitle={track.title}
+            onBegin={handleDismissOnboarding}
+          />
+        )}
+      </AnimatePresence>
+
       <header className="px-6 pt-4 pb-2 space-y-3">
         <div className="w-full bg-secondary h-1 rounded-full overflow-hidden">
           <motion.div
