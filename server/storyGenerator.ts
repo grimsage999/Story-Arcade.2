@@ -86,6 +86,20 @@ Respond in this exact JSON format:
     }
 
     const story = JSON.parse(jsonMatch[0]) as GeneratedStory;
+    
+    if (
+      typeof story.title !== 'string' ||
+      typeof story.p1 !== 'string' ||
+      typeof story.p2 !== 'string' ||
+      typeof story.p3 !== 'string' ||
+      typeof story.logline !== 'string' ||
+      typeof story.insight !== 'string' ||
+      !Array.isArray(story.themes) ||
+      !story.themes.every((t: unknown) => typeof t === 'string')
+    ) {
+      throw new Error("Invalid story structure from AI response");
+    }
+    
     return story;
   } catch (error) {
     console.error("[Story Generator] Error generating story:", error);

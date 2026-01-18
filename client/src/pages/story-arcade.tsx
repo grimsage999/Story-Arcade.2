@@ -357,8 +357,8 @@ export default function StoryArcade() {
     }, 60000);
 
     try {
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('TIMEOUT')), 65000);
+      const createTimeout = () => new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('TIMEOUT')), 45000);
       });
 
       const narrativeResponse = await Promise.race([
@@ -371,10 +371,18 @@ export default function StoryArcade() {
             answers
           })
         }),
-        timeoutPromise
+        createTimeout()
       ]);
       
+      if (!narrativeResponse.ok) {
+        throw new Error('Failed to generate story narrative');
+      }
+      
       const storyContent = await narrativeResponse.json();
+      
+      if (!storyContent.title || !storyContent.p1 || !storyContent.p2 || !storyContent.p3) {
+        throw new Error('Invalid story content received');
+      }
 
       const storyData = {
         trackId: activeTrack.id,
@@ -395,7 +403,7 @@ export default function StoryArcade() {
         return response.json();
       })();
 
-      const apiResponse = await Promise.race([apiPromise, timeoutPromise]);
+      const apiResponse = await Promise.race([apiPromise, createTimeout()]);
       
       if (forgeTimeoutRef.current) {
         clearTimeout(forgeTimeoutRef.current);
