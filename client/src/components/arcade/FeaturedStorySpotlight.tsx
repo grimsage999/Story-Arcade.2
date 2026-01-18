@@ -126,26 +126,30 @@ export function FeaturedStorySpotlight({
         
         {featuredStories.length > 1 && (
           <>
-            <Button
-              size="icon"
-              variant="outline"
-              onClick={goToPrev}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity bg-black/50 backdrop-blur-sm border-white/20 text-white"
-              aria-label="Previous story"
-              data-testid="button-spotlight-prev"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </Button>
-            <Button
-              size="icon"
-              variant="outline"
-              onClick={goToNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity bg-black/50 backdrop-blur-sm border-white/20 text-white"
-              aria-label="Next story"
-              data-testid="button-spotlight-next"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </Button>
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity">
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={goToPrev}
+                className="bg-black/50 backdrop-blur-sm border-white/20 text-white"
+                aria-label="Previous story"
+                data-testid="button-spotlight-prev"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </Button>
+            </div>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity">
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={goToNext}
+                className="bg-black/50 backdrop-blur-sm border-white/20 text-white"
+                aria-label="Next story"
+                data-testid="button-spotlight-next"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </Button>
+            </div>
           </>
         )}
         
