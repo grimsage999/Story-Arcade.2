@@ -228,6 +228,8 @@ export async function registerRoutes(
             trackTitle: story.trackTitle,
             themes: story.themes,
             p1: story.p1,
+            p2: story.p2,
+            p3: story.p3,
           });
           
           if (posterUrl) {

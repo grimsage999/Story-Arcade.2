@@ -16,37 +16,61 @@ interface StoryData {
   trackTitle: string;
   themes: string[];
   p1: string;
+  p2?: string;
+  p3?: string;
 }
 
 function buildPosterPrompt(story: StoryData): string {
-  const trackThemes: Record<string, string> = {
-    origin: "personal transformation, identity journey, dramatic lighting, emotional depth",
-    future: "futuristic cityscape, neon lights, cyberpunk aesthetics, hopeful dystopia",
-    legend: "urban mythology, neighborhood magic, street art vibes, community spirit",
+  const trackStyles: Record<string, { visual: string; mood: string; colors: string }> = {
+    origin: {
+      visual: "intimate portrait style, single figure silhouette, dramatic shadows",
+      mood: "introspective, transformative, deeply personal",
+      colors: "warm amber tones, deep shadows, golden hour lighting"
+    },
+    future: {
+      visual: "futuristic cityscape, neon-lit streets, holographic elements, flying vehicles",
+      mood: "hopeful, innovative, community-focused",
+      colors: "cyan and magenta neon, deep blues, electric highlights"
+    },
+    legend: {
+      visual: "urban street scene, magical elements emerging, neighborhood setting",
+      mood: "mysterious, whimsical, folkloric magic",
+      colors: "twilight purples, street lamp gold, ethereal glows"
+    },
   };
 
-  const trackStyle = trackThemes[story.trackId] || trackThemes.origin;
+  const style = trackStyles[story.trackId] || trackStyles.origin;
   const themeKeywords = story.themes.slice(0, 3).join(", ");
+  
+  // Use full story content for visual inspiration
+  const storyContent = [story.p1, story.p2, story.p3].filter(Boolean).join(" ");
+  const storyExcerpt = storyContent.slice(0, 300);
 
-  return `Create a cinematic movie poster image for a story.
+  return `Create a stunning cinematic movie poster for this story:
 
-STORY DETAILS:
-Title: "${story.title}"
-Tagline: "${story.logline}"
-Themes: ${themeKeywords}
-Opening: "${story.p1.slice(0, 150)}..."
+STORY: "${story.title}"
+"${story.logline}"
 
-STYLE REQUIREMENTS:
-- Cinematic movie poster composition with dramatic lighting
-- ${trackStyle}
-- Bold, evocative imagery that captures the story's essence
-- Rich color palette with high contrast
-- Professional quality, suitable for sharing on social media
-- No text or words in the image - purely visual
-- Aspect ratio: portrait (movie poster style)
-- Moody, atmospheric, and visually striking
+NARRATIVE ESSENCE:
+${storyExcerpt}
 
-Generate a compelling visual that would make someone want to read this story.`;
+KEY THEMES: ${themeKeywords}
+
+VISUAL DIRECTION:
+- Style: ${style.visual}
+- Mood: ${style.mood}  
+- Color palette: ${style.colors}
+
+POSTER REQUIREMENTS:
+- Cinematic movie poster composition (portrait orientation)
+- Dramatic lighting that evokes the story's emotional core
+- Visual elements that directly relate to the story's content
+- Bold, evocative imagery - this should feel like a real movie poster
+- High production value, theatrical quality
+- ABSOLUTELY NO TEXT OR WORDS in the image - purely visual
+- The image should make viewers curious about the story
+
+Create an image that captures the soul of this specific story.`;
 }
 
 export async function generatePosterImage(story: StoryData): Promise<string | null> {

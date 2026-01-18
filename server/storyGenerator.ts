@@ -32,40 +32,48 @@ export async function generateStoryNarrative(input: StoryInput): Promise<Generat
   
   const trackContext = getTrackContext(trackId);
   
-  const prompt = `You are a creative storyteller crafting cinematic micro-narratives. Based on the user's casual, fun answers to ice breaker questions, transform their responses into an engaging 3-paragraph story.
+  const prompt = `You are a master storyteller for Story Arcade, transforming casual answers into captivating cinematic micro-narratives. Your job is NOT to repeat the user's words - it's to create an entirely NEW story inspired by their answers.
 
 TRACK: ${trackTitle}
-CONTEXT: ${trackContext}
+NARRATIVE STYLE: ${trackContext}
 
-USER'S ANSWERS:
+USER'S RAW ANSWERS (use as inspiration, NOT to copy):
 - Setting/Hook: ${answers.hook || "Not provided"}
 - Sensory Detail: ${answers.sensory || "Not provided"}  
 - Challenge/Drama: ${answers.challenge || "Not provided"}
 - Hero/Reflection: ${answers.reflection || "Not provided"}
 - Resolution/New Reality: ${answers.resolution || "Not provided"}
 
-Create a short, engaging story based on these answers. The story should:
-1. Feel cinematic and vivid, like a movie trailer
-2. Be warm, uplifting, and fun (matching the casual ice breaker tone)
-3. Transform their simple answers into something more poetic and narrative
-4. Be exactly 3 paragraphs (labeled p1, p2, p3)
-5. Each paragraph should be 2-3 sentences max
+CRITICAL RULES - You MUST follow these:
+1. DO NOT copy or quote the user's exact words. Transform their ideas into vivid new prose.
+2. Write in third person narrative voice (like a movie narrator)
+3. Create actual scenes with characters, settings, and dramatic tension
+4. Each paragraph should flow into the next like a movie trailer
+5. Use evocative, cinematic language - metaphors, vivid imagery, emotional beats
+6. The story should feel complete with a beginning, middle, and end
 
-Also generate:
-- A catchy title (5-8 words, creative and memorable)
-- A logline (one sentence that hooks readers)
-- 2-3 themes (single words like "Hope", "Community", "Magic")
-- An insight (one short sentence about what makes this story special)
+TITLE REQUIREMENTS:
+- Must be 3-6 words (no more than 6 words)
+- Creative and evocative (like a movie title)
+- Capitalized properly (Title Case)
+- Examples of good titles: "The Last Coffee Shop", "Neon Dreams at Midnight", "Where Heroes Find Home"
 
-Respond in this exact JSON format:
+STRUCTURE YOUR STORY:
+- Paragraph 1 (p1): Set the scene with vivid atmosphere. Introduce the setting and hint at what's to come.
+- Paragraph 2 (p2): The heart of the story - the challenge, the struggle, the moment of truth.
+- Paragraph 3 (p3): The transformation - how everything changed, the new reality that emerged.
+
+Each paragraph should be 2-3 sentences of rich, cinematic prose.
+
+Respond with ONLY valid JSON in this exact format (no other text):
 {
-  "title": "Your Creative Title Here",
-  "logline": "A one-sentence hook that makes people want to read more.",
+  "title": "A Creative Movie-Style Title",
+  "logline": "A compelling one-sentence hook that captures the story's essence.",
   "themes": ["Theme1", "Theme2", "Theme3"],
-  "insight": "What makes this story resonate.",
-  "p1": "First paragraph of the story.",
-  "p2": "Second paragraph of the story.", 
-  "p3": "Third paragraph of the story."
+  "insight": "A brief reflection on what makes this story meaningful.",
+  "p1": "The atmospheric opening paragraph that sets the scene.",
+  "p2": "The dramatic middle paragraph with tension and struggle.", 
+  "p3": "The transformative closing paragraph showing change and hope."
 }`;
 
   try {
@@ -80,24 +88,15 @@ Respond in this exact JSON format:
       throw new Error("Unexpected response type");
     }
 
-    const jsonMatch = content.text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Could not parse JSON from response");
-    }
-
-    const story = JSON.parse(jsonMatch[0]) as GeneratedStory;
+    const story = parseStoryJSON(content.text);
     
-    if (
-      typeof story.title !== 'string' ||
-      typeof story.p1 !== 'string' ||
-      typeof story.p2 !== 'string' ||
-      typeof story.p3 !== 'string' ||
-      typeof story.logline !== 'string' ||
-      typeof story.insight !== 'string' ||
-      !Array.isArray(story.themes) ||
-      !story.themes.every((t: unknown) => typeof t === 'string')
-    ) {
+    if (!validateStory(story)) {
       throw new Error("Invalid story structure from AI response");
+    }
+    
+    // Ensure title isn't too long
+    if (story.title.split(' ').length > 8) {
+      story.title = story.title.split(' ').slice(0, 6).join(' ');
     }
     
     return story;
@@ -107,29 +106,81 @@ Respond in this exact JSON format:
   }
 }
 
+function parseStoryJSON(text: string): GeneratedStory {
+  // Clean up the text - remove markdown code blocks if present
+  let cleanText = text.trim();
+  
+  // Remove ```json or ``` wrappers
+  if (cleanText.startsWith('```')) {
+    cleanText = cleanText.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
+  }
+  
+  // Try to extract JSON object
+  const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    throw new Error("Could not find JSON in response");
+  }
+  
+  // Parse and return
+  return JSON.parse(jsonMatch[0]) as GeneratedStory;
+}
+
+function validateStory(story: unknown): story is GeneratedStory {
+  if (!story || typeof story !== 'object') return false;
+  const s = story as Record<string, unknown>;
+  
+  return (
+    typeof s.title === 'string' && s.title.length > 0 &&
+    typeof s.logline === 'string' && s.logline.length > 0 &&
+    typeof s.insight === 'string' &&
+    typeof s.p1 === 'string' && s.p1.length > 0 &&
+    typeof s.p2 === 'string' && s.p2.length > 0 &&
+    typeof s.p3 === 'string' && s.p3.length > 0 &&
+    Array.isArray(s.themes) &&
+    s.themes.every((t: unknown) => typeof t === 'string')
+  );
+}
+
 function getTrackContext(trackId: string): string {
   switch (trackId) {
     case "origin":
-      return "This is an Origin Story - a personal tale about a defining moment that shaped who someone is. Focus on transformation, growth, and finding one's voice.";
+      return "Origin Story - A personal tale of transformation. Write about a defining moment that shaped someone's identity. Focus on growth, courage, and finding one's authentic voice. Think coming-of-age drama.";
     case "future":
-      return "This is a Future City story - an optimistic vision of what the neighborhood could become in 2036. Focus on community wins, positive change, and hopeful innovation.";
+      return "Future City (2036) - An optimistic vision of tomorrow. Write about a neighborhood transformed by hope and innovation. Focus on community triumph, technological wonder, and positive change. Think hopeful sci-fi.";
     case "legend":
-      return "This is a Neighborhood Legend - a magical realism urban myth about something strange happening on the block. Focus on mystery, magic, and community folklore.";
+      return "Neighborhood Legend - Urban mythology and street magic. Write about something strange and wonderful happening on the block. Focus on mystery, wonder, and the magic hidden in everyday places. Think magical realism.";
     default:
-      return "A story about community and personal transformation.";
+      return "A story of community and personal transformation with cinematic flair.";
   }
 }
 
 function createFallbackStory(input: StoryInput): GeneratedStory {
-  const { trackTitle, answers } = input;
+  const { trackId, trackTitle, answers } = input;
   
+  // Create a proper fallback title based on track
+  const trackTitles: Record<string, string[]> = {
+    origin: ["The Turning Point", "A Voice Discovered", "The Moment Everything Changed"],
+    future: ["Tomorrow's Promise", "The City Reborn", "When Hope Returns"],
+    legend: ["The Block's Secret", "Street Magic Rising", "What the Neighbors Saw"],
+  };
+  
+  const titles = trackTitles[trackId] || trackTitles.origin;
+  const title = titles[Math.floor(Math.random() * titles.length)];
+  
+  // Create atmospheric fallback paragraphs
+  const hook = answers.hook || "an ordinary moment";
+  const sensory = answers.sensory || "the air thick with possibility";
+  const challenge = answers.challenge || "the weight of uncertainty";
+  const reflection = answers.reflection || "a spark of courage";
+  const resolution = answers.resolution || "everything would be different";
+
   return {
-    title: "The Story of " + (answers.hook?.slice(0, 20) || "Tomorrow"),
-    logline: `A ${trackTitle.toLowerCase()} story unfolds.`,
-    themes: ["Hope", "Community", "Change"],
-    insight: "Every story has the power to inspire.",
-    p1: `It started with ${answers.hook || "a moment of clarity"}. ${answers.sensory || "The air was electric with possibility."}`,
-    p2: `The challenge was real: ${answers.challenge || "doubt that whispers 'not yet'"}. But then came a turning point: ${answers.reflection || "courage found its voice."}`,
-    p3: `And so everything changed. ${answers.resolution || "A new chapter began, written by those who dared to dream."}`
+    title,
+    logline: `A ${trackTitle.toLowerCase()} tale of transformation and discovery.`,
+    themes: ["Hope", "Change", "Community"],
+    insight: "Every moment holds the seed of something extraordinary.",
+    p1: `It began like so many stories do - with ${hook.toLowerCase()}. The world seemed to hold its breath, ${sensory.toLowerCase()}.`,
+    p2: `But nothing worth having comes easy. There was ${challenge.toLowerCase()} to reckon with. And in that struggle, something unexpected emerged: ${reflection.toLowerCase()}.`,
+    p3: `And when the dust settled, the truth became clear. ${resolution.charAt(0).toUpperCase() + resolution.slice(1).toLowerCase()}. This wasn't just a story - it was a new beginning.`
   };
 }
