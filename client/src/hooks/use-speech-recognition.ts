@@ -50,6 +50,14 @@ export function useSpeechRecognition(
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const isStoppingRef = useRef(false);
   const shouldRestartRef = useRef(false);
+  const onResultRef = useRef(onResult);
+  const onErrorRef = useRef(onError);
+
+  // Keep refs updated without triggering effect re-runs
+  useEffect(() => {
+    onResultRef.current = onResult;
+    onErrorRef.current = onError;
+  }, [onResult, onError]);
 
   const SpeechRecognitionAPI =
     typeof window !== 'undefined'
@@ -71,7 +79,6 @@ export function useSpeechRecognition(
       setIsListening(true);
       setError(null);
       isStoppingRef.current = false;
-      shouldRestartRef.current = true;
     };
 
     recognition.onresult = (event) => {
@@ -85,10 +92,10 @@ export function useSpeechRecognition(
 
         if (result.isFinal) {
           final += transcript;
-          onResult?.({ transcript, isFinal: true, confidence });
+          onResultRef.current?.({ transcript, isFinal: true, confidence });
         } else {
           interim += transcript;
-          onResult?.({ transcript, isFinal: false, confidence });
+          onResultRef.current?.({ transcript, isFinal: false, confidence });
         }
       }
 
@@ -103,42 +110,56 @@ export function useSpeechRecognition(
 
     recognition.onerror = (event) => {
       const errorMessage = getErrorMessage(event.error);
+      // Don't show error for no-speech during continuous listening
+      if (event.error === 'no-speech' && shouldRestartRef.current) {
+        return;
+      }
       setError(errorMessage);
       setIsListening(false);
-      onError?.(errorMessage);
+      shouldRestartRef.current = false;
+      onErrorRef.current?.(errorMessage);
     };
 
     recognition.onend = () => {
-      if (!isStoppingRef.current && shouldRestartRef.current && continuous) {
-        // Auto-restart if not manually stopped - keeps listening longer
-        try {
-          setTimeout(() => {
-            if (shouldRestartRef.current && !isStoppingRef.current) {
-              recognition.start();
+      // Check if we should auto-restart
+      if (shouldRestartRef.current && !isStoppingRef.current && continuous) {
+        // Auto-restart after a brief pause
+        setTimeout(() => {
+          if (shouldRestartRef.current && !isStoppingRef.current && recognitionRef.current) {
+            try {
+              recognitionRef.current.start();
+            } catch {
+              setIsListening(false);
+              shouldRestartRef.current = false;
             }
-          }, 100);
-        } catch {
-          setIsListening(false);
-        }
+          } else {
+            setIsListening(false);
+          }
+        }, 50);
       } else {
         setIsListening(false);
+        shouldRestartRef.current = false;
       }
     };
 
     recognitionRef.current = recognition;
 
     return () => {
+      shouldRestartRef.current = false;
+      isStoppingRef.current = true;
       recognition.stop();
       recognitionRef.current = null;
     };
-  }, [SpeechRecognitionAPI, continuous, language, onResult, onError]);
+  }, [SpeechRecognitionAPI, continuous, language]);
 
   const start = useCallback(() => {
-    if (!recognitionRef.current || isListening) return;
+    if (!recognitionRef.current) return;
     
     try {
       setError(null);
       setInterimTranscript('');
+      isStoppingRef.current = false;
+      shouldRestartRef.current = true;
       recognitionRef.current.start();
     } catch (err) {
       if (err instanceof Error && err.message.includes('already started')) {
@@ -147,15 +168,22 @@ export function useSpeechRecognition(
         setError('Failed to start speech recognition');
       }
     }
-  }, [isListening]);
+  }, []);
 
   const stop = useCallback(() => {
     if (!recognitionRef.current) return;
     
-    isStoppingRef.current = true;
+    // Set flags BEFORE calling stop
     shouldRestartRef.current = false;
-    recognitionRef.current.stop();
+    isStoppingRef.current = true;
+    setIsListening(false);
     setInterimTranscript('');
+    
+    try {
+      recognitionRef.current.stop();
+    } catch {
+      // Ignore errors when stopping
+    }
   }, []);
 
   const toggle = useCallback(() => {
