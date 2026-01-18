@@ -39,6 +39,15 @@ Drizzle ORM with a PostgreSQL dialect defines the schema for `users`, `sessions`
 - **Interactive Guidance System:** Includes "Scene Examples" for pre-written prompts, a "Character Progress" indicator with visual feedback, and "AI-Powered Inspire Me" suggestions generated via the Gemini API.
 - **Forge Progress System:** Provides real-time feedback during story generation with progress bars, stage messages, and options for retrying or saving drafts in case of errors.
 - **My Stories Management:** Authenticated users can view, search, filter, sort, and manage their completed stories from the "My Stories" page, with options for export and deletion.
+- **XP & Level Progression System:** Authenticated users earn XP for creating stories, with a 20-level progression system. XP thresholds increase progressively (100, 200, 350... up to 10,000 XP). The XP progress bar appears in the navbar showing current level and progress to next level.
+- **Achievement Badges:** 17 unlockable badges across 4 categories (milestone, streak, track, level) with 5 rarity tiers (common, uncommon, rare, epic, legendary). Badges are awarded automatically when conditions are met (e.g., "First Story" for creating first story, "Week Warrior" for 7-day streak). Each badge awards bonus XP.
+- **Level-Up & Achievement Popups:** Celebratory notifications with retro arcade styling appear after earning XP, unlocking badges, or leveling up. Multiple badges queue and display sequentially.
+- **Badges Collection Page:** Dedicated page showing all badges organized by category, with locked/unlocked states, rarity styling, and earned dates for collected badges.
+
+**Progression Database Entities:**
+- `badges` - Badge definitions (id, name, description, icon, category, requirement, xpReward, rarity)
+- `user_badges` - Junction table tracking earned badges per user (userId, badgeId, earnedAt)
+- `users` - Extended with xp, level, currentStreak, longestStreak, lastStoryDate fields
 
 ## External Dependencies
 
