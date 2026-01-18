@@ -1,12 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'wouter';
-import { Sparkles, ArrowLeft, Share2, Copy, Check } from 'lucide-react';
+import { Sparkles, ArrowLeft, Share2, Copy, Check, Twitter, Facebook, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { SkipLink } from '@/components/arcade/SkipLink';
 import type { Story } from '@shared/schema';
-import { useState } from 'react';
 
 function getAccentColor(trackId: string) {
   switch (trackId) {
@@ -38,12 +37,52 @@ export default function StoryPage() {
     enabled: !!shareableId,
   });
 
+  // Update page title and Open Graph meta tags for social sharing
   useEffect(() => {
-    if (story) {
-      document.title = `${story.title} | Story Arcade`;
+    if (!story) return;
+    
+    document.title = `${story.title} | Story Arcade`;
+    
+    // Set Open Graph meta tags for social sharing
+    const metaTags = [
+      { property: 'og:title', content: story.title },
+      { property: 'og:description', content: story.logline },
+      { property: 'og:type', content: 'article' },
+      { property: 'og:url', content: window.location.href },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: story.title },
+      { name: 'twitter:description', content: story.logline },
+    ];
+    
+    // Add poster image if available
+    if (story.posterUrl) {
+      metaTags.push(
+        { property: 'og:image', content: story.posterUrl },
+        { name: 'twitter:image', content: story.posterUrl }
+      );
     }
+    
+    // Track created meta tags for cleanup
+    const createdTags: HTMLMetaElement[] = [];
+    
+    metaTags.forEach(({ property, name, content }) => {
+      const selector = property ? `meta[property="${property}"]` : `meta[name="${name}"]`;
+      let meta = document.querySelector(selector) as HTMLMetaElement;
+      
+      if (!meta) {
+        meta = document.createElement('meta');
+        if (property) meta.setAttribute('property', property);
+        if (name) meta.setAttribute('name', name);
+        document.head.appendChild(meta);
+        createdTags.push(meta);
+      }
+      meta.setAttribute('content', content);
+    });
+    
     return () => {
       document.title = 'Story Arcade';
+      // Clean up created meta tags
+      createdTags.forEach(tag => tag.remove());
     };
   }, [story]);
 
@@ -79,6 +118,24 @@ export default function StoryPage() {
     } else {
       handleCopyLink();
     }
+  };
+  
+  const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const shareText = story ? `"${story.title}" - ${story.logline}` : '';
+  
+  const handleTwitterShare = () => {
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+  };
+  
+  const handleFacebookShare = () => {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+  };
+  
+  const handleWhatsAppShare = () => {
+    const url = `https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`;
+    window.open(url, '_blank');
   };
 
   if (isLoading) {
@@ -214,22 +271,67 @@ export default function StoryPage() {
             ))}
           </div>
 
-          <div className="mt-8 pt-6 border-t border-border flex flex-col sm:flex-row gap-4">
-            <Link href="/">
-              <Button variant="outline" className="w-full sm:w-auto" data-testid="button-create-story">
-                <Sparkles className="w-4 h-4 mr-2" aria-hidden="true" />
-                Create Your Own Story
+          <div className="mt-8 pt-6 border-t border-border">
+            <p className="text-muted-foreground font-mono text-xs tracking-widest mb-4">SHARE THIS STORY</p>
+            <div className="flex flex-wrap gap-2 mb-6">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleCopyLink}
+                className="font-mono text-xs gap-2"
+                data-testid="button-copy-link-footer"
+              >
+                {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                {copied ? 'Copied!' : 'Copy Link'}
               </Button>
-            </Link>
-            <Button 
-              variant="ghost" 
-              onClick={handleShare}
-              className="w-full sm:w-auto"
-              data-testid="button-share-story-footer"
-            >
-              <Share2 className="w-4 h-4 mr-2" aria-hidden="true" />
-              Share This Story
-            </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleTwitterShare}
+                className="font-mono text-xs gap-2"
+                data-testid="button-share-twitter"
+              >
+                <Twitter className="w-4 h-4" />
+                Twitter
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleFacebookShare}
+                className="font-mono text-xs gap-2"
+                data-testid="button-share-facebook"
+              >
+                <Facebook className="w-4 h-4" />
+                Facebook
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleWhatsAppShare}
+                className="font-mono text-xs gap-2"
+                data-testid="button-share-whatsapp"
+              >
+                <MessageCircle className="w-4 h-4" />
+                WhatsApp
+              </Button>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Link href="/">
+                <Button className="w-full sm:w-auto" data-testid="button-create-story">
+                  <Sparkles className="w-4 h-4 mr-2" aria-hidden="true" />
+                  Create Your Own Story
+                </Button>
+              </Link>
+              <Button 
+                variant="outline" 
+                onClick={handleShare}
+                className="w-full sm:w-auto"
+                data-testid="button-share-story-footer"
+              >
+                <Share2 className="w-4 h-4 mr-2" aria-hidden="true" />
+                Share via Device
+              </Button>
+            </div>
           </div>
         </article>
 

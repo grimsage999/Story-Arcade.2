@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ChevronRight, ChevronLeft, ArrowRight, Shuffle, Share2, Eye, RefreshCw, Copy, Check, Link } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ArrowRight, Shuffle, Share2, Eye, RefreshCw, Copy, Check, Link, Twitter, Facebook, MessageCircle } from 'lucide-react';
 import type { Track, Story } from '@shared/schema';
 import { TRACKS, MOTIVATIONS, SEED_STORIES } from '@/lib/tracks';
 import { CRTOverlay } from '@/components/arcade/CRTOverlay';
@@ -97,7 +97,15 @@ export default function StoryArcade() {
     retry: 1,
   });
 
-  const gallery = apiGallery && apiGallery.length > 0 ? apiGallery : SEED_STORIES;
+  // Prioritize real user stories, supplement with seeds only if no real stories exist
+  const realStories = apiGallery?.filter(s => s.userId !== null) || [];
+  const hasRealStories = realStories.length > 0;
+  
+  // If we have real stories, show those first (sorted by newest), then optionally add seeds
+  // If no real stories, show seeds as examples
+  const gallery = hasRealStories 
+    ? [...realStories].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+    : SEED_STORIES;
 
   const createStoryMutation = useMutation({
     mutationFn: async (story: Omit<Story, 'id'>) => {
@@ -513,6 +521,28 @@ export default function StoryArcade() {
     
     // Fallback: copy the shareable link
     handleCopyLink();
+  };
+  
+  const handleTwitterShare = () => {
+    if (!generatedStory) return;
+    const shareUrl = getStoryShareUrl();
+    const shareText = `"${generatedStory.title}" - ${generatedStory.logline}`;
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+  };
+  
+  const handleFacebookShare = () => {
+    const shareUrl = getStoryShareUrl();
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+  };
+  
+  const handleWhatsAppShare = () => {
+    if (!generatedStory) return;
+    const shareUrl = getStoryShareUrl();
+    const shareText = `"${generatedStory.title}" - ${generatedStory.logline}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`;
+    window.open(url, '_blank');
   };
 
   const handleLogoClickDuringCreation = () => {
@@ -932,46 +962,75 @@ export default function StoryArcade() {
             </div>
           </div>
           
-          <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-center animate-fade-in flex-wrap">
-            <Button 
-              onClick={handleShare}
-              className="bg-primary text-primary-foreground font-display uppercase tracking-widest w-full md:w-auto"
-              data-testid="button-share-story"
-            >
-              <Share2 className="w-4 h-4 mr-2" aria-hidden="true" /> Share Story
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={handleCopyLink}
-              className="font-mono uppercase tracking-widest w-full md:w-auto"
-              data-testid="button-copy-link"
-            >
-              {linkCopied ? (
-                <>
-                  <Check className="w-4 h-4 mr-2 text-green-500" aria-hidden="true" /> Copied!
-                </>
-              ) : (
-                <>
-                  <Link className="w-4 h-4 mr-2" aria-hidden="true" /> Copy Link
-                </>
-              )}
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => setView('GALLERY')}
-              className="font-mono uppercase tracking-widest w-full md:w-auto"
-              data-testid="button-view-gallery"
-            >
-              <Eye className="w-4 h-4 mr-2" aria-hidden="true" /> View Gallery
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={startOver}
-              className="font-mono uppercase tracking-widest w-full md:w-auto"
-              data-testid="button-create-another"
-            >
-              <Shuffle className="w-4 h-4 mr-2" aria-hidden="true" /> Create Another
-            </Button>
+          <div className="animate-fade-in space-y-4">
+            {/* Social share buttons */}
+            <div className="flex flex-wrap gap-2 justify-center">
+              <p className="w-full text-center text-muted-foreground font-mono text-xs tracking-widest mb-2">SHARE YOUR STORY</p>
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={handleCopyLink}
+                className="font-mono text-xs gap-2"
+                data-testid="button-copy-link"
+              >
+                {linkCopied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                {linkCopied ? 'Copied!' : 'Copy Link'}
+              </Button>
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={handleTwitterShare}
+                className="font-mono text-xs gap-2"
+                data-testid="button-share-twitter"
+              >
+                <Twitter className="w-4 h-4" /> Twitter
+              </Button>
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={handleFacebookShare}
+                className="font-mono text-xs gap-2"
+                data-testid="button-share-facebook"
+              >
+                <Facebook className="w-4 h-4" /> Facebook
+              </Button>
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={handleWhatsAppShare}
+                className="font-mono text-xs gap-2"
+                data-testid="button-share-whatsapp"
+              >
+                <MessageCircle className="w-4 h-4" /> WhatsApp
+              </Button>
+              <Button 
+                size="sm"
+                onClick={handleShare}
+                className="font-mono text-xs gap-2"
+                data-testid="button-share-story"
+              >
+                <Share2 className="w-4 h-4" /> Share via Device
+              </Button>
+            </div>
+            
+            {/* Action buttons */}
+            <div className="flex flex-col md:flex-row gap-3 justify-center">
+              <Button 
+                variant="outline"
+                onClick={() => setView('GALLERY')}
+                className="font-mono uppercase tracking-widest w-full md:w-auto"
+                data-testid="button-view-gallery"
+              >
+                <Eye className="w-4 h-4 mr-2" aria-hidden="true" /> View Gallery
+              </Button>
+              <Button 
+                onClick={startOver}
+                className="bg-primary text-primary-foreground font-display uppercase tracking-widest w-full md:w-auto"
+                data-testid="button-create-another"
+              >
+                <Shuffle className="w-4 h-4 mr-2" aria-hidden="true" /> Create Another
+              </Button>
+            </div>
           </div>
         </main>
         

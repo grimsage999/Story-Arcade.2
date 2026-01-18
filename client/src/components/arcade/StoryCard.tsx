@@ -1,6 +1,8 @@
-import { Share2, Bookmark, Rewind, Zap, MapPin } from 'lucide-react';
+import { useState } from 'react';
+import { Share2, Copy, Check, Rewind, Zap, MapPin, ExternalLink } from 'lucide-react';
 import type { Story } from '@shared/schema';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 interface StoryCardProps {
   story: Story;
@@ -36,16 +38,41 @@ function getAccentColor(trackId: string) {
 
 export function StoryCard({ story, onView, compact = false }: StoryCardProps) {
   const accentClass = getAccentColor(story.trackId);
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+  
+  const getShareUrl = () => {
+    if (!story.shareableId) return window.location.href;
+    return `${window.location.origin}/story/${story.shareableId}`;
+  };
+  
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(getShareUrl());
+      setCopied(true);
+      toast({ title: "Link copied!", description: "Share this story with friends." });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "Copy failed", variant: "destructive" });
+    }
+  };
   
   const handleShare = async () => {
+    const shareUrl = getShareUrl();
     try {
       await navigator.share({
         title: story.title,
         text: story.logline,
-        url: window.location.href,
+        url: shareUrl,
       });
     } catch {
-      await navigator.clipboard.writeText(`${story.title}\n\n${story.logline}`);
+      handleCopyLink();
+    }
+  };
+  
+  const handleOpenStory = () => {
+    if (story.shareableId) {
+      window.open(`/story/${story.shareableId}`, '_blank');
     }
   };
 
@@ -113,7 +140,21 @@ export function StoryCard({ story, onView, compact = false }: StoryCardProps) {
         ))}
       </div>
       
-      <div className="flex items-center gap-2 pt-4 border-t border-border">
+      <div className="flex items-center gap-2 pt-4 border-t border-border flex-wrap">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={handleCopyLink}
+          className="text-muted-foreground hover:text-foreground"
+          data-testid={`button-copy-${story.id}`}
+          aria-label={`Copy link for story: ${story.title}`}
+        >
+          {copied ? (
+            <><Check className="w-4 h-4 mr-1 text-green-500" aria-hidden="true" /> Copied!</>
+          ) : (
+            <><Copy className="w-4 h-4 mr-1" aria-hidden="true" /> Copy Link</>
+          )}
+        </Button>
         <Button 
           variant="ghost" 
           size="sm" 
@@ -124,15 +165,18 @@ export function StoryCard({ story, onView, compact = false }: StoryCardProps) {
         >
           <Share2 className="w-4 h-4 mr-1" aria-hidden="true" /> Share
         </Button>
-        <Button 
-          variant="ghost" 
-          size="sm"
-          className="text-muted-foreground hover:text-foreground"
-          data-testid={`button-bookmark-${story.id}`}
-          aria-label={`Save story: ${story.title} to bookmarks`}
-        >
-          <Bookmark className="w-4 h-4 mr-1" aria-hidden="true" /> Save
-        </Button>
+        {story.shareableId && (
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={handleOpenStory}
+            className="text-muted-foreground hover:text-foreground"
+            data-testid={`button-open-${story.id}`}
+            aria-label={`Open story: ${story.title} in new tab`}
+          >
+            <ExternalLink className="w-4 h-4 mr-1" aria-hidden="true" /> Open
+          </Button>
+        )}
         {onView && (
           <Button 
             variant="ghost" 

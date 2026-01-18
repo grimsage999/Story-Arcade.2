@@ -116,7 +116,8 @@ export async function registerRoutes(
       let progression = null;
       if (userId) {
         try {
-          progression = await recordStoryCreation(userId, parseResult.data.trackId);
+          const storyData = parseResult.data as { trackId: string };
+          progression = await recordStoryCreation(userId, storyData.trackId);
         } catch (progError) {
           console.error("Failed to record progression:", progError);
         }
@@ -241,6 +242,34 @@ export async function registerRoutes(
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch poster status" });
+    }
+  });
+
+  // Open Graph metadata endpoint for story sharing
+  app.get("/api/stories/:shareableId/og", async (req, res) => {
+    try {
+      const { shareableId } = req.params;
+      const story = await storage.getStoryByShareableId(shareableId);
+      
+      if (!story) {
+        return res.json({
+          title: "Story Arcade",
+          description: "Turn your story into cinematic legend.",
+          image: null,
+        });
+      }
+      
+      res.json({
+        title: story.title,
+        description: story.logline,
+        author: story.author,
+        neighborhood: story.neighborhood,
+        trackTitle: story.trackTitle,
+        image: story.posterUrl || null,
+        themes: story.themes,
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch story metadata" });
     }
   });
 
