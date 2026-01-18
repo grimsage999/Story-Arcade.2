@@ -137,10 +137,10 @@ export const BADGE_DEFINITIONS: Badge[] = [
   {
     id: "track_future",
     name: "Future Visionary",
-    description: "Complete a story in the Future NYC track",
+    description: "Complete a story in the Future City track",
     icon: "rocket",
     category: "track",
-    requirement: "Complete Future NYC track",
+    requirement: "Complete Future City track",
     xpReward: 75,
     rarity: "common",
   },

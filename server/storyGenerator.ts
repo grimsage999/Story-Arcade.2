@@ -112,7 +112,7 @@ function getTrackContext(trackId: string): string {
     case "origin":
       return "This is an Origin Story - a personal tale about a defining moment that shaped who someone is. Focus on transformation, growth, and finding one's voice.";
     case "future":
-      return "This is a Future NYC story - an optimistic vision of what the neighborhood could become in 2036. Focus on community wins, positive change, and hopeful innovation.";
+      return "This is a Future City story - an optimistic vision of what the neighborhood could become in 2036. Focus on community wins, positive change, and hopeful innovation.";
     case "legend":
       return "This is a Neighborhood Legend - a magical realism urban myth about something strange happening on the block. Focus on mystery, magic, and community folklore.";
     default:
