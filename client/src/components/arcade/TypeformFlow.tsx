@@ -312,9 +312,14 @@ export function TypeformFlow({
                       exit={{ opacity: 0, y: -5 }}
                       className="mt-2 px-3 py-2 bg-primary/5 border border-primary/20 rounded-md"
                     >
-                      <p className="text-primary/70 text-sm font-mono italic">
-                        <span className="animate-pulse mr-2">...</span>
-                        {interimVoiceText}
+                      <p className="text-sm font-mono">
+                        {currentAnswer && (
+                          <span className="text-foreground/60">{currentAnswer} </span>
+                        )}
+                        <span className="text-primary italic">
+                          <span className="animate-pulse mr-1">...</span>
+                          {interimVoiceText}
+                        </span>
                       </p>
                     </motion.div>
                   )}
