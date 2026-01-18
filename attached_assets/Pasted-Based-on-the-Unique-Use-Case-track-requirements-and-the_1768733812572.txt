@@ -1,0 +1,18 @@
+Based on the "Unique Use Case" track requirements and the project's core thesis ("AI as a public ritual"), generating just an image and a story is technically sufficient for the MVP but likely insufficient to win the track.
+To truly fulfill the promise of a "communal ritual" rather than just a "solo productivity tool," the documentation strongly recommends three additional layers of functionality:
+1. The "Gallery Mode" (Collective Mythology)
+If the app only generates a story for the current user, it remains a private experience. To transform it into a community tool, the app must display previous stories.
+• Why it’s needed: The thesis states the project turns "personal memory into collective mythology",. Without a way to see what neighbors wrote, there is no "collective."
+• Implementation: The docs suggest an "Attract Mode" or Screensaver. When the booth is idle for 60 seconds, it should cycle through the last 10–20 generated cards. This proves to the judges that the tool builds a history rather than just processing one-off inputs.
+2. The "Attract" Loop (The Arcade Metaphor)
+Since the project is pitching an "Arcade Booth" experience, the app cannot just sit on a static form waiting for input.
+• Why it’s needed: A static web form feels like a survey (Track 3: Productivity). An arcade machine has an "idle state" that draws people in from across the room.
+• Implementation: You need a "Home / Attract Screen" with looping micro-copy (e.g., "Insert story to play") and subtle motion,. This visual layer is critical to selling the "physicality" of the device during the demo.
+3. Safety & Moderation (The "Sanctuary" Protocol)
+Because the target audience includes schools and public events, you cannot blindly display user-generated content (images/stories) without a safety net.
+• Why it’s needed: The "Arcade Sanctuary" framework notes that relying purely on AI generation is a liability risk for public deployment.
+• Implementation: The app should perform Client-Side Validation (filtering profanity before sending to AI) and use a "Circuit Breaker" (a pre-written fallback story) if the AI refuses to generate content due to safety flags,.
+Summary: The Difference Between "Tool" and "Ritual"
+• Image + Story: This creates a Product (good for the User).
+• Gallery + Attract Mode: This creates a Place (good for the Community).
+To win Track 2, the documentation advises focusing on the latter: "The Shift: Moving AI from Personal Productivity (Private) -> Community Ritual (Public)"

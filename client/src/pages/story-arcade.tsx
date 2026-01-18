@@ -28,6 +28,9 @@ import { CosmicMarquee } from '@/components/arcade/CosmicMarquee';
 import { OrbitalRings } from '@/components/arcade/OrbitalRings';
 import { HUDOverlay } from '@/components/arcade/HUDOverlay';
 import { TVWallGallery } from '@/components/arcade/TVWallGallery';
+import { AttractScreensaver } from '@/components/arcade/AttractScreensaver';
+import { useIdleTimer } from '@/hooks/useIdleTimer';
+import { checkContentSafety, getFallbackStory } from '@/lib/contentSafety';
 import { arcadeSounds } from '@/lib/arcadeSounds';
 import { Button } from '@/components/ui/button';
 import type { Badge, ProgressionReward } from '@/hooks/use-progression';
@@ -96,6 +99,9 @@ export default function StoryArcade() {
   const [pendingBadges, setPendingBadges] = useState<Badge[]>([]);
   const [currentBadge, setCurrentBadge] = useState<Badge | null>(null);
   const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
+  const [showScreensaver, setShowScreensaver] = useState(false);
+  const [contentWarning, setContentWarning] = useState<string | null>(null);
+  const [contentBlocked, setContentBlocked] = useState(false);
 
   const { data: apiGallery, isLoading: isLoadingGallery, isError: isGalleryError } = useQuery<Story[]>({
     queryKey: ['/api/stories'],
@@ -111,6 +117,23 @@ export default function StoryArcade() {
   const gallery = hasRealStories 
     ? [...realStories].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     : SEED_STORIES;
+
+  const { isIdle, activate: resetIdleTimer } = useIdleTimer({
+    timeout: 60000,
+    onIdle: () => {
+      if (view === 'ATTRACT' && gallery.length > 0) {
+        setShowScreensaver(true);
+      }
+    },
+    onActive: () => {
+      setShowScreensaver(false);
+    }
+  });
+
+  const handleDismissScreensaver = useCallback(() => {
+    setShowScreensaver(false);
+    resetIdleTimer();
+  }, [resetIdleTimer]);
 
   const createStoryMutation = useMutation({
     mutationFn: async (story: Omit<Story, 'id'>) => {
@@ -224,8 +247,20 @@ export default function StoryArcade() {
   const handleAnswerChange = (text: string) => {
     if (!activeTrack) return;
     const qId = activeTrack.questions[currentQuestionIndex].id;
-    setAnswers(prev => ({ ...prev, [qId]: text }));
+    
+    const safety = checkContentSafety(text);
+    if (!safety.isClean) {
+      setContentWarning("Please keep content family-friendly for our community.");
+      setContentBlocked(true);
+      setAnswers(prev => ({ ...prev, [qId]: safety.sanitizedText }));
+    } else {
+      setContentWarning(null);
+      setContentBlocked(false);
+      setAnswers(prev => ({ ...prev, [qId]: text }));
+    }
+    
     setInputError(false);
+    
     if (!hasTyped) {
       setHasTyped(true);
       setShowTooltip(false);
@@ -422,13 +457,40 @@ export default function StoryArcade() {
       const errorCode = error instanceof Error && error.message === 'TIMEOUT' ? 'ERR_TIMEOUT' : 'ERR_API_FAILURE';
       
       console.error('[Story Forge] Error:', errorMessage, new Date().toISOString());
+      console.log('[Story Forge] Using fallback story as circuit breaker');
       
-      if (errorMessage === 'TIMEOUT') {
-        setForgeStatus('timeout');
-      } else {
-        setForgeError({ message: errorMessage, code: errorCode });
-        setForgeStatus('error');
-      }
+      const fallback = getFallbackStory(activeTrack.id);
+      const fallbackStory: Story = {
+        id: Date.now(),
+        shareableId: `fb_${Date.now().toString(36)}`,
+        userId: null,
+        trackId: activeTrack.id,
+        trackTitle: activeTrack.title,
+        author: "Community Archive",
+        neighborhood: "Sanctuary Mode",
+        title: fallback.title,
+        themes: fallback.themes,
+        insight: storyContent.insight,
+        logline: fallback.logline,
+        p1: fallback.p1,
+        p2: fallback.p2,
+        p3: fallback.p3,
+        timestamp: new Date().toISOString(),
+        answers: answers,
+        posterUrl: null,
+        posterStatus: "pending"
+      };
+      
+      setGeneratedStory(fallbackStory);
+      setForgeStatus('success');
+      showToast("Story created in sanctuary mode");
+      
+      setShowConfetti(true);
+      arcadeSounds.storyComplete();
+      setTimeout(() => {
+        setShowConfetti(false);
+        setView('REVEAL');
+      }, 1500);
     }
   };
 
@@ -686,6 +748,12 @@ export default function StoryArcade() {
         </main>
         
         <Toast message={toast} />
+        
+        <AttractScreensaver 
+          stories={gallery}
+          isActive={showScreensaver}
+          onDismiss={handleDismissScreensaver}
+        />
       </div>
     );
   }
@@ -822,6 +890,15 @@ export default function StoryArcade() {
               <div className="mt-3">
                 <CharacterProgress charCount={charCount} />
               </div>
+              
+              {contentWarning && (
+                <div className="mt-3 p-3 bg-amber-500/10 border border-amber-500/30 rounded-md">
+                  <p className="text-amber-400 text-xs font-mono flex items-center gap-2">
+                    <span className="text-amber-500">⚠</span>
+                    {contentWarning}
+                  </p>
+                </div>
+              )}
               
               <InspireMe
                 sceneNumber={currentQuestionIndex + 1}
