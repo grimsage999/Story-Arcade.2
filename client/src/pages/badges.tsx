@@ -164,7 +164,7 @@ export function BadgesPage({ onBack }: BadgesPageProps) {
     return (
       <main 
         id="main-content" 
-        className="flex-1 p-6 md:p-12 pt-28 max-w-4xl mx-auto w-full" 
+        className="flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-4xl mx-auto w-full" 
         data-testid="view-badges"
       >
         <Button
@@ -201,7 +201,7 @@ export function BadgesPage({ onBack }: BadgesPageProps) {
     return (
       <main 
         id="main-content" 
-        className="flex-1 p-6 md:p-12 pt-28 max-w-4xl mx-auto w-full" 
+        className="flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-4xl mx-auto w-full" 
         data-testid="view-badges"
       >
         <div className="animate-pulse space-y-8">
@@ -219,7 +219,7 @@ export function BadgesPage({ onBack }: BadgesPageProps) {
   return (
     <main 
       id="main-content" 
-      className="flex-1 p-6 md:p-12 pt-28 max-w-5xl mx-auto w-full" 
+      className="flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-5xl mx-auto w-full" 
       data-testid="view-badges"
     >
       <Button
