@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Sparkles, Menu, Trophy, Home, Compass, Settings, FileText, BookOpen } from 'lucide-react';
+import { Sparkles, Menu, Trophy, Home, Compass, FileText, BookOpen, Settings } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-
-type View = 'ATTRACT' | 'TRACK_SELECT' | 'QUESTIONS' | 'FORGING' | 'REVEAL' | 'GALLERY' | 'DRAFTS' | 'MY_STORIES';
+import type { View } from '@/pages/story-arcade';
 
 interface NavbarProps {
   onViewChange: (view: View) => void;

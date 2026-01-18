@@ -18,6 +18,10 @@ export interface CompletedStory {
   themes: string[];
   createdAt: string;
   userInputs: Record<string, string>;
+  insight?: string;
+  logline?: string;
+  author?: string;
+  neighborhood?: string;
 }
 
 const DRAFT_PREFIX = 'storyArcade_draft_';

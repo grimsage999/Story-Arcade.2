@@ -36,7 +36,7 @@ import {
 import { DraftsPage } from '@/pages/drafts';
 import { MyStoriesPage } from '@/pages/my-stories';
 
-type View = 'ATTRACT' | 'TRACK_SELECT' | 'QUESTIONS' | 'FORGING' | 'REVEAL' | 'GALLERY' | 'DRAFTS' | 'MY_STORIES';
+export type View = 'ATTRACT' | 'TRACK_SELECT' | 'QUESTIONS' | 'FORGING' | 'REVEAL' | 'GALLERY' | 'DRAFTS' | 'MY_STORIES';
 
 const LOADING_STEPS = [
   "INITIALIZING STORY ENGINE...",
@@ -320,7 +320,7 @@ export default function StoryArcade() {
       setForgeStatus('success');
 
       const completedStory: CompletedStory = {
-        id: newStory.id?.toString() || Date.now().toString(),
+        id: `story_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
         title: newStory.title,
         trackId: activeTrack.id,
         trackTitle: activeTrack.title,
@@ -328,6 +328,10 @@ export default function StoryArcade() {
         themes: newStory.themes || storyContent.themes,
         createdAt: new Date().toISOString(),
         userInputs: answers,
+        insight: newStory.insight || storyContent.insight,
+        logline: newStory.logline || storyContent.logline,
+        author: newStory.author || 'You',
+        neighborhood: newStory.neighborhood || 'Your Collection',
       };
       saveCompletedStory(completedStory);
       
@@ -865,14 +869,14 @@ export default function StoryArcade() {
   if (view === 'MY_STORIES') {
     const handleViewCompletedStory = (story: CompletedStory) => {
       const storyForView: Story = {
-        id: parseInt(story.id) || 0,
+        id: parseInt(story.id.replace(/\D/g, '').slice(-9)) || 0,
         title: story.title,
         trackId: story.trackId,
         trackTitle: story.trackTitle,
-        author: 'You',
-        neighborhood: 'Your Collection',
-        insight: '',
-        logline: story.content[0]?.slice(0, 100) + '...',
+        author: story.author || 'You',
+        neighborhood: story.neighborhood || 'Your Collection',
+        insight: story.insight || '',
+        logline: story.logline || story.content[0]?.slice(0, 100) + '...',
         p1: story.content[0] || '',
         p2: story.content[1] || '',
         p3: story.content[2] || '',

@@ -1,0 +1,55 @@
+Story Arcade lacks accessibility features. Implement keyboard navigation, screen reader support, and color-blind friendly design.
+
+REQUIREMENT: Full WCAG 2.1 AA compliance with inclusive UX.
+
+IMPLEMENTATION DETAILS:
+1. ARIA labels on all interactive elements:
+   - HOME button: aria-label="Navigate to home page"
+   - EXPLORE button: aria-label="Browse community stories"
+   - COIN COUNTER: aria-label="Points earned: 1"
+   - CREATE STORY button: aria-label="Start creating a new story"
+   - NEXT SCENE: aria-label="Proceed to scene 2 (currently scene 1 of 5)"
+   - BACK: aria-label="Return to previous scene"
+   - FINISH & FORGE: aria-label="Complete story and generate narrative"
+
+2. Form field accessibility:
+   - Wrap each textarea in a <label> element
+   - Label text: "Inciting incident (minimum 5 characters, maximum 300 characters, currently 0 characters)"
+   - aria-required="true" on all scene inputs
+   - aria-describedby="helperText_scene1" pointing to validation message
+   - aria-invalid="false" initially, "true" if validation fails
+   - Character counter: aria-live="polite" for screen reader updates
+
+3. Keyboard navigation implementation:
+   - TAB: navigate between form inputs, buttons, navigation links
+   - SHIFT+TAB: navigate backwards
+   - ENTER: submit current form / activate button
+   - ESC: close modals, cancel operations, return to previous state
+   - SPACE: toggle expandable elements (like Examples panel)
+   - Arrow keys: navigate multi-option selections (tone, scene count)
+   - Visible focus indicator: 2px solid cyan outline on all focused elements
+   - Focus trap in modals (ESC closes, focus returns to trigger button)
+
+4. Color contrast & visual state indicators:
+   - Replace color-only state changes with combination of color + symbols:
+     - Valid input: Cyan border + Green checkmark (✓) icon
+     - Invalid input: Red border + Red "X" icon
+     - Disabled button: Grey background + Grey text + "⊘" symbol
+     - Hover state: Add 1px outline (not just color change)
+   - Test all color combinations with WebAIM color contrast checker (min 4.5:1 for text)
+   - Verify colorblind compatibility using Chrome DevTools: Emulate vision deficiency
+
+5. Visual focus indicators:
+   - Focus indicator thickness: 2px
+   - Focus indicator color: cyan (same as active state)
+   - Focus indicator style: outline (not border, to avoid shifting layout)
+   - Ensure focus visible on: buttons, inputs, links, expandable sections
+   - Never remove focus indicator with :focus { outline: none; }
+
+6. Screen reader optimizations:
+   - Add skip link at top of page: "Skip to main content" (hidden, visible on tab focus)
+   - Use semantic HTML: <button> instead of <div role="button">, <input> instead of custom
+   - Heading hierarchy: <h1> (Story Arcade), <h2> (Scene prompts), <h3> (sub-sections)
+   - Form structure: use <fieldset> + <legend> for grouped inputs
+   - Announce loading states: aria-busy="true" during API calls
+   - Announce story
