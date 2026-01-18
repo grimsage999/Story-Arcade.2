@@ -3,6 +3,7 @@ import { FileText, Play, Trash2, Copy, Pencil, Check, X, ArrowUpDown, Clock, Sor
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { StaticStarfield } from '@/components/arcade/StarfieldBackground';
 import { 
   getAllDrafts, 
   deleteDraft, 
@@ -85,12 +86,14 @@ export function DraftsPage({ onResumeDraft, onBack }: DraftsPageProps) {
   };
 
   return (
-    <main 
-      id="main-content" 
-      className="max-w-4xl mx-auto p-6 pt-24" 
-      data-testid="page-drafts"
-      aria-label="Your Drafts page"
-    >
+    <div className="relative min-h-screen">
+      <StaticStarfield />
+      <main 
+        id="main-content" 
+        className="relative max-w-4xl mx-auto p-6 pt-24" 
+        data-testid="page-drafts"
+        aria-label="Your Drafts page"
+      >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl md:text-5xl font-display text-foreground mb-2" data-testid="text-page-title">
@@ -267,6 +270,7 @@ export function DraftsPage({ onResumeDraft, onBack }: DraftsPageProps) {
           Back to Home
         </Button>
       </div>
-    </main>
+      </main>
+    </div>
   );
 }

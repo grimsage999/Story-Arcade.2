@@ -5,6 +5,7 @@ import { Sparkles, ArrowLeft, Share2, Copy, Check, Twitter, Facebook, MessageCir
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { SkipLink } from '@/components/arcade/SkipLink';
+import { StaticStarfield } from '@/components/arcade/StarfieldBackground';
 import type { Story } from '@shared/schema';
 
 function getAccentColor(trackId: string) {
@@ -140,8 +141,9 @@ export default function StoryPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
+      <div className="relative min-h-screen bg-background flex items-center justify-center">
+        <StaticStarfield />
+        <div className="relative text-center">
           <Sparkles className="w-8 h-8 text-primary animate-pulse mx-auto mb-4" aria-hidden="true" />
           <p className="text-muted-foreground font-mono text-sm">Loading story...</p>
         </div>
@@ -151,9 +153,10 @@ export default function StoryPage() {
 
   if (error || !story) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+      <div className="relative min-h-screen bg-background flex flex-col items-center justify-center p-6">
+        <StaticStarfield />
         <SkipLink />
-        <main id="main-content" role="main" className="text-center max-w-md">
+        <main id="main-content" role="main" className="relative text-center max-w-md">
           <h1 className="font-display text-3xl text-foreground mb-4">Story Not Found</h1>
           <p className="text-muted-foreground mb-8">
             This story may have been removed or the link is incorrect.
@@ -172,7 +175,8 @@ export default function StoryPage() {
   const accentClass = getAccentColor(story.trackId);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background">
+      <StaticStarfield />
       <SkipLink />
       
       <nav 

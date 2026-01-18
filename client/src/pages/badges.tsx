@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { useProgression, Badge } from "@/hooks/use-progression";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { StaticStarfield } from "@/components/arcade/StarfieldBackground";
 import { 
   Star, Book, Scroll, Crown, Trophy,
   Flame, Zap, Award, Medal,
@@ -162,11 +163,13 @@ export function BadgesPage({ onBack }: BadgesPageProps) {
 
   if (!user) {
     return (
-      <main 
-        id="main-content" 
-        className="flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-4xl mx-auto w-full" 
-        data-testid="view-badges"
-      >
+      <div className="relative min-h-screen">
+        <StaticStarfield />
+        <main 
+          id="main-content" 
+          className="relative flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-4xl mx-auto w-full" 
+          data-testid="view-badges"
+        >
         <Button
           variant="ghost"
           onClick={onBack}
@@ -193,35 +196,41 @@ export function BadgesPage({ onBack }: BadgesPageProps) {
             Sign In with Replit
           </Button>
         </div>
-      </main>
+        </main>
+      </div>
     );
   }
 
   if (isLoading || isLoadingBadges || allBadges.length === 0) {
     return (
-      <main 
-        id="main-content" 
-        className="flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-4xl mx-auto w-full" 
-        data-testid="view-badges"
-      >
-        <div className="animate-pulse space-y-8">
-          <div className="h-8 w-48 bg-muted rounded" />
-          <div className="grid gap-4 md:grid-cols-2">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="h-28 bg-muted/30 rounded-lg" />
-            ))}
+      <div className="relative min-h-screen">
+        <StaticStarfield />
+        <main 
+          id="main-content" 
+          className="relative flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-4xl mx-auto w-full" 
+          data-testid="view-badges"
+        >
+          <div className="animate-pulse space-y-8">
+            <div className="h-8 w-48 bg-muted rounded" />
+            <div className="grid gap-4 md:grid-cols-2">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-28 bg-muted/30 rounded-lg" />
+              ))}
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     );
   }
 
   return (
-    <main 
-      id="main-content" 
-      className="flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-5xl mx-auto w-full" 
-      data-testid="view-badges"
-    >
+    <div className="relative min-h-screen">
+      <StaticStarfield />
+      <main 
+        id="main-content" 
+        className="relative flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-5xl mx-auto w-full" 
+        data-testid="view-badges"
+      >
       <Button
         variant="ghost"
         onClick={onBack}
@@ -304,6 +313,7 @@ export function BadgesPage({ onBack }: BadgesPageProps) {
           );
         })}
       </div>
-    </main>
+      </main>
+    </div>
   );
 }

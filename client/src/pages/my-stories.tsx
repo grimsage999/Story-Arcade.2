@@ -9,6 +9,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
 import { apiRequest } from '@/lib/queryClient';
 import type { Story } from '@shared/schema';
+import { StaticStarfield } from '@/components/arcade/StarfieldBackground';
 import { 
   exportStoryAsText,
   formatTimeAgo,
@@ -135,61 +136,69 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
 
   if (authLoading || storiesLoading) {
     return (
-      <main 
-        id="main-content" 
-        className="max-w-4xl mx-auto p-6 pt-24 flex flex-col items-center justify-center min-h-[60vh]" 
-        data-testid="page-my-stories-loading"
-      >
-        <Loader2 className="w-8 h-8 text-cyan-400 animate-spin mb-4" />
-        <p className="text-muted-foreground font-mono text-sm">Loading your stories...</p>
-      </main>
+      <div className="relative min-h-screen">
+        <StaticStarfield />
+        <main 
+          id="main-content" 
+          className="relative max-w-4xl mx-auto p-6 pt-24 flex flex-col items-center justify-center min-h-[60vh]" 
+          data-testid="page-my-stories-loading"
+        >
+          <Loader2 className="w-8 h-8 text-cyan-400 animate-spin mb-4" />
+          <p className="text-muted-foreground font-mono text-sm">Loading your stories...</p>
+        </main>
+      </div>
     );
   }
 
   if (!isAuthenticated) {
     return (
-      <main 
-        id="main-content" 
-        className="max-w-4xl mx-auto p-6 pt-24" 
-        data-testid="page-my-stories-login"
-        aria-label="Login required"
-      >
-        <div className="text-center py-16 bg-card border border-card-border rounded-md">
-          <LogIn className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-2xl font-display text-foreground mb-2">Sign In to Access Your Stories</h2>
-          <p className="text-muted-foreground font-mono text-sm mb-6 max-w-md mx-auto">
-            Create an account or sign in to save your stories and access them from any device.
-          </p>
-          <div className="flex flex-col md:flex-row gap-3 justify-center">
-            <Button 
-              onClick={() => window.location.href = '/api/login'}
-              className="font-mono uppercase tracking-widest"
-              data-testid="button-login"
-            >
-              <LogIn className="w-4 h-4 mr-2" />
-              Sign In with Replit
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={onBack}
-              className="font-mono uppercase tracking-widest"
-              data-testid="button-back-home"
-            >
-              Back to Home
-            </Button>
+      <div className="relative min-h-screen">
+        <StaticStarfield />
+        <main 
+          id="main-content" 
+          className="relative max-w-4xl mx-auto p-6 pt-24" 
+          data-testid="page-my-stories-login"
+          aria-label="Login required"
+        >
+          <div className="text-center py-16 bg-card border border-card-border rounded-md">
+            <LogIn className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h2 className="text-2xl font-display text-foreground mb-2">Sign In to Access Your Stories</h2>
+            <p className="text-muted-foreground font-mono text-sm mb-6 max-w-md mx-auto">
+              Create an account or sign in to save your stories and access them from any device.
+            </p>
+            <div className="flex flex-col md:flex-row gap-3 justify-center">
+              <Button 
+                onClick={() => window.location.href = '/api/login'}
+                className="font-mono uppercase tracking-widest"
+                data-testid="button-login"
+              >
+                <LogIn className="w-4 h-4 mr-2" />
+                Sign In with Replit
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={onBack}
+                className="font-mono uppercase tracking-widest"
+                data-testid="button-back-home"
+              >
+                Back to Home
+              </Button>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     );
   }
 
   return (
-    <main 
-      id="main-content" 
-      className="max-w-4xl mx-auto p-6 pt-24" 
-      data-testid="page-my-stories"
-      aria-label="Your Stories page"
-    >
+    <div className="relative min-h-screen">
+      <StaticStarfield />
+      <main 
+        id="main-content" 
+        className="relative max-w-4xl mx-auto p-6 pt-24" 
+        data-testid="page-my-stories"
+        aria-label="Your Stories page"
+      >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl md:text-5xl font-display text-foreground mb-2" data-testid="text-page-title">
@@ -398,6 +407,7 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
           Back to Home
         </Button>
       </div>
-    </main>
+      </main>
+    </div>
   );
 }
