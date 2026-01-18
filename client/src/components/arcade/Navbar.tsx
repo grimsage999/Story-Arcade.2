@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Sparkles, Menu, Trophy, Home, Compass, Settings } from 'lucide-react';
+import { Sparkles, Menu, Trophy, Home, Compass, Settings, FileText, BookOpen } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 
-type View = 'ATTRACT' | 'TRACK_SELECT' | 'QUESTIONS' | 'FORGING' | 'REVEAL' | 'GALLERY';
+type View = 'ATTRACT' | 'TRACK_SELECT' | 'QUESTIONS' | 'FORGING' | 'REVEAL' | 'GALLERY' | 'DRAFTS' | 'MY_STORIES';
 
 interface NavbarProps {
   onViewChange: (view: View) => void;
@@ -107,6 +107,32 @@ export function Navbar({
                   {isCreating && <span className="text-xs text-muted-foreground ml-auto">({currentScene}/{totalScenes})</span>}
                 </Button>
 
+                <Button 
+                  variant="ghost"
+                  onClick={() => handleMobileNavClick('DRAFTS')} 
+                  className={`w-full justify-start gap-3 font-display text-lg tracking-widest ${
+                    isCreating ? 'text-muted-foreground/50 cursor-not-allowed' : ''
+                  }`}
+                  disabled={isCreating}
+                  data-testid="mobile-nav-drafts"
+                >
+                  <FileText className="w-5 h-5" />
+                  DRAFTS
+                </Button>
+
+                <Button 
+                  variant="ghost"
+                  onClick={() => handleMobileNavClick('MY_STORIES')} 
+                  className={`w-full justify-start gap-3 font-display text-lg tracking-widest ${
+                    isCreating ? 'text-muted-foreground/50 cursor-not-allowed' : ''
+                  }`}
+                  disabled={isCreating}
+                  data-testid="mobile-nav-my-stories"
+                >
+                  <BookOpen className="w-5 h-5" />
+                  MY STORIES
+                </Button>
+
                 {!isCreating && (
                   <Button 
                     variant="default"
@@ -197,6 +223,20 @@ export function Navbar({
               data-testid="nav-explore"
             >
               EXPLORE
+            </button>
+            <button 
+              onClick={() => handleNavClick('DRAFTS')} 
+              className={`${currentView === 'DRAFTS' ? 'text-foreground' : ''} ${navButtonClass}`}
+              data-testid="nav-drafts"
+            >
+              DRAFTS
+            </button>
+            <button 
+              onClick={() => handleNavClick('MY_STORIES')} 
+              className={`${currentView === 'MY_STORIES' ? 'text-foreground' : ''} ${navButtonClass}`}
+              data-testid="nav-my-stories"
+            >
+              MY STORIES
             </button>
           </>
         )}

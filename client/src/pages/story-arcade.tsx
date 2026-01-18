@@ -23,14 +23,20 @@ import { Button } from '@/components/ui/button';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { 
   type Draft, 
+  type CompletedStory,
   getAllDrafts, 
   getDraft, 
   saveDraft, 
   deleteDraft, 
-  generateDraftId 
+  generateDraftId,
+  saveCompletedStory,
+  getCompletedStories,
+  cleanupOldDrafts
 } from '@/lib/draftStorage';
+import { DraftsPage } from '@/pages/drafts';
+import { MyStoriesPage } from '@/pages/my-stories';
 
-type View = 'ATTRACT' | 'TRACK_SELECT' | 'QUESTIONS' | 'FORGING' | 'REVEAL' | 'GALLERY';
+type View = 'ATTRACT' | 'TRACK_SELECT' | 'QUESTIONS' | 'FORGING' | 'REVEAL' | 'GALLERY' | 'DRAFTS' | 'MY_STORIES';
 
 const LOADING_STEPS = [
   "INITIALIZING STORY ENGINE...",
@@ -106,6 +112,8 @@ export default function StoryArcade() {
     if (allDrafts.length > 0) {
       setRecoveryDraft(allDrafts[0]);
     }
+
+    cleanupOldDrafts();
   }, []);
 
   useEffect(() => {
@@ -310,6 +318,18 @@ export default function StoryArcade() {
 
       setGeneratedStory(newStory);
       setForgeStatus('success');
+
+      const completedStory: CompletedStory = {
+        id: newStory.id?.toString() || Date.now().toString(),
+        title: newStory.title,
+        trackId: activeTrack.id,
+        trackTitle: activeTrack.title,
+        content: [newStory.p1, newStory.p2, newStory.p3],
+        themes: newStory.themes || storyContent.themes,
+        createdAt: new Date().toISOString(),
+        userInputs: answers,
+      };
+      saveCompletedStory(completedStory);
       
       if (currentDraftIdRef.current) {
         deleteDraft(currentDraftIdRef.current);
@@ -822,6 +842,104 @@ export default function StoryArcade() {
             </Button>
           </div>
         </div>
+        
+        <Toast message={toast} />
+      </div>
+    );
+  }
+
+  if (view === 'DRAFTS') {
+    return (
+      <div className="min-h-screen bg-background flex flex-col font-sans relative">
+        <CRTOverlay />
+        <Navbar onViewChange={setView} currentView={view} streak={streak} />
+        <DraftsPage 
+          onResumeDraft={handleResumeDraft}
+          onBack={() => setView('ATTRACT')}
+        />
+        <Toast message={toast} />
+      </div>
+    );
+  }
+
+  if (view === 'MY_STORIES') {
+    const handleViewCompletedStory = (story: CompletedStory) => {
+      const storyForView: Story = {
+        id: parseInt(story.id) || 0,
+        title: story.title,
+        trackId: story.trackId,
+        trackTitle: story.trackTitle,
+        author: 'You',
+        neighborhood: 'Your Collection',
+        insight: '',
+        logline: story.content[0]?.slice(0, 100) + '...',
+        p1: story.content[0] || '',
+        p2: story.content[1] || '',
+        p3: story.content[2] || '',
+        themes: story.themes,
+        timestamp: story.createdAt,
+        answers: story.userInputs,
+      };
+      setGalleryModalStory(storyForView);
+    };
+
+    return (
+      <div className="min-h-screen bg-background flex flex-col font-sans relative">
+        <CRTOverlay />
+        <Navbar onViewChange={setView} currentView={view} streak={streak} />
+        <MyStoriesPage 
+          onViewStory={handleViewCompletedStory}
+          onBack={() => setView('ATTRACT')}
+          showToast={showToast}
+        />
+        
+        {galleryModalStory && (
+          <div 
+            className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-6"
+            onClick={() => setGalleryModalStory(null)}
+            data-testid="modal-story"
+          >
+            <div 
+              className="bg-card border border-primary/30 rounded-md max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-10 relative animate-fade-in"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button 
+                onClick={() => setGalleryModalStory(null)}
+                className="absolute top-4 right-4 text-muted-foreground hover-elevate"
+                data-testid="button-close-modal"
+                aria-label="Close modal"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              
+              <div className="mb-6">
+                <p className="text-primary font-mono text-xs tracking-widest mb-2">{galleryModalStory.trackTitle}</p>
+                <h2 className="font-display text-2xl md:text-4xl text-foreground mb-2">{galleryModalStory.title}</h2>
+              </div>
+              
+              <p className="text-lg text-primary font-display italic mb-6 border-l-4 border-primary pl-4">
+                "{galleryModalStory.logline}"
+              </p>
+              
+              <div className="space-y-4 text-foreground leading-relaxed">
+                <p>{galleryModalStory.p1}</p>
+                <p>{galleryModalStory.p2}</p>
+                <p>{galleryModalStory.p3}</p>
+              </div>
+              
+              <div className="flex items-center gap-2 mt-6 pt-6 border-t border-border flex-wrap">
+                {galleryModalStory.themes.map((theme) => (
+                  <span 
+                    key={theme}
+                    className="px-3 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-mono"
+                  >
+                    {theme}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
         
         <Toast message={toast} />
       </div>
