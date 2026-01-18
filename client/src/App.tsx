@@ -8,6 +8,8 @@ import { ArcadeSoundProvider } from "@/components/arcade/ArcadeSoundProvider";
 import { LogoStinger } from "@/components/arcade/LogoStinger";
 import StoryArcade from "@/pages/story-arcade";
 import StoryPage from "@/pages/story";
+import { BadgesPage } from "@/pages/badges";
+import { MyStoriesPage } from "@/pages/my-stories";
 import NotFound from "@/pages/not-found";
 
 
@@ -16,6 +18,8 @@ function Router() {
     <Switch>
       <Route path="/" component={StoryArcade} />
       <Route path="/story/:shareableId" component={StoryPage} />
+      <Route path="/badges">{() => <BadgesPage />}</Route>
+      <Route path="/my-stories">{() => <MyStoriesPage />}</Route>
       <Route component={NotFound} />
     </Switch>
   );

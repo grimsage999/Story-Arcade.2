@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useLocation } from "wouter";
 import { useProgression, Badge } from "@/hooks/use-progression";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -68,7 +69,7 @@ const RARITY_STYLES: Record<string, { bg: string; border: string; text: string; 
 };
 
 interface BadgesPageProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 function BadgeCard({ badge, earned }: { badge: Badge; earned: boolean }) {
@@ -145,8 +146,17 @@ function BadgeCard({ badge, earned }: { badge: Badge; earned: boolean }) {
 }
 
 export function BadgesPage({ onBack }: BadgesPageProps) {
+  const [, navigate] = useLocation();
   const { user } = useAuth();
   const { progress, allBadges, isLoading, isLoadingBadges } = useProgression();
+  
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      navigate('/');
+    }
+  };
 
   const earnedBadgeIds = new Set(progress?.badges.map(b => b.id) || []);
   
@@ -160,46 +170,6 @@ export function BadgesPage({ onBack }: BadgesPageProps) {
   const handleLogin = () => {
     window.location.href = '/api/login';
   };
-
-  if (!user) {
-    return (
-      <div className="relative min-h-screen">
-        <StaticStarfield />
-        <main 
-          id="main-content" 
-          className="relative flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-4xl mx-auto w-full" 
-          data-testid="view-badges"
-        >
-        <Button
-          variant="ghost"
-          onClick={onBack}
-          className="mb-6 font-mono text-xs tracking-widest"
-          data-testid="button-back"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back
-        </Button>
-
-        <div className="text-center py-16">
-          <Award className="w-16 h-16 text-muted-foreground mx-auto mb-6" />
-          <h2 className="text-2xl font-display text-foreground mb-4">
-            Sign In to Track Achievements
-          </h2>
-          <p className="text-muted-foreground font-mono text-sm mb-8 max-w-md mx-auto">
-            Create stories, earn XP, and unlock badges. Sign in to start your progression journey.
-          </p>
-          <Button 
-            onClick={handleLogin}
-            className="font-mono uppercase tracking-widest"
-            data-testid="button-login"
-          >
-            <LogIn className="w-4 h-4 mr-2" />
-            Sign In with Replit
-          </Button>
-        </div>
-        </main>
-      </div>
-    );
-  }
 
   if (isLoading || isLoadingBadges || allBadges.length === 0) {
     return (
@@ -233,7 +203,7 @@ export function BadgesPage({ onBack }: BadgesPageProps) {
       >
       <Button
         variant="ghost"
-        onClick={onBack}
+        onClick={handleBack}
         className="mb-6 font-mono text-xs tracking-widest"
         data-testid="button-back"
       >
@@ -245,7 +215,7 @@ export function BadgesPage({ onBack }: BadgesPageProps) {
           ACHIEVEMENTS
         </h1>
         
-        {progress && (
+        {user && progress ? (
           <div className="flex flex-wrap gap-6 text-sm font-mono">
             <div className="flex items-center gap-2">
               <Star className="w-5 h-5 text-yellow-400" />
@@ -268,6 +238,21 @@ export function BadgesPage({ onBack }: BadgesPageProps) {
               <span className="text-foreground">{progress.badges.length}/{allBadges.length} Badges</span>
             </div>
           </div>
+        ) : (
+          <div className="flex items-center gap-4 p-4 bg-card/50 border border-card-border rounded-md">
+            <div className="text-muted-foreground text-sm font-mono flex-1">
+              Sign in to track your progress and unlock badges!
+            </div>
+            <Button 
+              onClick={handleLogin}
+              size="sm"
+              className="font-mono uppercase tracking-widest text-xs"
+              data-testid="button-login"
+            >
+              <LogIn className="w-3 h-3 mr-2" />
+              Sign In
+            </Button>
+          </div>
         )}
       </div>
 
@@ -287,7 +272,7 @@ export function BadgesPage({ onBack }: BadgesPageProps) {
                   {category.name}
                 </h2>
                 <span className="text-sm font-mono text-muted-foreground">
-                  {earnedInCategory}/{categoryBadges.length}
+                  {user ? `${earnedInCategory}/${categoryBadges.length}` : `${categoryBadges.length} badges`}
                 </span>
               </div>
 

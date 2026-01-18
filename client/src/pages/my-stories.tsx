@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { BookOpen, Search, Trash2, Eye, Download, Copy, Link, Filter, ArrowUpDown, SortDesc, SortAsc, Calendar, Loader2, LogIn } from 'lucide-react';
+import { useState } from 'react';
+import { useLocation } from 'wouter';
+import { BookOpen, Search, Trash2, Eye, Download, Copy, Link, Filter, ArrowUpDown, SortDesc, SortAsc, Calendar, Loader2, LogIn, Globe, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -17,9 +18,9 @@ import {
 } from '@/lib/draftStorage';
 
 interface MyStoriesPageProps {
-  onViewStory: (story: CompletedStory) => void;
-  onBack: () => void;
-  showToast: (message: string) => void;
+  onViewStory?: (story: CompletedStory) => void;
+  onBack?: () => void;
+  showToast?: (message: string) => void;
 }
 
 type SortOption = 'newest' | 'oldest' | 'alphabetical';
@@ -44,6 +45,7 @@ function storyToCompletedStory(story: Story): CompletedStory {
 }
 
 export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageProps) {
+  const [, navigate] = useLocation();
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const [sortBy, setSortBy] = useState<SortOption>('newest');
@@ -52,9 +54,30 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  const handleViewStory = (story: CompletedStory) => {
+    if (onViewStory) {
+      onViewStory(story);
+    } else if (story.shareableId) {
+      navigate(`/story/${story.shareableId}`);
+    }
+  };
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      navigate('/');
+    }
+  };
+
   const { data: dbStories = [], isLoading: storiesLoading } = useQuery<Story[]>({
     queryKey: ['/api/stories/my'],
     enabled: isAuthenticated,
+  });
+
+  const { data: communityStories = [], isLoading: communityLoading } = useQuery<Story[]>({
+    queryKey: ['/api/stories'],
+    enabled: !isAuthenticated,
   });
 
   const deleteMutation = useMutation({
@@ -63,7 +86,7 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/stories/my'] });
-      showToast('Story deleted');
+      showToast?.('Story deleted');
     },
   });
 
@@ -105,16 +128,16 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
   const handleCopyText = (story: CompletedStory) => {
     const text = exportStoryAsText(story);
     navigator.clipboard.writeText(text);
-    showToast('Story copied to clipboard');
+    showToast?.('Story copied to clipboard');
   };
 
   const handleCopyLink = (story: CompletedStory) => {
     if (story.shareableId) {
       const url = `${window.location.origin}/story/${story.shareableId}`;
       navigator.clipboard.writeText(url);
-      showToast('Shareable link copied!');
+      showToast?.('Shareable link copied!');
     } else {
-      showToast('This story does not have a shareable link');
+      showToast?.('This story does not have a shareable link');
     }
   };
 
@@ -129,12 +152,13 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    showToast('Story downloaded');
+    showToast?.('Story downloaded');
   };
 
   const uniqueThemes = Array.from(new Set(stories.flatMap(s => s.themes)));
+  const publicStories: CompletedStory[] = communityStories.map(storyToCompletedStory);
 
-  if (authLoading || storiesLoading) {
+  if (authLoading || (isAuthenticated && storiesLoading) || (!isAuthenticated && communityLoading)) {
     return (
       <div className="relative min-h-screen">
         <StaticStarfield />
@@ -151,39 +175,137 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
   }
 
   if (!isAuthenticated) {
+    const filteredPublicStories = publicStories
+      .filter(story => {
+        const matchesSearch = searchQuery === '' || 
+          story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          story.content.some(p => p.toLowerCase().includes(searchQuery.toLowerCase()));
+        return matchesSearch;
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
     return (
       <div className="relative min-h-screen">
         <StaticStarfield />
         <main 
           id="main-content" 
           className="relative max-w-4xl mx-auto p-6 pt-24" 
-          data-testid="page-my-stories-login"
-          aria-label="Login required"
+          data-testid="page-my-stories-community"
+          aria-label="Community Stories"
         >
-          <div className="text-center py-16 bg-card border border-card-border rounded-md">
-            <LogIn className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-2xl font-display text-foreground mb-2">Sign In to Access Your Stories</h2>
-            <p className="text-muted-foreground font-mono text-sm mb-6 max-w-md mx-auto">
-              Create an account or sign in to save your stories and access them from any device.
-            </p>
-            <div className="flex flex-col md:flex-row gap-3 justify-center">
-              <Button 
-                onClick={() => window.location.href = '/api/login'}
-                className="font-mono uppercase tracking-widest"
-                data-testid="button-login"
-              >
-                <LogIn className="w-4 h-4 mr-2" />
-                Sign In with Replit
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={onBack}
-                className="font-mono uppercase tracking-widest"
-                data-testid="button-back-home"
-              >
-                Back to Home
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+              <h1 className="text-3xl md:text-5xl font-display text-foreground mb-2" data-testid="text-page-title">
+                Community Stories
+              </h1>
+              <p className="text-muted-foreground font-mono text-xs tracking-widest">
+                {publicStories.length} STOR{publicStories.length !== 1 ? 'IES' : 'Y'} FROM THE COMMUNITY
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4 p-4 bg-card/50 border border-card-border rounded-md mb-6">
+            <User className="w-5 h-5 text-primary shrink-0" />
+            <div className="text-muted-foreground text-sm font-mono flex-1">
+              Sign in to save your own stories and access them from any device!
+            </div>
+            <Button 
+              onClick={() => window.location.href = '/api/login'}
+              size="sm"
+              className="font-mono uppercase tracking-widest text-xs shrink-0"
+              data-testid="button-login"
+            >
+              <LogIn className="w-3 h-3 mr-2" />
+              Sign In
+            </Button>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-3 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search community stories..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+                data-testid="input-search"
+              />
+            </div>
+          </div>
+
+          {communityLoading ? (
+            <div className="text-center py-16">
+              <Loader2 className="w-8 h-8 text-cyan-400 animate-spin mx-auto mb-4" />
+              <p className="text-muted-foreground font-mono text-sm">Loading community stories...</p>
+            </div>
+          ) : filteredPublicStories.length === 0 ? (
+            <div className="text-center py-16 bg-card border border-card-border rounded-md">
+              <Globe className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground font-mono text-sm mb-4">
+                {searchQuery ? 'No stories match your search' : 'No community stories yet'}
+              </p>
+              <Button onClick={handleBack} variant="outline" data-testid="button-create-story">
+                Be the First to Create
               </Button>
             </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredPublicStories.slice(0, 10).map((story) => (
+                <div
+                  key={story.id}
+                  className="bg-card border border-card-border rounded-md p-4"
+                  data-testid={`story-item-${story.id}`}
+                >
+                  <div className="flex flex-col md:flex-row md:items-start gap-4">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-foreground font-display text-lg mb-1 truncate">
+                        {story.title}
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <span className="text-muted-foreground text-xs font-mono flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {formatTimeAgo(story.createdAt)}
+                        </span>
+                        <span className="text-primary/70 text-xs font-mono">{story.trackTitle}</span>
+                        {story.author && (
+                          <span className="text-muted-foreground/70 text-xs font-mono">
+                            by {story.author}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {story.themes.map(theme => (
+                          <Badge key={theme} variant="secondary" className="text-[10px]">
+                            {theme}
+                          </Badge>
+                        ))}
+                      </div>
+                      <p className="text-muted-foreground text-sm mt-2 line-clamp-2">
+                        {story.content[0]}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={() => handleViewStory(story)}
+                        size="sm"
+                        variant="outline"
+                        className="font-mono uppercase tracking-widest text-[10px]"
+                        data-testid={`button-view-${story.id}`}
+                      >
+                        <Eye className="w-3 h-3 mr-1" /> View
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-8 text-center">
+            <Button variant="outline" onClick={handleBack} data-testid="button-back" aria-label="Return to home page">
+              Back to Home
+            </Button>
           </div>
         </main>
       </div>
@@ -273,7 +395,7 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
         <div className="text-center py-16 bg-card border border-card-border rounded-md">
           <BookOpen className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
           <p className="text-muted-foreground font-mono text-sm mb-4">No stories created yet</p>
-          <Button onClick={onBack} variant="outline" data-testid="button-create-story">
+          <Button onClick={handleBack} variant="outline" data-testid="button-create-story">
             Create Your First Story
           </Button>
         </div>
@@ -317,7 +439,7 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
 
                   <div className="flex items-center gap-2">
                     <Button
-                      onClick={() => onViewStory(story)}
+                      onClick={() => handleViewStory(story)}
                       size="sm"
                       variant="outline"
                       className="font-mono uppercase tracking-widest text-[10px]"
@@ -403,7 +525,7 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
       )}
 
       <div className="mt-8 text-center">
-        <Button variant="outline" onClick={onBack} data-testid="button-back" aria-label="Return to home page">
+        <Button variant="outline" onClick={handleBack} data-testid="button-back" aria-label="Return to home page">
           Back to Home
         </Button>
       </div>
