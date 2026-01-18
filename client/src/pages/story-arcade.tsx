@@ -643,7 +643,7 @@ export default function StoryArcade() {
               </span>
             </h1>
             <p className="text-muted-foreground text-sm md:text-xl max-w-2xl mx-auto leading-relaxed font-light">
-              Build the public archive of the future. Answer 5 questions and watch your neighborhood's story come to life in a stylized artifact.
+              Build a living archive of your world. Answer 5 questions and watch memories come to life as stylized artifacts.
             </p>
             
             <div className="flex flex-col md:flex-row w-full md:w-auto gap-4 pt-8 justify-center">
