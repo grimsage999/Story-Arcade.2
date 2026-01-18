@@ -6,12 +6,12 @@ interface CharacterProgressProps {
 export function CharacterProgress({ charCount, suggested = 150 }: CharacterProgressProps) {
   const percentage = Math.min((charCount / suggested) * 100, 100);
   
-  let barColor = "bg-muted-foreground";
+  let barColor = "bg-zinc-500";
   let textColor = "text-muted-foreground";
   
   if (charCount >= 50 && charCount <= 150) {
-    barColor = "bg-primary";
-    textColor = "text-primary";
+    barColor = "bg-cyan-400";
+    textColor = "text-cyan-400";
   } else if (charCount > 150) {
     barColor = "bg-yellow-500";
     textColor = "text-yellow-500";

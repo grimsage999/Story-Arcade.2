@@ -160,6 +160,9 @@ export default function StoryArcade() {
     setCurrentDraftId(null);
     setLastSavedAt(null);
     setSaveFailed(false);
+    setInspireUsage({});
+    setHasTyped(false);
+    setShowTooltip(false);
     setView('QUESTIONS');
   };
 
@@ -218,6 +221,8 @@ export default function StoryArcade() {
 
     if (currentQuestionIndex < activeTrack.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
+      setHasTyped(false);
+      setShowTooltip(false);
     } else {
       setShowConfetti(true);
       setTimeout(() => {
