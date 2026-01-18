@@ -151,3 +151,36 @@ Preferred communication style: Simple, everyday language.
 - 60-second timeout triggers warning state with retry option
 - Error recovery preserves user inputs for retry or draft saving
 - Uses lucide-react icons (no emojis per design guidelines)
+
+### Mobile Responsive Design
+
+**Breakpoint Strategy:** Mobile-first with md: (768px) for desktop overrides
+
+**Navigation:**
+- Mobile: Sheet-based drawer (left slide, 70vw max-w-[320px]) with hamburger menu
+- Uses shadcn/ui Sheet component with Button components (variant="ghost") for nav items
+- Desktop: Traditional horizontal nav with hover-elevate utility for interactions
+- Scene progress indicator visible in both mobile and desktop during creation
+
+**Touch Optimization:**
+- Buttons use size="lg" for adequate touch targets
+- Buttons stack vertically on mobile (flex-col md:flex-row) with full width (w-full md:w-auto)
+- Textarea min-h-[120px] on mobile with 16px font size for zoom prevention
+
+**Typography:**
+- h1: text-[28px] md:text-7xl lg:text-8xl
+- h2: text-3xl md:text-5xl
+- Body: text-sm md:text-xl
+
+**Particle Optimization (Confetti):**
+- `client/src/hooks/use-mobile.tsx` - Mobile detection hook (< 768px)
+- Mobile: Capped at 20 particles (vs 100 desktop), reduced velocity/size
+- Respects prefers-reduced-motion with static Sparkles icon fallback
+
+**Back to Top Button:**
+- `client/src/components/arcade/BackToTop.tsx`
+- Only renders on mobile when scrollY > 300px
+- Fixed position bottom-right with smooth scroll behavior
+
+**Gallery Layout:**
+- grid-cols-1 md:grid-cols-2 lg:grid-cols-3 for responsive card layout
