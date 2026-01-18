@@ -7,6 +7,7 @@ import { MOTIVATIONS } from '@/lib/tracks';
 import { checkContentSafety } from '@/lib/contentSafety';
 import { OnboardingOverlay } from './OnboardingOverlay';
 import { VoiceMicButton } from './VoiceMicButton';
+import { SceneExamples } from './SceneExamples';
 
 interface TypeformFlowProps {
   track: Track;
@@ -346,6 +347,12 @@ export function TypeformFlow({
                   </p>
                 </motion.div>
               )}
+
+              <SceneExamples
+                sceneNumber={currentIndex + 1}
+                trackId={track.id}
+                onExampleClick={(example) => handleAnswerInput(example)}
+              />
 
               <div className="flex items-center justify-between pt-4">
                 <Button
