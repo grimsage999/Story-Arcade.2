@@ -4,6 +4,13 @@ import { storage } from "./storage";
 import { insertStorySchema } from "@shared/schema";
 import { registerInspireRoutes } from "./routes/inspire";
 import { isAuthenticated } from "./replit_integrations/auth";
+import { 
+  getUserProgress, 
+  getAllBadges, 
+  recordStoryCreation, 
+  seedBadges,
+  LEVEL_THRESHOLDS 
+} from "./progression";
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   const user = (req as any).user;
@@ -18,7 +25,32 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
+  await seedBadges();
+  
   registerInspireRoutes(app);
+  
+  app.get("/api/progression", requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const progress = await getUserProgress(userId);
+      res.json(progress);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch progression" });
+    }
+  });
+
+  app.get("/api/badges", async (_req, res) => {
+    try {
+      const badges = await getAllBadges();
+      res.json(badges);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch badges" });
+    }
+  });
+
+  app.get("/api/levels", (_req, res) => {
+    res.json({ thresholds: LEVEL_THRESHOLDS });
+  });
   
   app.get("/api/stories", async (_req, res) => {
     try {
@@ -79,7 +111,17 @@ export async function registerRoutes(
       }
       const userId = req.user?.claims?.sub;
       const story = await storage.createStory(parseResult.data, userId);
-      res.status(201).json(story);
+      
+      let progression = null;
+      if (userId) {
+        try {
+          progression = await recordStoryCreation(userId, parseResult.data.trackId);
+        } catch (progError) {
+          console.error("Failed to record progression:", progError);
+        }
+      }
+      
+      res.status(201).json({ story, progression });
     } catch (error) {
       res.status(500).json({ error: "Failed to create story" });
     }

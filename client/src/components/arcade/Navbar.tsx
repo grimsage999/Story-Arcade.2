@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Sparkles, Menu, Trophy, Home, Compass, FileText, BookOpen, Settings, LogIn, LogOut, User } from 'lucide-react';
+import { Sparkles, Menu, Trophy, Home, Compass, FileText, BookOpen, Settings, LogIn, LogOut, User, Award } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/use-auth';
+import { XPProgressBar } from './XPProgressBar';
 import type { View } from '@/pages/story-arcade';
 
 interface NavbarProps {
@@ -178,6 +179,22 @@ export function Navbar({
                   MY STORIES
                 </Button>
 
+                <Button 
+                  variant="ghost"
+                  onClick={() => handleMobileNavClick('BADGES')} 
+                  className={`w-full justify-start gap-3 font-display text-lg tracking-widest ${
+                    isCreating ? 'text-muted-foreground/50 cursor-not-allowed' : ''
+                  }`}
+                  disabled={isCreating}
+                  data-testid="mobile-nav-badges"
+                  role="menuitem"
+                  aria-label="View achievements and badges"
+                  aria-disabled={isCreating}
+                >
+                  <Award className="w-5 h-5" aria-hidden="true" />
+                  BADGES
+                </Button>
+
                 {!isCreating && (
                   <Button 
                     variant="default"
@@ -345,6 +362,20 @@ export function Navbar({
         >
            <Trophy className="w-3 h-3" aria-hidden="true" /> {streak}
         </div>
+
+        <XPProgressBar />
+
+        <button 
+          onClick={() => handleNavClick('BADGES')} 
+          className={`${currentView === 'BADGES' ? 'text-foreground' : ''} ${navButtonClass} flex items-center gap-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 rounded-sm`}
+          data-testid="nav-badges"
+          role="menuitem"
+          aria-label="View achievements and badges"
+          aria-current={currentView === 'BADGES' ? 'page' : undefined}
+        >
+          <Award className="w-3 h-3" aria-hidden="true" />
+          BADGES
+        </button>
 
         {!authLoading && (
           isAuthenticated && user ? (

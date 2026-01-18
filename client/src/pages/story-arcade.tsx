@@ -21,7 +21,9 @@ import { ForgeProgress, type ForgeStatus } from '@/components/arcade/ForgeProgre
 import { BackToTop } from '@/components/arcade/BackToTop';
 import { SkipLink } from '@/components/arcade/SkipLink';
 import { StoryModal } from '@/components/arcade/StoryModal';
+import { AchievementPopup, LevelUpPopup } from '@/components/arcade/AchievementPopup';
 import { Button } from '@/components/ui/button';
+import type { Badge, ProgressionReward } from '@/hooks/use-progression';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { 
   type Draft, 
@@ -37,8 +39,9 @@ import {
 } from '@/lib/draftStorage';
 import { DraftsPage } from '@/pages/drafts';
 import { MyStoriesPage } from '@/pages/my-stories';
+import { BadgesPage } from '@/pages/badges';
 
-export type View = 'ATTRACT' | 'TRACK_SELECT' | 'QUESTIONS' | 'FORGING' | 'REVEAL' | 'GALLERY' | 'DRAFTS' | 'MY_STORIES';
+export type View = 'ATTRACT' | 'TRACK_SELECT' | 'QUESTIONS' | 'FORGING' | 'REVEAL' | 'GALLERY' | 'DRAFTS' | 'MY_STORIES' | 'BADGES';
 
 const LOADING_STEPS = [
   "INITIALIZING STORY ENGINE...",
@@ -82,6 +85,10 @@ export default function StoryArcade() {
   const [forgeError, setForgeError] = useState<{ message: string; code?: string } | undefined>();
   const forgeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
+  
+  const [pendingBadges, setPendingBadges] = useState<Badge[]>([]);
+  const [currentBadge, setCurrentBadge] = useState<Badge | null>(null);
+  const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
 
   const { data: apiGallery, isLoading: isLoadingGallery, isError: isGalleryError } = useQuery<Story[]>({
     queryKey: ['/api/stories'],
@@ -168,6 +175,22 @@ export default function StoryArcade() {
     setToast(msg);
     setTimeout(() => setToast(null), 3000);
   }, []);
+
+  useEffect(() => {
+    if (pendingBadges.length > 0 && !currentBadge && !levelUpLevel) {
+      const [nextBadge, ...remaining] = pendingBadges;
+      setCurrentBadge(nextBadge);
+      setPendingBadges(remaining);
+    }
+  }, [pendingBadges, currentBadge, levelUpLevel]);
+
+  const handleBadgePopupClose = () => {
+    setCurrentBadge(null);
+  };
+
+  const handleLevelUpClose = () => {
+    setLevelUpLevel(null);
+  };
 
   const handleTrackSelect = (track: Track) => {
     setActiveTrack(track);
@@ -310,7 +333,7 @@ export default function StoryArcade() {
         return response.json();
       })();
 
-      const [newStory] = await Promise.all([
+      const [apiResponse] = await Promise.all([
         Promise.race([apiPromise, timeoutPromise]),
         minDelayPromise
       ]);
@@ -319,8 +342,23 @@ export default function StoryArcade() {
         clearTimeout(forgeTimeoutRef.current);
       }
 
+      const newStory = apiResponse.story || apiResponse;
+      const progression: ProgressionReward | null = apiResponse.progression || null;
+      
       setGeneratedStory(newStory);
       setForgeStatus('success');
+      
+      if (progression) {
+        queryClient.invalidateQueries({ queryKey: ['/api/progression'] });
+        
+        if (progression.leveledUp && progression.newLevel) {
+          setLevelUpLevel(progression.newLevel);
+        }
+        
+        if (progression.newBadges && progression.newBadges.length > 0) {
+          setPendingBadges(progression.newBadges);
+        }
+      }
 
       const completedStory: CompletedStory = {
         id: `story_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -917,6 +955,12 @@ export default function StoryArcade() {
         </main>
         
         <Toast message={toast} />
+        <LevelUpPopup newLevel={levelUpLevel} onClose={handleLevelUpClose} />
+        <AchievementPopup 
+          badge={currentBadge} 
+          xpAwarded={currentBadge?.xpReward} 
+          onClose={handleBadgePopupClose} 
+        />
       </div>
     );
   }
@@ -972,6 +1016,18 @@ export default function StoryArcade() {
           <StoryModal story={galleryModalStory} onClose={() => setGalleryModalStory(null)} />
         )}
         
+        <Toast message={toast} />
+      </div>
+    );
+  }
+
+  if (view === 'BADGES') {
+    return (
+      <div className="min-h-screen bg-background flex flex-col font-sans relative">
+        <SkipLink />
+        <CRTOverlay />
+        <Navbar onViewChange={setView} currentView={view} streak={streak} />
+        <BadgesPage onBack={() => setView('ATTRACT')} />
         <Toast message={toast} />
       </div>
     );
