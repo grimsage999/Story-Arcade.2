@@ -10,7 +10,7 @@ import StoryArcade from "@/pages/story-arcade";
 import StoryPage from "@/pages/story";
 import NotFound from "@/pages/not-found";
 
-const INTRO_SEEN_KEY = 'story-arcade-intro-seen';
+const INTRO_SEEN_KEY = 'story-arcade-intro-seen-v2';
 
 function Router() {
   return (
