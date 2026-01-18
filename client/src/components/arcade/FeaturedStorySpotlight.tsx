@@ -130,7 +130,7 @@ export function FeaturedStorySpotlight({
               size="icon"
               variant="outline"
               onClick={goToPrev}
-              className="absolute left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity bg-black/50 backdrop-blur-sm border-white/20 text-white"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity bg-black/50 backdrop-blur-sm border-white/20 text-white"
               aria-label="Previous story"
               data-testid="button-spotlight-prev"
             >
@@ -140,7 +140,7 @@ export function FeaturedStorySpotlight({
               size="icon"
               variant="outline"
               onClick={goToNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity bg-black/50 backdrop-blur-sm border-white/20 text-white"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity bg-black/50 backdrop-blur-sm border-white/20 text-white"
               aria-label="Next story"
               data-testid="button-spotlight-next"
             >
