@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, jsonb, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -19,6 +19,7 @@ export type User = typeof users.$inferSelect;
 
 export const stories = pgTable("stories", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  shareableId: varchar("shareable_id", { length: 12 }).notNull().unique(),
   trackId: text("track_id").notNull(),
   trackTitle: text("track_title").notNull(),
   author: text("author").notNull(),
@@ -34,8 +35,11 @@ export const stories = pgTable("stories", {
   answers: jsonb("answers"),
 });
 
-export const insertStorySchema = createInsertSchema(stories).omit({
+export const insertStorySchema = createInsertSchema(stories, {
+  themes: z.array(z.string()),
+}).omit({
   id: true,
+  shareableId: true,
 });
 
 export type InsertStory = z.infer<typeof insertStorySchema>;

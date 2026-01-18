@@ -22,6 +22,7 @@ export interface CompletedStory {
   logline?: string;
   author?: string;
   neighborhood?: string;
+  shareableId?: string;
 }
 
 const DRAFT_PREFIX = 'storyArcade_draft_';

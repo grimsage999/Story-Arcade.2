@@ -20,6 +20,22 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/stories/share/:shareableId", async (req, res) => {
+    try {
+      const { shareableId } = req.params;
+      if (!shareableId || shareableId.length < 6) {
+        return res.status(400).json({ error: "Invalid shareable ID" });
+      }
+      const story = await storage.getStoryByShareableId(shareableId);
+      if (!story) {
+        return res.status(404).json({ error: "Story not found" });
+      }
+      res.json(story);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch story" });
+    }
+  });
+
   app.get("/api/stories/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);

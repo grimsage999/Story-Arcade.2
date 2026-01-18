@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ChevronRight, ChevronLeft, ArrowRight, Shuffle, Share2, Eye, RefreshCw } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ArrowRight, Shuffle, Share2, Eye, RefreshCw, Copy, Check, Link } from 'lucide-react';
 import type { Track, Story } from '@shared/schema';
 import { TRACKS, MOTIVATIONS, SEED_STORIES } from '@/lib/tracks';
 import { CRTOverlay } from '@/components/arcade/CRTOverlay';
@@ -81,6 +81,7 @@ export default function StoryArcade() {
   const [forgeStatus, setForgeStatus] = useState<ForgeStatus>('running');
   const [forgeError, setForgeError] = useState<{ message: string; code?: string } | undefined>();
   const forgeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const { data: apiGallery, isLoading: isLoadingGallery, isError: isGalleryError } = useQuery<Story[]>({
     queryKey: ['/api/stories'],
@@ -334,6 +335,7 @@ export default function StoryArcade() {
         logline: newStory.logline || storyContent.logline,
         author: newStory.author || 'You',
         neighborhood: newStory.neighborhood || 'Your Collection',
+        shareableId: newStory.shareableId,
       };
       saveCompletedStory(completedStory);
       
@@ -430,18 +432,42 @@ export default function StoryArcade() {
     setView('TRACK_SELECT');
   };
 
+  const getStoryShareUrl = () => {
+    if (!generatedStory?.shareableId) return window.location.href;
+    return `${window.location.origin}/story/${generatedStory.shareableId}`;
+  };
+
+  const handleCopyLink = async () => {
+    try {
+      const shareUrl = getStoryShareUrl();
+      await navigator.clipboard.writeText(shareUrl);
+      setLinkCopied(true);
+      showToast("Link copied to clipboard!");
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      showToast("Could not copy link");
+    }
+  };
+
   const handleShare = async () => {
     if (!generatedStory) return;
-    try {
-      await navigator.share({
-        title: generatedStory.title,
-        text: generatedStory.logline,
-        url: window.location.href,
-      });
-    } catch {
-      await navigator.clipboard.writeText(`${generatedStory.title}\n\n${generatedStory.logline}\n\n${generatedStory.p1}\n\n${generatedStory.p2}\n\n${generatedStory.p3}`);
-      showToast("Story copied to clipboard!");
+    const shareUrl = getStoryShareUrl();
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: generatedStory.title,
+          text: generatedStory.logline,
+          url: shareUrl,
+        });
+        return;
+      } catch {
+        // Fallback to copy link if share fails
+      }
     }
+    
+    // Fallback: copy the shareable link
+    handleCopyLink();
   };
 
   const handleLogoClickDuringCreation = () => {
@@ -847,13 +873,29 @@ export default function StoryArcade() {
             </div>
           </div>
           
-          <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-center animate-fade-in">
+          <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-center animate-fade-in flex-wrap">
             <Button 
               onClick={handleShare}
               className="bg-primary text-primary-foreground font-display uppercase tracking-widest w-full md:w-auto"
               data-testid="button-share-story"
             >
-              <Share2 className="w-4 h-4 mr-2" /> Share Story
+              <Share2 className="w-4 h-4 mr-2" aria-hidden="true" /> Share Story
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={handleCopyLink}
+              className="font-mono uppercase tracking-widest w-full md:w-auto"
+              data-testid="button-copy-link"
+            >
+              {linkCopied ? (
+                <>
+                  <Check className="w-4 h-4 mr-2 text-green-500" aria-hidden="true" /> Copied!
+                </>
+              ) : (
+                <>
+                  <Link className="w-4 h-4 mr-2" aria-hidden="true" /> Copy Link
+                </>
+              )}
             </Button>
             <Button 
               variant="outline"
@@ -861,7 +903,7 @@ export default function StoryArcade() {
               className="font-mono uppercase tracking-widest w-full md:w-auto"
               data-testid="button-view-gallery"
             >
-              <Eye className="w-4 h-4 mr-2" /> View Gallery
+              <Eye className="w-4 h-4 mr-2" aria-hidden="true" /> View Gallery
             </Button>
             <Button 
               variant="outline"
@@ -869,7 +911,7 @@ export default function StoryArcade() {
               className="font-mono uppercase tracking-widest w-full md:w-auto"
               data-testid="button-create-another"
             >
-              <Shuffle className="w-4 h-4 mr-2" /> Create Another
+              <Shuffle className="w-4 h-4 mr-2" aria-hidden="true" /> Create Another
             </Button>
           </div>
         </main>

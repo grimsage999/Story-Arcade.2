@@ -35,11 +35,12 @@ Preferred communication style: Simple, everyday language.
 
 **Current Endpoints:**
 - `GET /api/stories` - Fetch all stories
-- `GET /api/stories/:id` - Fetch single story
-- `POST /api/stories` - Create new story
+- `GET /api/stories/:id` - Fetch single story by numeric ID
+- `GET /api/stories/share/:shareableId` - Fetch single story by shareable ID (for public links)
+- `POST /api/stories` - Create new story (returns story with generated shareableId)
 - `DELETE /api/stories/:id` - Delete story
 
-**Storage Pattern:** Interface-based storage abstraction (`IStorage`) currently implemented with in-memory storage (`MemStorage`). This allows easy swap to database-backed storage without changing route handlers.
+**Storage Pattern:** Interface-based storage abstraction (`IStorage`) implemented with PostgreSQL-backed `DatabaseStorage` class. Stories are persisted to the database with auto-generated 8-character base64url shareable IDs for public sharing.
 
 ### Data Layer
 
@@ -99,6 +100,38 @@ Preferred communication style: Simple, everyday language.
 **Draft Cleanup:**
 - Draft automatically deleted when story successfully forged
 - Auto-save interval cleared when entering forging state
+
+### Shareable Story Links
+
+**Feature:** Community sharing via unique shareable URLs for each story
+
+**URL Pattern:** `/story/:shareableId` (e.g., `/story/abc12345`)
+
+**Key Components:**
+- `client/src/pages/story.tsx` - Dedicated story page with full story display
+- `server/storage.ts` - DatabaseStorage class with `getStoryByShareableId()` method
+- Shareable ID generated as 8-character base64url string on story creation
+
+**Story Page Features:**
+- Full story content display with title, author, neighborhood
+- Track badge showing the story category
+- Copy Link button with visual feedback (checkmark on success)
+- Share button using Web Share API with fallback to clipboard copy
+- Theme badges at bottom
+- "Create Your Own Story" CTA
+- Responsive design with arcade styling
+
+**Share Flow:**
+1. User creates story through Story Arcade
+2. API returns story with auto-generated `shareableId`
+3. Story saved to database with shareable ID
+4. REVEAL view shows "Copy Link" button with share URL
+5. MY STORIES page uses shareable links for existing stories
+6. Recipients can view story at `/story/:shareableId` without authentication
+
+**API Endpoints:**
+- `GET /api/stories/share/:shareableId` - Fetch story by shareable ID (404 if not found)
+- `POST /api/stories` - Creates story with auto-generated shareableId
 
 ### Interactive Guidance System
 

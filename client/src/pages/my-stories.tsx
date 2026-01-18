@@ -79,9 +79,13 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
   };
 
   const handleCopyLink = (story: CompletedStory) => {
-    const url = `${window.location.origin}?story=${story.id}`;
-    navigator.clipboard.writeText(url);
-    showToast('Link copied to clipboard');
+    if (story.shareableId) {
+      const url = `${window.location.origin}/story/${story.shareableId}`;
+      navigator.clipboard.writeText(url);
+      showToast('Shareable link copied!');
+    } else {
+      showToast('This story does not have a shareable link');
+    }
   };
 
   const handleDownloadPdf = (story: CompletedStory) => {
