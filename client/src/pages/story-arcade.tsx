@@ -749,7 +749,8 @@ export default function StoryArcade() {
               <p className="text-muted-foreground font-mono text-xs italic">{motivation}</p>
               
               <SceneExamples 
-                sceneNumber={currentQuestionIndex + 1} 
+                sceneNumber={currentQuestionIndex + 1}
+                trackId={activeTrack.id}
                 onExampleClick={handleExampleClick}
               />
             </div>
