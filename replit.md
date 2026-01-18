@@ -48,6 +48,11 @@ Drizzle ORM with a PostgreSQL dialect defines the schema for `users`, `sessions`
 - **Cinematic Poster Generation:** AI-generated movie poster-style images for each story, auto-generated when viewing the story reveal. Posters are created using Gemini 2.5-flash-image model with track-specific visual styles. Features include download functionality, regeneration option, and rate-limited async generation. Posters are stored as base64 data URLs in the `posterUrl` field with status tracking (`pending`, `generating`, `ready`, `failed`).
 - **Retro Arcade Sound System:** Web Audio API-based synthesized 8-bit sound effects that play on interactive element hover/click. Features include global event delegation via ArcadeSoundProvider, SoundToggle component in Navbar with localStorage persistence for user preference, throttled hover sounds (80-100ms) to prevent audio spam, and dedicated sounds for achievements, level-ups, and story completion. Sound types: hover (short blip), click (percussive), achievement (ascending arpeggio), levelUp (fanfare), storyComplete (triumphant chord sequence).
 - **Visual Hover Effects:** CSS-based arcade-styled hover animations including neon glow effects, scanline shimmer, CRT distortion, and pixel animations. Effects respect `prefers-reduced-motion` media query for accessibility.
+- **Animated Logo Stinger:** First-visit intro animation featuring a 10-second cinematic sequence:
+  - `LogoStinger`: Canvas-based starfield with nebula overlays, faceted 5-pointed star with dual-tone gradients (blue/cyan left, gold/magenta right), animated shard assembly, glow pulse, and "STORY ARCADE" title reveal
+  - Shows once on first visit (tracked via localStorage 'story-arcade-intro-seen')
+  - Click-to-skip functionality for impatient users
+  - Respects `prefers-reduced-motion` for accessibility (shows static end state for 2 seconds instead)
 - **Arcade Cabinet Aesthetics:** Immersive arcade cabinet experience with decorative components:
   - `ArcadeCabinet`: Bezel frame wrapper with side panels, stripe patterns, and control panel decorations
   - `CosmicMarquee`: Animated header with stars, planets, and shooting star effects
