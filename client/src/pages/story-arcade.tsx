@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ChevronRight, ChevronLeft, ArrowRight, Shuffle, Share2, Eye, RefreshCw, X } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ArrowRight, Shuffle, Share2, Eye, RefreshCw } from 'lucide-react';
 import type { Track, Story } from '@shared/schema';
 import { TRACKS, MOTIVATIONS, SEED_STORIES } from '@/lib/tracks';
 import { CRTOverlay } from '@/components/arcade/CRTOverlay';
@@ -19,6 +19,8 @@ import { InspireMe } from '@/components/arcade/InspireMe';
 import { TextareaTooltip } from '@/components/arcade/TextareaTooltip';
 import { ForgeProgress, type ForgeStatus } from '@/components/arcade/ForgeProgress';
 import { BackToTop } from '@/components/arcade/BackToTop';
+import { SkipLink } from '@/components/arcade/SkipLink';
+import { StoryModal } from '@/components/arcade/StoryModal';
 import { Button } from '@/components/ui/button';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { 
@@ -512,6 +514,7 @@ export default function StoryArcade() {
   if (view === 'ATTRACT') {
     return (
       <div className="min-h-screen bg-background flex flex-col font-sans text-foreground relative">
+        <SkipLink />
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
         
@@ -523,7 +526,7 @@ export default function StoryArcade() {
           />
         )}
         
-        <div className="relative flex-1 flex flex-col justify-center items-center px-6 text-center pt-20 md:pt-0">
+        <main id="main-content" className="relative flex-1 flex flex-col justify-center items-center px-6 text-center pt-20 md:pt-0" role="main">
           <div className="z-10 max-w-5xl space-y-8 animate-fade-in">
             <button
               onClick={handleSecretDemoTrigger}
@@ -548,8 +551,9 @@ export default function StoryArcade() {
                 size="lg"
                 className="w-full md:w-auto bg-primary text-primary-foreground font-display uppercase tracking-widest shadow-[0_0_15px_rgba(34,211,238,0.5)]"
                 data-testid="button-create-story"
+                aria-label="Start creating a new story"
               >
-                Create Your Story <ChevronRight className="ml-2 w-5 h-5" />
+                Create Your Story <ChevronRight className="ml-2 w-5 h-5" aria-hidden="true" />
               </Button>
               <Button 
                 variant="outline"
@@ -557,6 +561,7 @@ export default function StoryArcade() {
                 onClick={() => { setActiveTrack(TRACKS[0]); setAnswers({}); setCurrentQuestionIndex(0); setView('QUESTIONS'); }} 
                 className="w-full md:w-auto font-mono uppercase tracking-widest"
                 data-testid="button-quick-start"
+                aria-label="Quick start with Origin Story track"
               >
                 Quick Start: Origin
               </Button>
@@ -572,7 +577,7 @@ export default function StoryArcade() {
               </button>
             </div>
           </div>
-        </div>
+        </main>
         
         <Toast message={toast} />
       </div>
@@ -582,10 +587,11 @@ export default function StoryArcade() {
   if (view === 'TRACK_SELECT') {
     return (
       <div className="min-h-screen bg-background flex flex-col font-sans relative">
+        <SkipLink />
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
         
-        <div className="flex-1 p-6 md:p-12 pt-28 max-w-7xl mx-auto w-full">
+        <main id="main-content" className="flex-1 p-6 md:p-12 pt-28 max-w-7xl mx-auto w-full" role="main">
           <div className="mb-10 md:mb-16">
             <h2 className="text-3xl md:text-5xl text-foreground font-display uppercase mb-3" data-testid="text-page-title">Select a Cartridge</h2>
             <p className="text-muted-foreground font-mono text-xs md:text-sm tracking-widest">CHOOSE THE THEME OF YOUR NARRATIVE</p>
@@ -604,7 +610,7 @@ export default function StoryArcade() {
               <TrackCard key={track.id} track={track} onSelect={handleTrackSelect} />
             ))}
           </div>
-        </div>
+        </main>
         
         <Toast message={toast} />
       </div>
@@ -620,6 +626,7 @@ export default function StoryArcade() {
     
     return (
       <div className="min-h-screen bg-background flex flex-col font-sans relative overflow-hidden">
+        <SkipLink />
         <CRTOverlay />
         <Confetti active={showConfetti} />
         <Navbar 
@@ -641,7 +648,7 @@ export default function StoryArcade() {
           />
         )}
         
-        <div className="flex-1 flex flex-col pt-24 pb-32 px-6 md:p-12 md:pt-28 max-w-6xl mx-auto w-full">
+        <main id="main-content" className="flex-1 flex flex-col pt-24 pb-32 px-6 md:p-12 md:pt-28 max-w-6xl mx-auto w-full" role="main">
           <div className="w-full flex justify-between items-center mb-8 md:mb-16 border-b border-border pb-6 gap-4 flex-wrap">
             <div className="flex items-center gap-4 flex-wrap">
               <span className={`px-3 py-1 border ${activeTrack.border} ${activeTrack.accent} bg-opacity-10 rounded-sm text-[10px] font-mono uppercase tracking-widest`} data-testid="badge-track">
@@ -677,20 +684,33 @@ export default function StoryArcade() {
             </div>
 
             <div className="lg:col-span-7 flex flex-col justify-center">
-              <div className={`relative group flex-1 ${inputError ? 'animate-shake' : ''}`}>
-                <TextareaTooltip 
-                  isVisible={showTooltip} 
-                  onDismiss={() => setShowTooltip(false)} 
-                />
-                <textarea
-                  value={currentInput}
-                  onChange={(e) => handleAnswerChange(e.target.value)}
-                  onFocus={handleTextareaFocus}
-                  placeholder={question.placeholder}
-                  className="w-full h-full min-h-[120px] md:min-h-[240px] bg-card border border-card-border rounded-md p-4 md:p-6 text-[16px] md:text-lg leading-relaxed placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all resize-none"
-                  data-testid="input-answer"
-                />
-              </div>
+              <fieldset className="border-0 p-0 m-0">
+                <legend className="sr-only">Scene {currentQuestionIndex + 1} of {activeTrack.questions.length}: {question.prompt}</legend>
+                <div className={`relative group flex-1 ${inputError ? 'animate-shake' : ''}`}>
+                  <TextareaTooltip 
+                    isVisible={showTooltip} 
+                    onDismiss={() => setShowTooltip(false)} 
+                  />
+                  <label htmlFor="scene-input" className="sr-only">
+                    {question.prompt} (minimum 5 characters, maximum 300 characters, currently {charCount} characters)
+                  </label>
+                  <textarea
+                    id="scene-input"
+                    value={currentInput}
+                    onChange={(e) => handleAnswerChange(e.target.value)}
+                    onFocus={handleTextareaFocus}
+                    placeholder={question.placeholder}
+                    className="w-full h-full min-h-[120px] md:min-h-[240px] bg-card border border-card-border rounded-md p-4 md:p-6 text-[16px] md:text-lg leading-relaxed placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all resize-none"
+                    data-testid="input-answer"
+                    aria-required="true"
+                    aria-describedby="scene-helper"
+                    aria-invalid={inputError}
+                  />
+                  <div id="scene-helper" className="sr-only" aria-live="polite">
+                    {charCount} of 300 characters entered. Minimum 5 characters required.
+                  </div>
+                </div>
+              </fieldset>
               
               <div className="mt-3">
                 <CharacterProgress charCount={charCount} />
@@ -712,8 +732,9 @@ export default function StoryArcade() {
                   onClick={prevQuestion}
                   className="font-mono uppercase tracking-widest w-full md:w-auto order-2 md:order-1"
                   data-testid="button-prev"
+                  aria-label={currentQuestionIndex === 0 ? 'Return to track selection' : `Return to scene ${currentQuestionIndex}`}
                 >
-                  <ChevronLeft className="w-4 h-4 mr-2" />
+                  <ChevronLeft className="w-4 h-4 mr-2" aria-hidden="true" />
                   {currentQuestionIndex === 0 ? 'Back' : 'Prev'}
                 </Button>
                 <Button 
@@ -721,9 +742,13 @@ export default function StoryArcade() {
                   disabled={!isValid}
                   className="bg-primary text-primary-foreground font-display uppercase tracking-widest shadow-[0_0_15px_rgba(34,211,238,0.5)] disabled:opacity-50 w-full md:w-auto order-1 md:order-2"
                   data-testid="button-next"
+                  aria-label={currentQuestionIndex === activeTrack.questions.length - 1 
+                    ? 'Complete story and generate narrative' 
+                    : `Proceed to scene ${currentQuestionIndex + 2} (currently scene ${currentQuestionIndex + 1} of ${activeTrack.questions.length})`}
+                  aria-disabled={!isValid}
                 >
                   {currentQuestionIndex === activeTrack.questions.length - 1 ? 'Forge Story' : 'Next'}
-                  <ChevronRight className="w-4 h-4 ml-2" />
+                  <ChevronRight className="w-4 h-4 ml-2" aria-hidden="true" />
                 </Button>
               </div>
 
@@ -732,7 +757,7 @@ export default function StoryArcade() {
               </div>
             </div>
           </div>
-        </div>
+        </main>
         
         <Toast message={toast} />
       </div>
@@ -742,6 +767,7 @@ export default function StoryArcade() {
   if (view === 'FORGING') {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center font-sans relative">
+        <SkipLink />
         <CRTOverlay />
         {showConfetti && <Confetti active={showConfetti} />}
         <Navbar 
@@ -753,7 +779,7 @@ export default function StoryArcade() {
           totalScenes={totalScenes}
         />
         
-        <div className="text-center px-6 animate-fade-in relative" data-testid="view-forging">
+        <main id="main-content" className="text-center px-6 animate-fade-in relative" data-testid="view-forging" role="main">
           {forgeStatus === 'running' && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
               <div className="w-32 h-32 relative">
@@ -773,7 +799,7 @@ export default function StoryArcade() {
             onCancel={handleForgeCancel}
             onSaveDraft={handleForgeSaveDraft}
           />
-        </div>
+        </main>
         
         <Toast message={toast} />
       </div>
@@ -783,10 +809,11 @@ export default function StoryArcade() {
   if (view === 'REVEAL' && generatedStory) {
     return (
       <div className="min-h-screen bg-background flex flex-col font-sans relative">
+        <SkipLink />
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
         
-        <div className="flex-1 p-6 md:p-12 pt-28 max-w-4xl mx-auto w-full" data-testid="view-reveal">
+        <main id="main-content" className="flex-1 p-6 md:p-12 pt-28 max-w-4xl mx-auto w-full" data-testid="view-reveal" role="main">
           <div className="mb-8 text-center animate-fade-in">
             <p className="text-primary font-mono text-xs tracking-widest mb-4">YOUR STORY IS READY</p>
             <h1 className="font-display text-3xl md:text-5xl text-foreground mb-4" data-testid="text-story-title">
@@ -845,7 +872,7 @@ export default function StoryArcade() {
               <Shuffle className="w-4 h-4 mr-2" /> Create Another
             </Button>
           </div>
-        </div>
+        </main>
         
         <Toast message={toast} />
       </div>
@@ -855,6 +882,7 @@ export default function StoryArcade() {
   if (view === 'DRAFTS') {
     return (
       <div className="min-h-screen bg-background flex flex-col font-sans relative">
+        <SkipLink />
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
         <DraftsPage 
@@ -889,6 +917,7 @@ export default function StoryArcade() {
 
     return (
       <div className="min-h-screen bg-background flex flex-col font-sans relative">
+        <SkipLink />
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
         <MyStoriesPage 
@@ -898,51 +927,7 @@ export default function StoryArcade() {
         />
         
         {galleryModalStory && (
-          <div 
-            className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-6"
-            onClick={() => setGalleryModalStory(null)}
-            data-testid="modal-story"
-          >
-            <div 
-              className="bg-card border border-primary/30 rounded-md max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-10 relative animate-fade-in"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button 
-                onClick={() => setGalleryModalStory(null)}
-                className="absolute top-4 right-4 text-muted-foreground hover-elevate"
-                data-testid="button-close-modal"
-                aria-label="Close modal"
-              >
-                <X className="w-6 h-6" />
-              </button>
-              
-              <div className="mb-6">
-                <p className="text-primary font-mono text-xs tracking-widest mb-2">{galleryModalStory.trackTitle}</p>
-                <h2 className="font-display text-2xl md:text-4xl text-foreground mb-2">{galleryModalStory.title}</h2>
-              </div>
-              
-              <p className="text-lg text-primary font-display italic mb-6 border-l-4 border-primary pl-4">
-                "{galleryModalStory.logline}"
-              </p>
-              
-              <div className="space-y-4 text-foreground leading-relaxed">
-                <p>{galleryModalStory.p1}</p>
-                <p>{galleryModalStory.p2}</p>
-                <p>{galleryModalStory.p3}</p>
-              </div>
-              
-              <div className="flex items-center gap-2 mt-6 pt-6 border-t border-border flex-wrap">
-                {galleryModalStory.themes.map((theme) => (
-                  <span 
-                    key={theme}
-                    className="px-3 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-mono"
-                  >
-                    {theme}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
+          <StoryModal story={galleryModalStory} onClose={() => setGalleryModalStory(null)} />
         )}
         
         <Toast message={toast} />
@@ -953,10 +938,11 @@ export default function StoryArcade() {
   if (view === 'GALLERY') {
     return (
       <div className="min-h-screen bg-background flex flex-col font-sans relative">
+        <SkipLink />
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
         
-        <div className="flex-1 p-6 md:p-12 pt-28 max-w-7xl mx-auto w-full" data-testid="view-gallery">
+        <main id="main-content" className="flex-1 p-6 md:p-12 pt-28 max-w-7xl mx-auto w-full" data-testid="view-gallery" role="main">
           <div className="mb-10 md:mb-16 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <h2 className="text-3xl md:text-5xl text-foreground font-display uppercase mb-3">Community Archive</h2>
@@ -992,59 +978,12 @@ export default function StoryArcade() {
               ))}
             </div>
           )}
-        </div>
+        </main>
 
         <BackToTop />
 
         {galleryModalStory && (
-          <div 
-            className="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-6"
-            onClick={() => setGalleryModalStory(null)}
-            data-testid="modal-story"
-          >
-            <div 
-              className="bg-card border border-primary/30 rounded-md max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 md:p-10 relative animate-fade-in"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button 
-                onClick={() => setGalleryModalStory(null)}
-                className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
-                data-testid="button-close-modal"
-                aria-label="Close modal"
-              >
-                <X className="w-6 h-6" />
-              </button>
-              
-              <div className="mb-6">
-                <p className="text-primary font-mono text-xs tracking-widest mb-2">{galleryModalStory.trackTitle}</p>
-                <h2 className="font-display text-2xl md:text-4xl text-foreground mb-2">{galleryModalStory.title}</h2>
-                <p className="text-muted-foreground font-mono text-sm">
-                  by {galleryModalStory.author} • {galleryModalStory.neighborhood}
-                </p>
-              </div>
-              
-              <p className="text-lg text-primary font-display italic mb-6 border-l-4 border-primary pl-4">
-                "{galleryModalStory.logline}"
-              </p>
-              
-              <div className="space-y-4 text-foreground leading-relaxed">
-                <p>{galleryModalStory.p1}</p>
-                <p>{galleryModalStory.p2}</p>
-                <p>{galleryModalStory.p3}</p>
-              </div>
-              
-              <div className="flex items-center gap-2 mt-6 pt-6 border-t border-border flex-wrap">
-                {galleryModalStory.themes.map((theme) => (
-                  <span 
-                    key={theme}
-                    className="px-3 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-mono"
-                  >
-                    {theme}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
+          <StoryModal story={galleryModalStory} onClose={() => setGalleryModalStory(null)} />
         )}
         
         <Toast message={toast} />

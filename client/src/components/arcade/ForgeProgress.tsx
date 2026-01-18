@@ -94,8 +94,13 @@ export function ForgeProgress({
 
   if (status === 'timeout') {
     return (
-      <div className="flex flex-col items-center justify-center text-center space-y-6 p-8" data-testid="forge-timeout">
-        <Clock className="w-16 h-16 text-yellow-500 mb-4" />
+      <div 
+        className="flex flex-col items-center justify-center text-center space-y-6 p-8" 
+        data-testid="forge-timeout"
+        role="alert"
+        aria-live="assertive"
+      >
+        <Clock className="w-16 h-16 text-yellow-500 mb-4" aria-hidden="true" />
         <h2 className="font-display text-2xl md:text-3xl text-yellow-500 uppercase tracking-widest">
           Taking longer than expected
         </h2>
@@ -127,8 +132,13 @@ export function ForgeProgress({
   if (status === 'error') {
     return (
       <>
-        <div className="flex flex-col items-center justify-center text-center space-y-6 p-8" data-testid="forge-error">
-          <AlertTriangle className="w-16 h-16 text-destructive mb-4" />
+        <div 
+          className="flex flex-col items-center justify-center text-center space-y-6 p-8" 
+          data-testid="forge-error"
+          role="alert"
+          aria-live="assertive"
+        >
+          <AlertTriangle className="w-16 h-16 text-destructive mb-4" aria-hidden="true" />
           <h2 className="font-display text-2xl md:text-3xl text-destructive uppercase tracking-widest">
             Legend forging failed
           </h2>
@@ -198,7 +208,14 @@ export function ForgeProgress({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center text-center space-y-8 p-8 max-w-lg" data-testid="forge-progress">
+    <div 
+      className="flex flex-col items-center justify-center text-center space-y-8 p-8 max-w-lg" 
+      data-testid="forge-progress"
+      role="status"
+      aria-busy="true"
+      aria-live="polite"
+      aria-label={`Forging your story. Stage: ${currentStage.message} Progress: ${Math.round(progress)}%`}
+    >
       <h1 className="font-display text-3xl md:text-5xl text-foreground uppercase tracking-widest">
         Forging your legend...
       </h1>
@@ -208,8 +225,13 @@ export function ForgeProgress({
       </p>
 
       <div className="w-full max-w-md space-y-2">
-        <Progress value={progress} className="h-2" data-testid="progress-forge" />
-        <p className="text-xs font-mono text-muted-foreground text-right">
+        <Progress 
+          value={progress} 
+          className="h-2" 
+          data-testid="progress-forge"
+          aria-label={`Story generation progress: ${Math.round(progress)}%`}
+        />
+        <p className="text-xs font-mono text-muted-foreground text-right" aria-hidden="true">
           {Math.round(progress)}%
         </p>
       </div>
@@ -217,10 +239,11 @@ export function ForgeProgress({
       <div 
         className={`transition-opacity duration-300 ${fadeIn ? 'opacity-100' : 'opacity-0'}`}
         data-testid="text-forge-stage"
+        aria-live="polite"
       >
         <p className="font-mono text-lg md:text-xl text-primary flex items-center justify-center gap-2">
-          <currentStage.icon className="w-5 h-5" />
-          {currentStage.message}
+          <currentStage.icon className="w-5 h-5" aria-hidden="true" />
+          <span>{currentStage.message}</span>
         </p>
       </div>
     </div>

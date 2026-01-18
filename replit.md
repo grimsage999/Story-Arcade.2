@@ -240,3 +240,51 @@ interface CompletedStory {
 **Auto-Save on Completion:**
 - Completed stories automatically saved to localStorage after successful forging
 - Includes all story content, themes, user inputs, and metadata
+
+### Accessibility (WCAG 2.1 AA Compliance)
+
+**Landmark Structure:**
+- All views implement `<main id="main-content" role="main">` landmark
+- SkipLink component (`client/src/components/arcade/SkipLink.tsx`) provides "Skip to main content" link
+- Semantic HTML structure with proper heading hierarchy
+
+**Keyboard Navigation:**
+- Tab navigation through all interactive elements
+- Enter/Space activates buttons and cards
+- ESC closes modals and returns focus to trigger element
+- Focus trap implemented in all modal dialogs
+- Custom focus ring: `focus:ring-cyan-400` for brand-consistent visibility
+
+**Screen Reader Support:**
+- All decorative icons marked with `aria-hidden="true"`
+- Interactive elements have descriptive `aria-label` attributes
+- Live regions (`aria-live="polite"`) for dynamic content updates
+- `aria-busy` states for loading indicators
+- `aria-describedby` for contextual help text
+
+**Modal Accessibility:**
+- `role="dialog"` and `aria-modal="true"` on all modals
+- `aria-labelledby` references modal title
+- `aria-describedby` references modal description
+- Focus automatically moves to first focusable element on open
+- Focus restored to trigger element on close (`previousFocusRef` pattern)
+
+**Form Accessibility:**
+- `<fieldset>` and `<legend>` wrap related form controls
+- All inputs have associated `<label>` elements
+- `aria-required="true"` on required fields
+- `aria-invalid` reflects validation state
+- `aria-describedby` links to error messages and help text
+- Character count announced via `aria-live="polite"`
+
+**Component Accessibility:**
+- TrackCard: `role="button"`, keyboard activatable, `aria-pressed` state
+- StoryCard: Semantic `<article>` element, descriptive `aria-label`
+- Navigation: `role="navigation"` with `aria-label` descriptions
+- Toast notifications: `aria-live="polite"` for announcements
+
+**Key Components:**
+- `client/src/components/arcade/SkipLink.tsx` - Skip navigation link
+- `client/src/components/arcade/UnsavedStoryModal.tsx` - Focus trap and restoration
+- `client/src/components/arcade/TrackCard.tsx` - Keyboard-accessible cards
+- `client/src/components/arcade/StoryCard.tsx` - Semantic article cards

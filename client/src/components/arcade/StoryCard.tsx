@@ -11,13 +11,13 @@ interface StoryCardProps {
 function getIcon(trackId: string) {
   switch (trackId) {
     case 'origin':
-      return <Rewind className="w-3 h-3" />;
+      return <Rewind className="w-3 h-3" aria-hidden="true" />;
     case 'future':
-      return <Zap className="w-3 h-3" />;
+      return <Zap className="w-3 h-3" aria-hidden="true" />;
     case 'legend':
-      return <MapPin className="w-3 h-3" />;
+      return <MapPin className="w-3 h-3" aria-hidden="true" />;
     default:
-      return <Zap className="w-3 h-3" />;
+      return <Zap className="w-3 h-3" aria-hidden="true" />;
   }
 }
 
@@ -51,10 +51,14 @@ export function StoryCard({ story, onView, compact = false }: StoryCardProps) {
 
   if (compact) {
     return (
-      <div 
-        className="bg-card border border-card-border rounded-md p-4 hover:border-primary/30 transition-colors cursor-pointer"
+      <article 
+        className="bg-card border border-card-border rounded-md p-4 hover:border-primary/30 transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
         onClick={() => onView?.(story)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onView?.(story); }}}
         data-testid={`card-story-${story.id}`}
+        tabIndex={0}
+        role="button"
+        aria-label={`View story: ${story.title} by ${story.author}`}
       >
         <div className="flex items-center gap-2 mb-2">
           <span className={`px-2 py-0.5 rounded-full border text-[10px] font-mono flex items-center gap-1 ${accentClass}`}>
@@ -64,14 +68,15 @@ export function StoryCard({ story, onView, compact = false }: StoryCardProps) {
         </div>
         <h4 className="font-display text-lg text-foreground mb-1">{story.title}</h4>
         <p className="text-sm text-muted-foreground line-clamp-2">{story.logline}</p>
-      </div>
+      </article>
     );
   }
 
   return (
-    <div 
+    <article 
       className="bg-card border border-card-border rounded-md p-6 hover:border-primary/30 transition-colors group"
       data-testid={`card-story-${story.id}`}
+      aria-label={`Story: ${story.title} by ${story.author}`}
     >
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
@@ -115,16 +120,18 @@ export function StoryCard({ story, onView, compact = false }: StoryCardProps) {
           onClick={handleShare}
           className="text-muted-foreground hover:text-foreground"
           data-testid={`button-share-${story.id}`}
+          aria-label={`Share story: ${story.title}`}
         >
-          <Share2 className="w-4 h-4 mr-1" /> Share
+          <Share2 className="w-4 h-4 mr-1" aria-hidden="true" /> Share
         </Button>
         <Button 
           variant="ghost" 
           size="sm"
           className="text-muted-foreground hover:text-foreground"
           data-testid={`button-bookmark-${story.id}`}
+          aria-label={`Save story: ${story.title} to bookmarks`}
         >
-          <Bookmark className="w-4 h-4 mr-1" /> Save
+          <Bookmark className="w-4 h-4 mr-1" aria-hidden="true" /> Save
         </Button>
         {onView && (
           <Button 
@@ -133,11 +140,12 @@ export function StoryCard({ story, onView, compact = false }: StoryCardProps) {
             onClick={() => onView(story)}
             className="ml-auto text-primary"
             data-testid={`button-view-${story.id}`}
+            aria-label={`Read full story: ${story.title}`}
           >
             Read Full Story
           </Button>
         )}
       </div>
-    </div>
+    </article>
   );
 }

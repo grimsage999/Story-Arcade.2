@@ -101,7 +101,12 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
   const uniqueThemes = Array.from(new Set(stories.flatMap(s => s.themes)));
 
   return (
-    <div className="max-w-4xl mx-auto p-6 pt-24" data-testid="page-my-stories">
+    <main 
+      id="main-content" 
+      className="max-w-4xl mx-auto p-6 pt-24" 
+      data-testid="page-my-stories"
+      aria-label="Your Stories page"
+    >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl md:text-5xl font-display text-foreground mb-2" data-testid="text-page-title">
@@ -301,10 +306,10 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
       )}
 
       <div className="mt-8 text-center">
-        <Button variant="outline" onClick={onBack} data-testid="button-back">
+        <Button variant="outline" onClick={onBack} data-testid="button-back" aria-label="Return to home page">
           Back to Home
         </Button>
       </div>
-    </div>
+    </main>
   );
 }

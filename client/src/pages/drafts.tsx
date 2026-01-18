@@ -85,21 +85,26 @@ export function DraftsPage({ onResumeDraft, onBack }: DraftsPageProps) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 pt-24" data-testid="page-drafts">
+    <main 
+      id="main-content" 
+      className="max-w-4xl mx-auto p-6 pt-24" 
+      data-testid="page-drafts"
+      aria-label="Your Drafts page"
+    >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl md:text-5xl font-display text-foreground mb-2" data-testid="text-page-title">
             Your Drafts
           </h1>
-          <p className="text-muted-foreground font-mono text-xs tracking-widest">
+          <p className="text-muted-foreground font-mono text-xs tracking-widest" role="status" aria-live="polite">
             {drafts.length} DRAFT{drafts.length !== 1 ? 'S' : ''} SAVED
           </p>
         </div>
         
         <div className="flex items-center gap-3">
           <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-            <SelectTrigger className="w-[160px]" data-testid="select-sort">
-              <ArrowUpDown className="w-4 h-4 mr-2" />
+            <SelectTrigger className="w-[160px]" data-testid="select-sort" aria-label="Sort drafts by">
+              <ArrowUpDown className="w-4 h-4 mr-2" aria-hidden="true" />
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -258,10 +263,10 @@ export function DraftsPage({ onResumeDraft, onBack }: DraftsPageProps) {
       )}
 
       <div className="mt-8 text-center">
-        <Button variant="outline" onClick={onBack} data-testid="button-back">
+        <Button variant="outline" onClick={onBack} data-testid="button-back" aria-label="Return to home page">
           Back to Home
         </Button>
       </div>
-    </div>
+    </main>
   );
 }

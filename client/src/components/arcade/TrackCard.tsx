@@ -9,13 +9,13 @@ interface TrackCardProps {
 function getIcon(trackId: string) {
   switch (trackId) {
     case 'origin':
-      return <Rewind className="w-6 h-6 text-fuchsia-400" />;
+      return <Rewind className="w-6 h-6 text-fuchsia-400" aria-hidden="true" />;
     case 'future':
-      return <Zap className="w-6 h-6 text-cyan-400" />;
+      return <Zap className="w-6 h-6 text-cyan-400" aria-hidden="true" />;
     case 'legend':
-      return <MapPin className="w-6 h-6 text-amber-400" />;
+      return <MapPin className="w-6 h-6 text-amber-400" aria-hidden="true" />;
     default:
-      return <Zap className="w-6 h-6 text-cyan-400" />;
+      return <Zap className="w-6 h-6 text-cyan-400" aria-hidden="true" />;
   }
 }
 
@@ -29,8 +29,9 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
   return (
     <button 
       onClick={() => onSelect(track)}
-      className={`group relative min-h-[220px] md:h-[360px] bg-card border border-card-border ${borderHoverClass} p-6 md:p-8 flex flex-col justify-between cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_0_40px_rgba(0,0,0,0.4)] overflow-hidden rounded-md active:scale-[0.98] text-left`}
+      className={`group relative min-h-[220px] md:h-[360px] bg-card border border-card-border ${borderHoverClass} p-6 md:p-8 flex flex-col justify-between cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_0_40px_rgba(0,0,0,0.4)] overflow-hidden rounded-md active:scale-[0.98] text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400`}
       data-testid={`card-track-${track.id}`}
+      aria-label={`Select ${track.title} track: ${track.subtitle}. ${track.questions.length} questions.`}
     >
       <div className={`absolute inset-0 bg-gradient-to-br ${track.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
       <div className="relative z-10 flex flex-col h-full">
@@ -58,7 +59,7 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
         <div className="mt-auto pt-6 border-t border-border/50 flex items-center justify-between gap-2 text-[10px] font-mono text-muted-foreground group-hover:text-foreground transition-colors flex-wrap">
           <span>{track.questions.length} QUESTIONS</span>
           <span className="flex items-center">
-            INSERT <ArrowRight className="w-3 h-3 ml-2 group-hover:translate-x-1 transition-transform" />
+            INSERT <ArrowRight className="w-3 h-3 ml-2 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
           </span>
         </div>
       </div>
