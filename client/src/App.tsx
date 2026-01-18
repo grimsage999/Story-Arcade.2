@@ -27,20 +27,38 @@ function App() {
   const [introChecked, setIntroChecked] = useState(false);
 
   useEffect(() => {
-    // Check for replay parameter in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const shouldReplay = urlParams.get('replay') === 'intro';
-    
-    if (shouldReplay) {
-      // Clear the flag and remove the URL parameter
-      localStorage.removeItem(INTRO_SEEN_KEY);
-      window.history.replaceState({}, '', window.location.pathname);
-      setShowIntro(true);
-    } else {
-      const hasSeenIntro = localStorage.getItem(INTRO_SEEN_KEY);
-      if (!hasSeenIntro) {
+    try {
+      // Check for URL parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const shouldReplay = urlParams.get('replay') === 'intro';
+      const forceIntro = urlParams.get('intro') === 'force';
+      
+      // Force intro bypasses all checks
+      if (forceIntro) {
+        console.log('[LogoStinger] Force intro triggered via URL');
+        window.history.replaceState({}, '', window.location.pathname);
         setShowIntro(true);
+        setIntroChecked(true);
+        return;
       }
+      
+      if (shouldReplay) {
+        // Clear the flag and remove the URL parameter
+        console.log('[LogoStinger] Replay intro triggered');
+        localStorage.removeItem(INTRO_SEEN_KEY);
+        window.history.replaceState({}, '', window.location.pathname);
+        setShowIntro(true);
+      } else {
+        const hasSeenIntro = localStorage.getItem(INTRO_SEEN_KEY);
+        console.log('[LogoStinger] Has seen intro:', hasSeenIntro);
+        if (!hasSeenIntro) {
+          setShowIntro(true);
+        }
+      }
+    } catch (e) {
+      // If localStorage is blocked, show intro
+      console.log('[LogoStinger] localStorage error, showing intro:', e);
+      setShowIntro(true);
     }
     setIntroChecked(true);
   }, []);
