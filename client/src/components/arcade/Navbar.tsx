@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Sparkles, Menu, X, Trophy } from 'lucide-react';
+import { Sparkles, Menu, Trophy, Home, Compass, Settings } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
 
 type View = 'ATTRACT' | 'TRACK_SELECT' | 'QUESTIONS' | 'FORGING' | 'REVEAL' | 'GALLERY';
 
@@ -39,22 +41,122 @@ export function Navbar({
     }
   };
 
+  const handleMobileNavClick = (targetView: View) => {
+    if (!isCreating) {
+      onViewChange(targetView);
+      setMobileMenuOpen(false);
+    }
+  };
+
   const navButtonClass = isCreating 
     ? 'opacity-50 cursor-not-allowed' 
-    : 'hover:text-primary transition-colors cursor-pointer';
+    : 'hover-elevate cursor-pointer';
 
   return (
     <nav className="fixed top-0 left-0 w-full z-40 bg-background/90 backdrop-blur-xl border-b border-border px-4 md:px-8 py-4 flex justify-between items-center gap-4">
-      <button 
-        onClick={handleLogoClick} 
-        className="cursor-pointer group flex items-center gap-3"
-        data-testid="link-home"
-      >
-        <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-sm flex items-center justify-center shadow-lg shadow-cyan-900/50 group-hover:rotate-12 transition-transform">
-          <Sparkles className="w-5 h-5 text-black fill-black" />
-        </div>
-        <span className="font-display text-lg md:text-xl text-foreground tracking-[0.15em] group-hover:text-primary transition-colors">STORY ARCADE</span>
-      </button>
+      <div className="flex items-center gap-3">
+        <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              data-testid="button-mobile-menu"
+              aria-label="Open menu"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[70vw] max-w-[320px] bg-background border-r border-border p-0">
+            <div className="flex flex-col h-full">
+              <div className="p-6 border-b border-border">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-sm flex items-center justify-center shadow-lg shadow-cyan-900/50">
+                    <Sparkles className="w-5 h-5 text-black fill-black" />
+                  </div>
+                  <span className="font-display text-lg text-foreground tracking-[0.15em]">STORY ARCADE</span>
+                </div>
+              </div>
+
+              <div className="flex-1 p-4 space-y-2">
+                <Button 
+                  variant="ghost"
+                  onClick={() => handleMobileNavClick('ATTRACT')} 
+                  className={`w-full justify-start gap-3 font-display text-lg tracking-widest ${
+                    isCreating ? 'text-muted-foreground/50 cursor-not-allowed' : ''
+                  }`}
+                  disabled={isCreating}
+                  data-testid="mobile-nav-home"
+                >
+                  <Home className="w-5 h-5" />
+                  HOME
+                  {isCreating && <span className="text-xs text-muted-foreground ml-auto">({currentScene}/{totalScenes})</span>}
+                </Button>
+                
+                <Button 
+                  variant="ghost"
+                  onClick={() => handleMobileNavClick('GALLERY')} 
+                  className={`w-full justify-start gap-3 font-display text-lg tracking-widest ${
+                    isCreating ? 'text-muted-foreground/50 cursor-not-allowed' : ''
+                  }`}
+                  disabled={isCreating}
+                  data-testid="mobile-nav-explore"
+                >
+                  <Compass className="w-5 h-5" />
+                  EXPLORE
+                  {isCreating && <span className="text-xs text-muted-foreground ml-auto">({currentScene}/{totalScenes})</span>}
+                </Button>
+
+                {!isCreating && (
+                  <Button 
+                    variant="default"
+                    onClick={() => handleMobileNavClick('TRACK_SELECT')} 
+                    className="w-full justify-start gap-3 font-display text-lg tracking-widest"
+                    data-testid="mobile-nav-create"
+                  >
+                    <Sparkles className="w-5 h-5" />
+                    CREATE STORY
+                  </Button>
+                )}
+              </div>
+
+              <div className="p-4 border-t border-border space-y-4">
+                <div className="flex items-center gap-3 p-4 rounded-md bg-amber-900/10 border border-amber-500/20">
+                  <Trophy className="w-5 h-5 text-amber-400" />
+                  <span className="text-amber-400 font-mono text-sm">{streak} stories created</span>
+                </div>
+                
+                {isCreating && (
+                  <div className="flex items-center gap-3 p-4 rounded-md bg-cyan-900/10 border border-cyan-500/20">
+                    <Sparkles className="w-5 h-5 text-cyan-400" />
+                    <span className="text-cyan-400 font-mono text-sm">Scene {currentScene}/{totalScenes}</span>
+                  </div>
+                )}
+
+                <Button 
+                  variant="ghost"
+                  className="w-full justify-start gap-3 text-muted-foreground font-mono text-sm tracking-widest"
+                  data-testid="mobile-nav-settings"
+                >
+                  <Settings className="w-5 h-5" />
+                  SETTINGS
+                </Button>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        <button 
+          onClick={handleLogoClick} 
+          className="cursor-pointer group flex items-center gap-3"
+          data-testid="link-home"
+        >
+          <div className="w-8 h-8 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-sm flex items-center justify-center shadow-lg shadow-cyan-900/50 group-hover:rotate-3 transition-transform hidden md:flex">
+            <Sparkles className="w-5 h-5 text-black fill-black" />
+          </div>
+          <span className="font-display text-lg md:text-xl text-foreground tracking-[0.15em]">STORY ARCADE</span>
+        </button>
+      </div>
       
       <div className="hidden md:flex items-center gap-6 font-mono text-xs text-muted-foreground font-medium tracking-widest">
         {isCreating ? (
@@ -110,59 +212,16 @@ export function Navbar({
         </div>
       </div>
 
-      <button 
-        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        className="md:hidden text-muted-foreground p-2 hover:text-foreground"
-        data-testid="button-mobile-menu"
-        aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-      >
-        {mobileMenuOpen ? <X /> : <Menu />}
-      </button>
-
-      {mobileMenuOpen && (
-        <div className="absolute top-full left-0 w-full bg-background border-b border-border p-6 flex flex-col gap-6 md:hidden shadow-2xl animate-slide-in-from-top">
-          {isCreating ? (
-            <>
-              <span className="text-left text-muted-foreground/50 font-display text-xl tracking-widest">
-                HOME (Scene {currentScene}/{totalScenes})
-              </span>
-              <span className="text-left text-muted-foreground/50 font-display text-xl tracking-widest">
-                EXPLORE (Scene {currentScene}/{totalScenes})
-              </span>
-              <div className="flex items-center gap-2 text-cyan-400 font-mono text-sm">
-                Story in Progress: Scene {currentScene}/{totalScenes}
-              </div>
-            </>
-          ) : (
-            <>
-              <button 
-                onClick={() => { onViewChange('ATTRACT'); setMobileMenuOpen(false); }} 
-                className="text-left text-foreground font-display text-xl tracking-widest"
-                data-testid="mobile-nav-home"
-              >
-                HOME
-              </button>
-              <button 
-                onClick={() => { onViewChange('GALLERY'); setMobileMenuOpen(false); }} 
-                className="text-left text-foreground font-display text-xl tracking-widest"
-                data-testid="mobile-nav-explore"
-              >
-                EXPLORE
-              </button>
-              <button 
-                onClick={() => { onViewChange('TRACK_SELECT'); setMobileMenuOpen(false); }} 
-                className="text-left text-primary font-display text-xl tracking-widest"
-                data-testid="mobile-nav-create"
-              >
-                CREATE STORY
-              </button>
-            </>
-          )}
-          <div className="flex items-center gap-2 text-amber-400 font-mono text-sm">
-            <Trophy className="w-4 h-4" /> {streak} stories created
+      <div className="md:hidden flex items-center gap-2">
+        {isCreating && (
+          <div className="flex items-center gap-1 text-cyan-400 text-xs font-mono" data-testid="mobile-scene-progress">
+            {currentScene}/{totalScenes}
           </div>
+        )}
+        <div className="flex items-center gap-1 text-amber-400 text-xs" data-testid="mobile-streak">
+          <Trophy className="w-3 h-3" /> {streak}
         </div>
-      )}
+      </div>
     </nav>
   );
 }

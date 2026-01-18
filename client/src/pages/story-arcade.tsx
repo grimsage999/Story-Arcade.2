@@ -18,6 +18,7 @@ import { CharacterProgress } from '@/components/arcade/CharacterProgress';
 import { InspireMe } from '@/components/arcade/InspireMe';
 import { TextareaTooltip } from '@/components/arcade/TextareaTooltip';
 import { ForgeProgress, type ForgeStatus } from '@/components/arcade/ForgeProgress';
+import { BackToTop } from '@/components/arcade/BackToTop';
 import { Button } from '@/components/ui/button';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { 
@@ -502,12 +503,12 @@ export default function StoryArcade() {
           <div className="z-10 max-w-5xl space-y-8 animate-fade-in">
             <button
               onClick={handleSecretDemoTrigger}
-              className="inline-block px-4 py-1.5 border border-primary/20 rounded-full bg-primary/10 text-primary font-mono text-[10px] md:text-xs tracking-[0.2em] mb-4 backdrop-blur-sm hover:bg-primary/20 transition-colors cursor-pointer"
+              className="inline-block px-4 py-1.5 border border-primary/20 rounded-full bg-primary/10 text-primary font-mono text-[10px] md:text-xs tracking-[0.2em] mb-4 backdrop-blur-sm hover-elevate cursor-pointer"
               data-testid="badge-version"
             >
               COMMUNITY MYTHOLOGY ENGINE v1.0
             </button>
-            <h1 className="text-4xl md:text-7xl lg:text-8xl font-display leading-[0.9] tracking-tight hover:scale-[1.01] transition-transform duration-500 cursor-default">
+            <h1 className="text-[28px] md:text-7xl lg:text-8xl font-display leading-[0.95] md:leading-[0.9] tracking-tight cursor-default">
               TURN YOUR STORY INTO <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 drop-shadow-[0_0_30px_rgba(34,211,238,0.4)] animate-pulse-glow">
                 CINEMATIC LEGEND
@@ -521,7 +522,7 @@ export default function StoryArcade() {
               <Button 
                 onClick={() => setView('TRACK_SELECT')} 
                 size="lg"
-                className="w-full md:w-auto bg-primary text-primary-foreground font-display uppercase tracking-widest shadow-[0_0_15px_rgba(34,211,238,0.5)] hover:shadow-[0_0_25px_rgba(34,211,238,0.6)] transition-all"
+                className="w-full md:w-auto bg-primary text-primary-foreground font-display uppercase tracking-widest shadow-[0_0_15px_rgba(34,211,238,0.5)]"
                 data-testid="button-create-story"
               >
                 Create Your Story <ChevronRight className="ml-2 w-5 h-5" />
@@ -540,7 +541,7 @@ export default function StoryArcade() {
             <div className="pt-12">
               <button 
                 onClick={() => setView('GALLERY')}
-                className="text-muted-foreground hover:text-primary transition-colors font-mono text-xs tracking-widest flex items-center gap-2 mx-auto"
+                className="text-muted-foreground hover-elevate font-mono text-xs tracking-widest flex items-center gap-2 mx-auto"
                 data-testid="link-explore-gallery"
               >
                 <Eye className="w-4 h-4" /> EXPLORE {gallery.length} COMMUNITY STORIES
@@ -640,7 +641,7 @@ export default function StoryArcade() {
           <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
             <div className="lg:col-span-5 flex flex-col justify-center">
               <p className="text-muted-foreground font-mono text-[10px] md:text-xs tracking-widest mb-4">{question.guidance.toUpperCase()}</p>
-              <h2 className="font-display text-2xl md:text-4xl text-foreground leading-tight mb-6" data-testid="text-question-prompt">
+              <h2 className="font-display text-xl md:text-4xl text-foreground leading-tight mb-4 md:mb-6" data-testid="text-question-prompt">
                 {question.prompt}
               </h2>
               <p className="text-muted-foreground font-mono text-xs italic">{motivation}</p>
@@ -662,7 +663,7 @@ export default function StoryArcade() {
                   onChange={(e) => handleAnswerChange(e.target.value)}
                   onFocus={handleTextareaFocus}
                   placeholder={question.placeholder}
-                  className="w-full h-full min-h-[180px] md:min-h-[240px] bg-card border border-card-border rounded-md p-6 text-foreground text-base md:text-lg leading-relaxed placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all resize-none"
+                  className="w-full h-full min-h-[120px] md:min-h-[240px] bg-card border border-card-border rounded-md p-4 md:p-6 text-[16px] md:text-lg leading-relaxed placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all resize-none"
                   data-testid="input-answer"
                 />
               </div>
@@ -681,11 +682,11 @@ export default function StoryArcade() {
                 onUse={handleInspireUse}
               />
 
-              <div className="flex justify-between items-center mt-6 gap-4">
+              <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center mt-6 gap-3 md:gap-4">
                 <Button 
                   variant="outline" 
                   onClick={prevQuestion}
-                  className="font-mono uppercase tracking-widest"
+                  className="font-mono uppercase tracking-widest w-full md:w-auto order-2 md:order-1"
                   data-testid="button-prev"
                 >
                   <ChevronLeft className="w-4 h-4 mr-2" />
@@ -694,7 +695,7 @@ export default function StoryArcade() {
                 <Button 
                   onClick={nextQuestion}
                   disabled={!isValid}
-                  className="bg-primary text-primary-foreground font-display uppercase tracking-widest shadow-[0_0_15px_rgba(34,211,238,0.5)] disabled:opacity-50 disabled:shadow-none"
+                  className="bg-primary text-primary-foreground font-display uppercase tracking-widest shadow-[0_0_15px_rgba(34,211,238,0.5)] disabled:opacity-50 w-full md:w-auto order-1 md:order-2"
                   data-testid="button-next"
                 >
                   {currentQuestionIndex === activeTrack.questions.length - 1 ? 'Forge Story' : 'Next'}
@@ -795,10 +796,10 @@ export default function StoryArcade() {
             </div>
           </div>
           
-          <div className="flex flex-col md:flex-row gap-4 justify-center animate-fade-in">
+          <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-center animate-fade-in">
             <Button 
               onClick={handleShare}
-              className="bg-primary text-primary-foreground font-display uppercase tracking-widest"
+              className="bg-primary text-primary-foreground font-display uppercase tracking-widest w-full md:w-auto"
               data-testid="button-share-story"
             >
               <Share2 className="w-4 h-4 mr-2" /> Share Story
@@ -806,7 +807,7 @@ export default function StoryArcade() {
             <Button 
               variant="outline"
               onClick={() => setView('GALLERY')}
-              className="font-mono uppercase tracking-widest"
+              className="font-mono uppercase tracking-widest w-full md:w-auto"
               data-testid="button-view-gallery"
             >
               <Eye className="w-4 h-4 mr-2" /> View Gallery
@@ -814,7 +815,7 @@ export default function StoryArcade() {
             <Button 
               variant="outline"
               onClick={startOver}
-              className="font-mono uppercase tracking-widest"
+              className="font-mono uppercase tracking-widest w-full md:w-auto"
               data-testid="button-create-another"
             >
               <Shuffle className="w-4 h-4 mr-2" /> Create Another
@@ -859,7 +860,7 @@ export default function StoryArcade() {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 pb-20">
               {gallery.map((story) => (
                 <StoryCard 
                   key={story.id} 
@@ -870,6 +871,8 @@ export default function StoryArcade() {
             </div>
           )}
         </div>
+
+        <BackToTop />
 
         {galleryModalStory && (
           <div 

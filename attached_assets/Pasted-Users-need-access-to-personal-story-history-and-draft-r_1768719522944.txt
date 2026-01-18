@@ -1,0 +1,63 @@
+Users need access to personal story history and draft recovery across sessions.
+
+REQUIREMENT: Add persistent draft storage, personal story library, and export features.
+
+IMPLEMENTATION DETAILS:
+1. Auto-save drafts to localStorage:
+   - Every 10 seconds during scene creation
+   - Structure: { draftId, storyTitle, currentScene, userInputs: [5 slots], createdAt, lastSavedAt }
+   - Display auto-save status: "Auto-saved just now" (update in real-time)
+   - If save fails: show warning notification (3 sec): "Draft save failed - check connection"
+
+2. Create persistent DRAFTS section:
+   - New tab/page accessible from navigation
+   - Display saved drafts in list format:
+     ```
+     [Story Title] [Scene 2/5] - Created 2h ago
+     [CONTINUE] [DUPLICATE] [DELETE]
+     ```
+   - Pagination for 10+ drafts (10 per page)
+   - Sort by: [Most Recent] [Oldest] [Alphabetical]
+   - Allow renaming draft: click title to edit inline
+
+3. Draft recovery on startup:
+   - Check localStorage for incomplete drafts on app load
+   - If draft exists from < 24 hours ago, show modal:
+     ```
+     "Welcome back! Found an unsaved story: 'The Meteor Legend' (Scene 3/5)"
+     [RESUME] [DISCARD] [NEW STORY]
+     ```
+   - Auto-dismiss if user has no recent drafts
+
+4. MY STORIES personal library:
+   - New navigation item: [MY STORIES]
+   - Display all completed stories created by this user
+   - Card layout: [Story title] [Date created] [Theme tags] [View/Edit/Export]
+   - Sort by: [Newest First] [Most Liked] [Alphabetical]
+   - Pagination: 10 stories per page
+   - Search bar: "Search your stories..."
+   - Filter by theme: [All] [HOPE] [GRIT] [MYSTERY] etc.
+
+5. Export functionality on completed stories:
+   - Add button group on story page: [EXPORT]
+   - Dropdown menu options:
+     - [📄 Download as PDF] - styled PDF with story text, themes, ID, timestamp
+     - [📋 Copy to Clipboard] - plain text version ready for pasting
+     - [🔗 Copy Story Link] - shareable URL with story ID (for EXPLORE)
+     - [📸 Generate Card] - creates social media preview image (title + opening quote)
+
+6. localStorage key structure:
+   - "storyArcade_drafts": array of all drafts
+   - "storyArcade_completed": array of published stories (synced with server if available)
+   - "storyArcade_settings": user preferences (theme, language, etc.)
+   - Max storage: 5MB (warn user if approaching limit)
+   - Auto-cleanup: delete drafts older than 30 days
+
+7. Service Worker for offline access:
+   - Cache completed stories locally (offline-readable)
+   - Show "📡 Offline Mode" indicator when no connection
+   - Allow viewing completed stories but disable creation/publishing
+   - Sync drafts when connection restored
+
+Use browser's IndexedDB for scale (> 1000 stories), fall back to localStorage for < 100.
+Add "Clear all drafts?" confirmation before deletion.
