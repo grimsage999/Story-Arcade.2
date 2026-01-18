@@ -13,6 +13,10 @@ import { DraftRecoveryBanner } from '@/components/arcade/DraftRecoveryBanner';
 import { UnsavedStoryModal } from '@/components/arcade/UnsavedStoryModal';
 import { DraftsList } from '@/components/arcade/DraftsList';
 import { AutoSaveIndicator } from '@/components/arcade/AutoSaveIndicator';
+import { SceneExamples } from '@/components/arcade/SceneExamples';
+import { CharacterProgress } from '@/components/arcade/CharacterProgress';
+import { InspireMe } from '@/components/arcade/InspireMe';
+import { TextareaTooltip } from '@/components/arcade/TextareaTooltip';
 import { Button } from '@/components/ui/button';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { 
@@ -59,6 +63,10 @@ export default function StoryArcade() {
 
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const currentDraftIdRef = useRef<string | null>(null);
+  
+  const [inspireUsage, setInspireUsage] = useState<Record<number, number>>({});
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [hasTyped, setHasTyped] = useState(false);
 
   const { data: apiGallery, isLoading: isLoadingGallery, isError: isGalleryError } = useQuery<Story[]>({
     queryKey: ['/api/stories'],
@@ -160,6 +168,40 @@ export default function StoryArcade() {
     const qId = activeTrack.questions[currentQuestionIndex].id;
     setAnswers(prev => ({ ...prev, [qId]: text }));
     setInputError(false);
+    if (!hasTyped) {
+      setHasTyped(true);
+      setShowTooltip(false);
+    }
+  };
+  
+  const handleTextareaFocus = () => {
+    if (!hasTyped) {
+      setShowTooltip(true);
+    }
+  };
+  
+  const handleExampleClick = (example: string) => {
+    if (!activeTrack) return;
+    const qId = activeTrack.questions[currentQuestionIndex].id;
+    setAnswers(prev => ({ ...prev, [qId]: example }));
+    setInputError(false);
+    setHasTyped(true);
+  };
+  
+  const handleInspireClick = (suggestion: string) => {
+    if (!activeTrack) return;
+    const qId = activeTrack.questions[currentQuestionIndex].id;
+    setAnswers(prev => ({ ...prev, [qId]: suggestion }));
+    setInputError(false);
+    setHasTyped(true);
+  };
+  
+  const handleInspireUse = () => {
+    const sceneNum = currentQuestionIndex + 1;
+    setInspireUsage(prev => ({
+      ...prev,
+      [sceneNum]: (prev[sceneNum] || 0) + 1
+    }));
   };
 
   const nextQuestion = () => {
@@ -526,21 +568,42 @@ export default function StoryArcade() {
                 {question.prompt}
               </h2>
               <p className="text-muted-foreground font-mono text-xs italic">{motivation}</p>
+              
+              <SceneExamples 
+                sceneNumber={currentQuestionIndex + 1} 
+                onExampleClick={handleExampleClick}
+              />
             </div>
 
             <div className="lg:col-span-7 flex flex-col justify-center">
               <div className={`relative group flex-1 ${inputError ? 'animate-shake' : ''}`}>
+                <TextareaTooltip 
+                  isVisible={showTooltip} 
+                  onDismiss={() => setShowTooltip(false)} 
+                />
                 <textarea
                   value={currentInput}
                   onChange={(e) => handleAnswerChange(e.target.value)}
+                  onFocus={handleTextareaFocus}
                   placeholder={question.placeholder}
                   className="w-full h-full min-h-[180px] md:min-h-[240px] bg-card border border-card-border rounded-md p-6 text-foreground text-base md:text-lg leading-relaxed placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_15px_rgba(34,211,238,0.2)] transition-all resize-none"
                   data-testid="input-answer"
                 />
-                <div className="absolute bottom-4 right-4 text-xs font-mono text-muted-foreground" data-testid="text-char-count">
-                  {charCount} chars
-                </div>
               </div>
+              
+              <div className="mt-3">
+                <CharacterProgress charCount={charCount} />
+              </div>
+              
+              <InspireMe
+                sceneNumber={currentQuestionIndex + 1}
+                trackTitle={activeTrack.title}
+                prompt={question.prompt}
+                currentInput={currentInput}
+                onSuggestionClick={handleInspireClick}
+                usageCount={inspireUsage[currentQuestionIndex + 1] || 0}
+                onUse={handleInspireUse}
+              />
 
               <div className="flex justify-between items-center mt-6 gap-4">
                 <Button 

@@ -2,11 +2,14 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertStorySchema } from "@shared/schema";
+import { registerInspireRoutes } from "./routes/inspire";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  
+  registerInspireRoutes(app);
   
   app.get("/api/stories", async (_req, res) => {
     try {
