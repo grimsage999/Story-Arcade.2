@@ -639,7 +639,7 @@ export default function StoryArcade() {
             <h1 className="text-[28px] md:text-7xl lg:text-8xl font-display leading-[0.95] md:leading-[0.9] tracking-tight cursor-default">
               TURN YOUR STORY INTO <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 drop-shadow-[0_0_30px_rgba(34,211,238,0.4)] animate-pulse-glow">
-                CINEMATIC LEGEND
+                AN EXPERIENCE
               </span>
             </h1>
             <p className="text-muted-foreground text-sm md:text-xl max-w-2xl mx-auto leading-relaxed font-light">
