@@ -27,9 +27,20 @@ function App() {
   const [introChecked, setIntroChecked] = useState(false);
 
   useEffect(() => {
-    const hasSeenIntro = localStorage.getItem(INTRO_SEEN_KEY);
-    if (!hasSeenIntro) {
+    // Check for replay parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const shouldReplay = urlParams.get('replay') === 'intro';
+    
+    if (shouldReplay) {
+      // Clear the flag and remove the URL parameter
+      localStorage.removeItem(INTRO_SEEN_KEY);
+      window.history.replaceState({}, '', window.location.pathname);
       setShowIntro(true);
+    } else {
+      const hasSeenIntro = localStorage.getItem(INTRO_SEEN_KEY);
+      if (!hasSeenIntro) {
+        setShowIntro(true);
+      }
     }
     setIntroChecked(true);
   }, []);
