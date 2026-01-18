@@ -17,6 +17,7 @@ import { SceneExamples } from '@/components/arcade/SceneExamples';
 import { CharacterProgress } from '@/components/arcade/CharacterProgress';
 import { InspireMe } from '@/components/arcade/InspireMe';
 import { TextareaTooltip } from '@/components/arcade/TextareaTooltip';
+import { ForgeProgress, type ForgeStatus } from '@/components/arcade/ForgeProgress';
 import { Button } from '@/components/ui/button';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { 
@@ -67,6 +68,10 @@ export default function StoryArcade() {
   const [inspireUsage, setInspireUsage] = useState<Record<number, number>>({});
   const [showTooltip, setShowTooltip] = useState(false);
   const [hasTyped, setHasTyped] = useState(false);
+  
+  const [forgeStatus, setForgeStatus] = useState<ForgeStatus>('running');
+  const [forgeError, setForgeError] = useState<{ message: string; code?: string } | undefined>();
+  const forgeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const { data: apiGallery, isLoading: isLoadingGallery, isError: isGalleryError } = useQuery<Story[]>({
     queryKey: ['/api/stories'],
@@ -249,13 +254,17 @@ export default function StoryArcade() {
     }
     
     setView('FORGING');
-    setLoadingStep(0);
+    setForgeStatus('running');
+    setForgeError(undefined);
 
-    for (let i = 0; i < LOADING_STEPS.length; i++) {
-      await new Promise(r => setTimeout(r, 800));
-      setLoadingStep(i + 1);
+    if (forgeTimeoutRef.current) {
+      clearTimeout(forgeTimeoutRef.current);
     }
-    await new Promise(r => setTimeout(r, 500));
+
+    forgeTimeoutRef.current = setTimeout(() => {
+      setForgeStatus('timeout');
+      console.error('[Story Forge] Timeout after 60 seconds', new Date().toISOString());
+    }, 60000);
 
     const storyContent = {
       title: "The Legend of " + (answers.hook ? answers.hook.slice(0, 20) : "Tomorrow"),
@@ -278,29 +287,91 @@ export default function StoryArcade() {
     };
 
     try {
-      const response = await createStoryMutation.mutateAsync(storyData);
-      const newStory = await response.json();
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('TIMEOUT')), 65000);
+      });
+
+      const minDelayPromise = new Promise<void>(resolve => setTimeout(resolve, 8000));
+
+      const apiPromise = (async () => {
+        const response = await createStoryMutation.mutateAsync(storyData);
+        return response.json();
+      })();
+
+      const [newStory] = await Promise.all([
+        Promise.race([apiPromise, timeoutPromise]),
+        minDelayPromise
+      ]);
+      
+      if (forgeTimeoutRef.current) {
+        clearTimeout(forgeTimeoutRef.current);
+      }
+
       setGeneratedStory(newStory);
-    } catch {
-      const newStory: Story = {
-        id: Date.now(),
-        ...storyData,
-      };
-      setGeneratedStory(newStory);
+      setForgeStatus('success');
+      
+      if (currentDraftIdRef.current) {
+        deleteDraft(currentDraftIdRef.current);
+        currentDraftIdRef.current = null;
+        setCurrentDraftId(null);
+        setDrafts(getAllDrafts());
+      }
+
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      localStorage.setItem('story_arcade_streak', newStreak.toString());
+
+      setShowConfetti(true);
+      setTimeout(() => {
+        setShowConfetti(false);
+        setView('REVEAL');
+      }, 1500);
+    } catch (error) {
+      if (forgeTimeoutRef.current) {
+        clearTimeout(forgeTimeoutRef.current);
+      }
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      const errorCode = error instanceof Error && error.message === 'TIMEOUT' ? 'ERR_TIMEOUT' : 'ERR_API_FAILURE';
+      
+      console.error('[Story Forge] Error:', errorMessage, new Date().toISOString());
+      
+      if (errorMessage === 'TIMEOUT') {
+        setForgeStatus('timeout');
+      } else {
+        setForgeError({ message: errorMessage, code: errorCode });
+        setForgeStatus('error');
+      }
     }
+  };
 
-    if (currentDraftIdRef.current) {
-      deleteDraft(currentDraftIdRef.current);
-      currentDraftIdRef.current = null;
-      setCurrentDraftId(null);
-      setDrafts(getAllDrafts());
+  const handleForgeRetry = () => {
+    generateStory();
+  };
+
+  const handleForgeCancel = () => {
+    if (forgeTimeoutRef.current) {
+      clearTimeout(forgeTimeoutRef.current);
     }
+    setCurrentQuestionIndex(activeTrack ? activeTrack.questions.length - 1 : 4);
+    setView('QUESTIONS');
+  };
 
-    const newStreak = streak + 1;
-    setStreak(newStreak);
-    localStorage.setItem('story_arcade_streak', newStreak.toString());
-
-    setView('REVEAL');
+  const handleForgeSaveDraft = () => {
+    performAutoSave();
+    showToast('Draft saved successfully!');
+    if (forgeTimeoutRef.current) {
+      clearTimeout(forgeTimeoutRef.current);
+    }
+    setActiveTrack(null);
+    setAnswers({});
+    setCurrentQuestionIndex(0);
+    currentDraftIdRef.current = null;
+    setCurrentDraftId(null);
+    setLastSavedAt(null);
+    setSaveFailed(false);
+    setDrafts(getAllDrafts());
+    setView('TRACK_SELECT');
   };
 
   const handleSecretDemoTrigger = () => {
@@ -647,6 +718,7 @@ export default function StoryArcade() {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center font-sans relative">
         <CRTOverlay />
+        {showConfetti && <Confetti active={showConfetti} />}
         <Navbar 
           onViewChange={setView} 
           currentView={view} 
@@ -656,28 +728,26 @@ export default function StoryArcade() {
           totalScenes={totalScenes}
         />
         
-        <div className="text-center space-y-8 px-6 animate-fade-in" data-testid="view-forging">
-          <div className="w-24 h-24 mx-auto relative">
-            <div className="absolute inset-0 border-4 border-primary/30 rounded-full animate-ping" />
-            <div className="absolute inset-2 border-4 border-primary/50 rounded-full animate-pulse" />
-            <div className="absolute inset-4 border-4 border-primary rounded-full flex items-center justify-center">
-              <RefreshCw className="w-8 h-8 text-primary animate-spin" />
+        <div className="text-center px-6 animate-fade-in relative" data-testid="view-forging">
+          {forgeStatus === 'running' && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
+              <div className="w-32 h-32 relative">
+                <div className="absolute inset-0 border-4 border-primary/30 rounded-full animate-ping" />
+                <div className="absolute inset-2 border-4 border-primary/50 rounded-full animate-pulse" />
+                <div className="absolute inset-4 border-4 border-primary rounded-full flex items-center justify-center">
+                  <RefreshCw className="w-10 h-10 text-primary animate-spin" />
+                </div>
+              </div>
             </div>
-          </div>
+          )}
           
-          <div className="space-y-4">
-            <h2 className="font-display text-2xl md:text-4xl text-foreground uppercase tracking-widest">
-              {LOADING_STEPS[loadingStep - 1] || LOADING_STEPS[0]}
-            </h2>
-            <div className="flex gap-2 justify-center">
-              {LOADING_STEPS.map((_, i) => (
-                <div 
-                  key={i}
-                  className={`w-3 h-3 rounded-full transition-all duration-300 ${i < loadingStep ? 'bg-primary' : 'bg-secondary'}`}
-                />
-              ))}
-            </div>
-          </div>
+          <ForgeProgress
+            status={forgeStatus}
+            errorDetails={forgeError}
+            onRetry={handleForgeRetry}
+            onCancel={handleForgeCancel}
+            onSaveDraft={handleForgeSaveDraft}
+          />
         </div>
         
         <Toast message={toast} />

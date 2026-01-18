@@ -1,0 +1,53 @@
+Story Arcade is desktop-optimized but difficult to use on phones. Implement responsive design for screens < 768px.
+
+REQUIREMENT: Mobile-optimized touch-friendly interface.
+
+IMPLEMENTATION DETAILS:
+1. Navigation restructure for mobile:
+   - Hide top navigation bar on screens < 768px
+   - Replace with hamburger menu (☰) in top-left corner
+   - Sliding drawer panel contains: [HOME] [EXPLORE] [COIN COUNTER] [SETTINGS]
+   - Close drawer when user clicks any menu item
+   - Drawer slides in from left, 70% viewport width
+   - Backdrop dims main content (semi-transparent dark overlay, close on tap)
+
+2. Expand input area for mobile:
+   - Text field width: 85% of viewport on mobile (vs current ~90%)
+   - Increase height: textarea minHeight = 120px (vs current smaller)
+   - Font size: increase to 16px+ to prevent auto-zoom on iOS
+   - Add 16px padding inside textarea
+   - Remove extra padding around form to maximize space
+
+3. Increase button sizes for touch:
+   - Minimum touch target: 44px height (WCAG 2.5 standard)
+   - NEXT SCENE, BACK, FINISH & FORGE buttons: 44px tall, 100% width
+   - Spacing between buttons: 12px
+   - Make buttons stack vertically on mobile instead of side-by-side
+
+4. Responsive typography:
+   - Main heading (h1): 28px on mobile (vs current larger)
+   - Prompt text (h2): 20px on mobile
+   - Body text: 16px minimum (prevents pinch-zoom)
+   - Director's Note: 14px
+   - Validation text: 12px
+
+5. Particle animation optimization:
+   - Test animation on low-end devices (simulate on Chrome DevTools)
+   - For devices with reduced motion setting: show simple fade-in instead of particles
+   - Cap particle count to 20 on mobile (vs desktop 50+)
+   - Use CSS transform (GPU-accelerated) instead of canvas if possible
+
+6. Story card layout on mobile:
+   - EXPLORE page: single column layout (vs 2 columns on desktop)
+   - Story cards: full width with 16px margin
+   - Card height: auto (scale to content)
+   - Font in cards: 14px (smaller on mobile)
+
+7. Add mobile-specific buttons:
+   - BACK TO TOP button (bottom-right) on long pages like EXPLORE
+   - Fixed position, sticky after scrolling down 300px
+   - Only on mobile (<768px)
+
+Breakpoint: Use media query @media (max-width: 768px) { ... }
+Test on: iPhone 14, Samsung Galaxy S21, iPad Mini
+Ensure no horizontal scrolling on any screen size.
