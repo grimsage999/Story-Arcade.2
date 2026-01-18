@@ -12,6 +12,7 @@ import {
   LEVEL_THRESHOLDS 
 } from "./progression";
 import { generatePosterImage } from "./posterGenerator";
+import { generateStoryNarrative } from "./storyGenerator";
 
 function requireAuth(req: Request, res: Response, next: NextFunction) {
   const user = (req as any).user;
@@ -143,6 +144,27 @@ export async function registerRoutes(
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete story" });
+    }
+  });
+
+  app.post("/api/stories/generate", async (req, res) => {
+    try {
+      const { trackId, trackTitle, answers } = req.body;
+      
+      if (!trackId || !trackTitle || !answers) {
+        return res.status(400).json({ error: "Missing required fields: trackId, trackTitle, answers" });
+      }
+      
+      const narrative = await generateStoryNarrative({
+        trackId,
+        trackTitle,
+        answers
+      });
+      
+      res.json(narrative);
+    } catch (error) {
+      console.error("Error generating story narrative:", error);
+      res.status(500).json({ error: "Failed to generate story narrative" });
     }
   });
 

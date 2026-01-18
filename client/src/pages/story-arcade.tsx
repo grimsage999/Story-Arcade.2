@@ -356,46 +356,46 @@ export default function StoryArcade() {
       console.error('[Story Forge] Timeout after 60 seconds', new Date().toISOString());
     }, 60000);
 
-    const storyContent = {
-      title: "The Legend of " + (answers.hook ? answers.hook.slice(0, 20) : "Tomorrow"),
-      themes: ["Hope", "Grit", "Transformation"],
-      insight: MOTIVATIONS[Math.floor(Math.random() * MOTIVATIONS.length)],
-      logline: `A ${activeTrack.title.toLowerCase()} story begins today.`,
-      p1: "It started with " + (answers.hook || "a dream") + ". " + (answers.sensory || "The air was electric with possibility."),
-      p2: "The challenge was real: " + (answers.challenge || "the doubt that whispers 'not you'") + ". But in that moment of truth, a voice said: " + (answers.reflection || "'I am ready.'"),
-      p3: "And so the world changed. " + (answers.resolution || "Victory was won, and a new chapter began."),
-    };
-
-    const storyData = {
-      trackId: activeTrack.id,
-      ...storyContent,
-      author: "Protagonist",
-      neighborhood: "The Block",
-      timestamp: new Date().toISOString(),
-      trackTitle: activeTrack.title,
-      answers: answers,
-      shareableId: "",
-      userId: null,
-      posterUrl: null,
-      posterStatus: "pending",
-    };
-
     try {
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error('TIMEOUT')), 65000);
       });
 
-      const minDelayPromise = new Promise<void>(resolve => setTimeout(resolve, 8000));
+      const narrativeResponse = await Promise.race([
+        fetch('/api/stories/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            trackId: activeTrack.id,
+            trackTitle: activeTrack.title,
+            answers
+          })
+        }),
+        timeoutPromise
+      ]);
+      
+      const storyContent = await narrativeResponse.json();
+
+      const storyData = {
+        trackId: activeTrack.id,
+        ...storyContent,
+        author: "Protagonist",
+        neighborhood: "The Block",
+        timestamp: new Date().toISOString(),
+        trackTitle: activeTrack.title,
+        answers: answers,
+        shareableId: "",
+        userId: null,
+        posterUrl: null,
+        posterStatus: "pending",
+      };
 
       const apiPromise = (async () => {
         const response = await createStoryMutation.mutateAsync(storyData);
         return response.json();
       })();
 
-      const [apiResponse] = await Promise.all([
-        Promise.race([apiPromise, timeoutPromise]),
-        minDelayPromise
-      ]);
+      const apiResponse = await Promise.race([apiPromise, timeoutPromise]);
       
       if (forgeTimeoutRef.current) {
         clearTimeout(forgeTimeoutRef.current);
@@ -475,7 +475,7 @@ export default function StoryArcade() {
         neighborhood: "Sanctuary Mode",
         title: fallback.title,
         themes: fallback.themes,
-        insight: storyContent.insight,
+        insight: fallback.insight || "A story from the archive.",
         logline: fallback.logline,
         p1: fallback.p1,
         p2: fallback.p2,
