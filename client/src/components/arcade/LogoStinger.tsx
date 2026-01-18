@@ -7,7 +7,7 @@ interface LogoStingerProps {
   autoPlay?: boolean;
 }
 
-export function LogoStinger({ onComplete, duration = 10000, autoPlay = true }: LogoStingerProps) {
+export function LogoStinger({ onComplete, duration = 5000, autoPlay = true }: LogoStingerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [phase, setPhase] = useState<'black' | 'starfield' | 'assemble' | 'glow' | 'title' | 'brighten' | 'fadeout'>('black');
   const [isVisible, setIsVisible] = useState(true);
@@ -57,12 +57,12 @@ export function LogoStinger({ onComplete, duration = 10000, autoPlay = true }: L
     }
 
     const timeline = [
-      { phase: 'starfield' as const, delay: 300 },
-      { phase: 'assemble' as const, delay: 500 },
-      { phase: 'glow' as const, delay: 5500 },
-      { phase: 'title' as const, delay: 6500 },
-      { phase: 'brighten' as const, delay: 8500 },
-      { phase: 'fadeout' as const, delay: 9500 },
+      { phase: 'starfield' as const, delay: 150 },
+      { phase: 'assemble' as const, delay: 300 },
+      { phase: 'glow' as const, delay: 2500 },
+      { phase: 'title' as const, delay: 3200 },
+      { phase: 'brighten' as const, delay: 4200 },
+      { phase: 'fadeout' as const, delay: 4600 },
     ];
 
     const timeouts: ReturnType<typeof setTimeout>[] = [];
@@ -99,7 +99,7 @@ export function LogoStinger({ onComplete, duration = 10000, autoPlay = true }: L
         animate={{ 
           opacity: phase === 'black' ? 1 : phase === 'fadeout' ? 1 : 0 
         }}
-        transition={{ duration: 0.8 }}
+        transition={{ duration: 0.4 }}
       />
 
       {/* Starfield Canvas */}
@@ -153,7 +153,7 @@ export function LogoStinger({ onComplete, duration = 10000, autoPlay = true }: L
           opacity: phase === 'title' || phase === 'brighten' ? 1 : 0,
           filter: phase === 'brighten' ? 'brightness(1.3)' : 'brightness(1)'
         }}
-        transition={{ duration: 0.8 }}
+        transition={{ duration: 0.5 }}
       >
         <h1 
           className="text-white text-4xl md:text-5xl lg:text-6xl font-bold tracking-[0.2em] uppercase"
@@ -217,8 +217,8 @@ function FacetedStar({ phase }: { phase: string }) {
           scale: isPulsing ? [1, 1.1, 1] : 1,
         }}
         transition={{ 
-          opacity: { duration: 0.5 },
-          scale: { duration: 2, repeat: isPulsing ? Infinity : 0 }
+          opacity: { duration: 0.3 },
+          scale: { duration: 1.2, repeat: isPulsing ? Infinity : 0 }
         }}
       />
 
@@ -284,8 +284,8 @@ function FacetedStar({ phase }: { phase: string }) {
               rotate: 0 
             } : {}}
             transition={{
-              duration: 0.8,
-              delay: 0.1 * index,
+              duration: 0.5,
+              delay: 0.06 * index,
               ease: [0.34, 1.56, 0.64, 1], // Overshoot easing
             }}
           />
@@ -299,7 +299,7 @@ function FacetedStar({ phase }: { phase: string }) {
           fill="url(#centerHighlight)"
           initial={{ opacity: 0, scale: 0 }}
           animate={isAssembling ? { opacity: 0.8, scale: 1 } : {}}
-          transition={{ delay: 1, duration: 0.5 }}
+          transition={{ delay: 0.5, duration: 0.3 }}
         />
         
         <defs>
