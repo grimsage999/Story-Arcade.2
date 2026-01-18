@@ -72,3 +72,30 @@ Preferred communication style: Simple, everyday language.
 - @replit/vite-plugin-cartographer and dev-banner for development features
 
 **Session Management:** connect-pg-simple and express-session configured for PostgreSQL session storage
+
+### Draft Auto-Save System
+
+**Storage:** localStorage with key pattern `storyArcade_draft_[timestamp]`
+
+**Features:**
+- Auto-save every 10 seconds during story creation
+- Uses ref-based ID tracking (currentDraftIdRef) for synchronous access
+- Draft includes: trackId, trackTitle, sceneNumber, userInputs, createdAt, lastSavedAt
+- Maximum 5 drafts with auto-cleanup of oldest
+
+**UI Components:**
+- `client/src/lib/draftStorage.ts` - Storage utilities
+- `client/src/components/arcade/AutoSaveIndicator.tsx` - Shows "Auto-saved Xm ago"
+- `client/src/components/arcade/DraftsList.tsx` - Drafts section with CONTINUE/DELETE
+- `client/src/components/arcade/DraftRecoveryBanner.tsx` - Recovery prompt on startup
+- `client/src/components/arcade/UnsavedStoryModal.tsx` - Modal on navigation during creation
+
+**Navigation Protection:**
+- HOME/EXPLORE links disabled during story creation (scenes 1-5)
+- Tooltips show "Finish your story first! (Scene X/5)"
+- Logo click shows unsaved modal with SAVE DRAFT/DISCARD/CONTINUE options
+- Scene progress indicator in navbar during creation
+
+**Draft Cleanup:**
+- Draft automatically deleted when story successfully forged
+- Auto-save interval cleared when entering forging state
