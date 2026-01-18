@@ -47,11 +47,14 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <ArcadeSoundProvider>
-          {showIntro && (
+          {showIntro ? (
             <LogoStinger onComplete={handleIntroComplete} duration={10000} />
+          ) : (
+            <>
+              <Toaster />
+              <Router />
+            </>
           )}
-          <Toaster />
-          <Router />
         </ArcadeSoundProvider>
       </TooltipProvider>
     </QueryClientProvider>
