@@ -8,6 +8,21 @@ interface StoryCardProps {
   story: Story;
   onView?: (story: Story) => void;
   compact?: boolean;
+  glowVariant?: 'cyan' | 'pink' | 'fuchsia' | 'teal' | 'amber' | 'violet';
+}
+
+const CRT_GLOW_STYLES = {
+  cyan: { glow: '0 0 20px rgba(34, 211, 238, 0.3)', border: 'border-cyan-500/40' },
+  pink: { glow: '0 0 20px rgba(236, 72, 153, 0.3)', border: 'border-pink-500/40' },
+  fuchsia: { glow: '0 0 20px rgba(192, 38, 211, 0.3)', border: 'border-fuchsia-500/40' },
+  teal: { glow: '0 0 20px rgba(20, 184, 166, 0.3)', border: 'border-teal-500/40' },
+  amber: { glow: '0 0 20px rgba(251, 191, 36, 0.25)', border: 'border-amber-500/40' },
+  violet: { glow: '0 0 20px rgba(139, 92, 246, 0.3)', border: 'border-violet-500/40' },
+};
+
+function getGlowVariantFromIndex(index: number): keyof typeof CRT_GLOW_STYLES {
+  const variants: (keyof typeof CRT_GLOW_STYLES)[] = ['cyan', 'pink', 'fuchsia', 'teal', 'amber', 'violet'];
+  return variants[index % variants.length];
 }
 
 function getIcon(trackId: string) {
@@ -36,10 +51,13 @@ function getAccentColor(trackId: string) {
   }
 }
 
-export function StoryCard({ story, onView, compact = false }: StoryCardProps) {
+export function StoryCard({ story, onView, compact = false, glowVariant }: StoryCardProps) {
   const accentClass = getAccentColor(story.trackId);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+  
+  const effectiveGlow = glowVariant || getGlowVariantFromIndex(story.id);
+  const glowStyle = CRT_GLOW_STYLES[effectiveGlow];
   
   const getShareUrl = () => {
     if (!story.shareableId) return window.location.href;
@@ -79,7 +97,8 @@ export function StoryCard({ story, onView, compact = false }: StoryCardProps) {
   if (compact) {
     return (
       <article 
-        className="bg-card border border-card-border rounded-md p-4 hover:border-primary/30 transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400"
+        className={`bg-card border ${glowStyle.border} rounded-md p-4 transition-all duration-300 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400 hover:scale-[1.02]`}
+        style={{ boxShadow: glowStyle.glow }}
         onClick={() => onView?.(story)}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onView?.(story); }}}
         data-testid={`card-story-${story.id}`}
@@ -101,7 +120,8 @@ export function StoryCard({ story, onView, compact = false }: StoryCardProps) {
 
   return (
     <article 
-      className="bg-card border border-card-border rounded-md p-6 hover:border-primary/30 transition-colors group"
+      className={`bg-card border ${glowStyle.border} rounded-md p-6 transition-all duration-300 group hover:scale-[1.01]`}
+      style={{ boxShadow: glowStyle.glow }}
       data-testid={`card-story-${story.id}`}
       aria-label={`Story: ${story.title} by ${story.author}`}
     >

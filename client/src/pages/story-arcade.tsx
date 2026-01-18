@@ -23,6 +23,11 @@ import { SkipLink } from '@/components/arcade/SkipLink';
 import { StoryModal } from '@/components/arcade/StoryModal';
 import { AchievementPopup, LevelUpPopup } from '@/components/arcade/AchievementPopup';
 import { StoryPoster } from '@/components/arcade/StoryPoster';
+import { ArcadeCabinet } from '@/components/arcade/ArcadeCabinet';
+import { CosmicMarquee } from '@/components/arcade/CosmicMarquee';
+import { OrbitalRings } from '@/components/arcade/OrbitalRings';
+import { HUDOverlay } from '@/components/arcade/HUDOverlay';
+import { TVWallGallery } from '@/components/arcade/TVWallGallery';
 import { arcadeSounds } from '@/lib/arcadeSounds';
 import { Button } from '@/components/ui/button';
 import type { Badge, ProgressionReward } from '@/hooks/use-progression';
@@ -882,25 +887,31 @@ export default function StoryArcade() {
         />
         
         <main id="main-content" className="text-center px-6 animate-fade-in relative" data-testid="view-forging" role="main">
-          {forgeStatus === 'running' && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
-              <div className="w-32 h-32 relative">
-                <div className="absolute inset-0 border-4 border-primary/30 rounded-full animate-ping" />
-                <div className="absolute inset-2 border-4 border-primary/50 rounded-full animate-pulse" />
-                <div className="absolute inset-4 border-4 border-primary rounded-full flex items-center justify-center">
-                  <RefreshCw className="w-10 h-10 text-primary animate-spin" />
-                </div>
+          <OrbitalRings variant={forgeStatus === 'running' ? 'intense' : 'subtle'} showCoordinates={true} animate={forgeStatus === 'running'}>
+            <HUDOverlay showGrid={true} variant="full" label="FORGE">
+              <div className="py-12 px-4">
+                {forgeStatus === 'running' && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20">
+                    <div className="w-32 h-32 relative">
+                      <div className="absolute inset-0 border-4 border-primary/30 rounded-full animate-ping" />
+                      <div className="absolute inset-2 border-4 border-primary/50 rounded-full animate-pulse" />
+                      <div className="absolute inset-4 border-4 border-primary rounded-full flex items-center justify-center">
+                        <RefreshCw className="w-10 h-10 text-primary animate-spin" />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <ForgeProgress
+                  status={forgeStatus}
+                  errorDetails={forgeError}
+                  onRetry={handleForgeRetry}
+                  onCancel={handleForgeCancel}
+                  onSaveDraft={handleForgeSaveDraft}
+                />
               </div>
-            </div>
-          )}
-          
-          <ForgeProgress
-            status={forgeStatus}
-            errorDetails={forgeError}
-            onRetry={handleForgeRetry}
-            onCancel={handleForgeCancel}
-            onSaveDraft={handleForgeSaveDraft}
-          />
+            </HUDOverlay>
+          </OrbitalRings>
         </main>
         
         <Toast message={toast} />
@@ -915,54 +926,57 @@ export default function StoryArcade() {
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
         
-        <main id="main-content" className="flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-4xl mx-auto w-full" data-testid="view-reveal" role="main">
-          <div className="mb-8 text-center animate-fade-in">
-            <p className="text-primary font-mono text-xs tracking-widest mb-4">YOUR STORY IS READY</p>
-            <h1 className="font-display text-3xl md:text-5xl text-foreground mb-4" data-testid="text-story-title">
-              {generatedStory.title}
-            </h1>
-            <p className="text-muted-foreground font-mono text-sm">
-              {generatedStory.trackTitle} • {generatedStory.neighborhood}
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-[1fr_auto] gap-6 md:gap-8 mb-8">
-            <div className="bg-card border border-card-border rounded-md p-6 md:p-10 animate-fade-in">
-              <p className="text-xl md:text-2xl text-primary font-display italic mb-8 border-l-4 border-primary pl-6">
-                "{generatedStory.logline}"
+        <main id="main-content" className="flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-5xl mx-auto w-full" data-testid="view-reveal" role="main">
+          <ArcadeCabinet showMarquee={false} variant="compact">
+            <div className="mb-8 text-center animate-fade-in">
+              <CosmicMarquee title="YOUR STORY IS READY" variant="minimal" />
+              <h1 className="font-display text-3xl md:text-5xl text-foreground my-4" data-testid="text-story-title">
+                {generatedStory.title}
+              </h1>
+              <p className="text-muted-foreground font-mono text-sm">
+                {generatedStory.trackTitle} • {generatedStory.neighborhood}
               </p>
-              
-              <div className="space-y-6 text-foreground leading-relaxed text-base md:text-lg">
-                <p data-testid="text-story-p1">{generatedStory.p1}</p>
-                <p data-testid="text-story-p2">{generatedStory.p2}</p>
-                <p data-testid="text-story-p3">{generatedStory.p3}</p>
-              </div>
-              
-              <div className="flex items-center gap-2 mt-8 pt-6 border-t border-border flex-wrap">
-                {generatedStory.themes.map((theme) => (
-                  <span 
-                    key={theme}
-                    className="px-3 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-mono"
-                  >
-                    {theme}
-                  </span>
-                ))}
-              </div>
             </div>
             
-            <div className="animate-fade-in md:sticky md:top-24 self-start">
-              <div className="text-center mb-4">
-                <p className="text-xs font-mono text-muted-foreground tracking-widest">CINEMATIC POSTER</p>
+            <HUDOverlay showGrid={false} variant="corners" showTechReadouts={false}>
+              <div className="grid md:grid-cols-[1fr_auto] gap-6 md:gap-8 mb-8">
+                <div className="bg-card border border-card-border rounded-md p-6 md:p-10 animate-fade-in">
+                  <p className="text-xl md:text-2xl text-primary font-display italic mb-8 border-l-4 border-primary pl-6">
+                    "{generatedStory.logline}"
+                  </p>
+                  
+                  <div className="space-y-6 text-foreground leading-relaxed text-base md:text-lg">
+                    <p data-testid="text-story-p1">{generatedStory.p1}</p>
+                    <p data-testid="text-story-p2">{generatedStory.p2}</p>
+                    <p data-testid="text-story-p3">{generatedStory.p3}</p>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 mt-8 pt-6 border-t border-border flex-wrap">
+                    {generatedStory.themes.map((theme) => (
+                      <span 
+                        key={theme}
+                        className="px-3 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-mono"
+                      >
+                        {theme}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                
+                <div className="animate-fade-in md:sticky md:top-24 self-start">
+                  <div className="text-center mb-4">
+                    <p className="text-xs font-mono text-muted-foreground tracking-widest">CINEMATIC POSTER</p>
+                  </div>
+                  <StoryPoster 
+                    storyId={generatedStory.id} 
+                    storyTitle={generatedStory.title}
+                    autoGenerate={true}
+                  />
+                </div>
               </div>
-              <StoryPoster 
-                storyId={generatedStory.id} 
-                storyTitle={generatedStory.title}
-                autoGenerate={true}
-              />
-            </div>
-          </div>
+            </HUDOverlay>
           
-          <div className="animate-fade-in space-y-4">
+            <div className="animate-fade-in space-y-4">
             {/* Social share buttons */}
             <div className="flex flex-wrap gap-2 justify-center">
               <p className="w-full text-center text-muted-foreground font-mono text-xs tracking-widest mb-2">SHARE YOUR STORY</p>
@@ -1031,7 +1045,8 @@ export default function StoryArcade() {
                 <Shuffle className="w-4 h-4 mr-2" aria-hidden="true" /> Create Another
               </Button>
             </div>
-          </div>
+            </div>
+          </ArcadeCabinet>
         </main>
         
         <Toast message={toast} />
@@ -1139,27 +1154,30 @@ export default function StoryArcade() {
             </Button>
           </div>
 
-          {gallery.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="text-muted-foreground font-mono text-sm mb-6">No stories yet. Be the first to create one!</p>
-              <Button 
-                onClick={() => setView('TRACK_SELECT')}
-                className="bg-primary text-primary-foreground font-display uppercase tracking-widest"
-              >
-                Create First Story
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 pb-20">
-              {gallery.map((story) => (
-                <StoryCard 
-                  key={story.id} 
-                  story={story} 
-                  onView={(s) => setGalleryModalStory(s)}
-                />
-              ))}
-            </div>
-          )}
+          <TVWallGallery showStripes={true}>
+            {gallery.length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-muted-foreground font-mono text-sm mb-6">No stories yet. Be the first to create one!</p>
+                <Button 
+                  onClick={() => setView('TRACK_SELECT')}
+                  className="bg-primary text-primary-foreground font-display uppercase tracking-widest"
+                >
+                  Create First Story
+                </Button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 pb-20">
+                {gallery.map((story, index) => (
+                  <StoryCard 
+                    key={story.id} 
+                    story={story} 
+                    onView={(s) => setGalleryModalStory(s)}
+                    glowVariant={(['cyan', 'pink', 'fuchsia', 'teal', 'amber', 'violet'] as const)[index % 6]}
+                  />
+                ))}
+              </div>
+            )}
+          </TVWallGallery>
         </main>
 
         <BackToTop />
