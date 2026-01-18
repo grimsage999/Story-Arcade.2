@@ -4,62 +4,62 @@ export const TRACKS: Track[] = [
   {
     id: 'origin',
     title: 'Origin Story',
-    subtitle: 'How did you become you?',
-    description: "Trace the moment that defined your character arc. Every hero has a beginning.",
+    subtitle: 'Share your defining moment!',
+    description: "Tell us about a moment that shaped who you are. Everyone has a story worth sharing.",
     color: 'from-fuchsia-500 to-purple-900',
     accent: 'text-fuchsia-400',
     border: 'border-fuchsia-500',
     badge: "CLASSIC",
     questions: [
-      { id: 'hook', prompt: "Where were you when you realized your life was about to change?", placeholder: "e.g. On the roof...", guidance: "Set the scene." },
-      { id: 'sensory', prompt: "Describe the scene—what specific sound, smell, or object defines that memory?", placeholder: "e.g. Rain on asphalt...", guidance: "Engage the senses." },
-      { id: 'challenge', prompt: "What was the one obstacle—a person, a fear, or a situation—that stood in your way?", placeholder: "e.g. My own doubt.", guidance: "The antagonist." },
-      { id: 'reflection', prompt: "In that moment of doubt, what was the one truth you told yourself?", placeholder: "e.g. 'I am ready.'", guidance: "Internal monologue." },
-      { id: 'resolution', prompt: "How did overcoming that moment shape who you are today?", placeholder: "e.g. I open doors for others.", guidance: "Your power now." }
+      { id: 'hook', prompt: "What's a fun or memorable place you've had an 'aha!' moment?", placeholder: "e.g. A coffee shop, the subway, my kitchen...", guidance: "Pick a spot!" },
+      { id: 'sensory', prompt: "What song, smell, or random object reminds you of that time?", placeholder: "e.g. The smell of popcorn, a certain song...", guidance: "Get specific!" },
+      { id: 'challenge', prompt: "What was the hardest part or funniest obstacle you faced?", placeholder: "e.g. I was too nervous to speak up...", guidance: "Keep it real." },
+      { id: 'reflection', prompt: "What advice did you give yourself to push through?", placeholder: "e.g. 'Just go for it!'", guidance: "Your pep talk." },
+      { id: 'resolution', prompt: "How do you use that experience to help others now?", placeholder: "e.g. I always encourage people to try...", guidance: "Pay it forward." }
     ]
   },
   {
     id: 'future',
     title: 'Future NYC',
-    subtitle: 'What does the city look like when we win?',
-    description: "Step into 2036. Design the future your neighborhood deserves.",
+    subtitle: 'Dream up your ideal neighborhood!',
+    description: "Imagine your perfect city block in 2036. What changes would make life better?",
     color: 'from-cyan-400 to-blue-900',
     accent: 'text-cyan-400',
     border: 'border-cyan-400',
     badge: "POPULAR",
     questions: [
-      { id: 'hook', prompt: "The year is 2036. What is the first thing that tells you 'We won'?", placeholder: "e.g. Silence of electric streets.", guidance: "Visualize victory." },
-      { id: 'sensory', prompt: "Close your eyes. What is the new smell or sound in the air?", placeholder: "e.g. Jasmine scent.", guidance: "Make it tangible." },
-      { id: 'challenge', prompt: "What was the specific problem the community had to solve together?", placeholder: "e.g. The heat waves.", guidance: "The struggle." },
-      { id: 'reflection', prompt: "Why was it so important for you personally to see this change?", placeholder: "e.g. For my grandmother.", guidance: "Personal stake." },
-      { id: 'resolution', prompt: "What is the new daily ritual that proves this future is here to stay?", placeholder: "e.g. Block dinners.", guidance: "Anchor in habit." }
+      { id: 'hook', prompt: "It's 2036—what's the first cool thing you notice about your neighborhood?", placeholder: "e.g. Flying food trucks, rooftop gardens...", guidance: "Dream big!" },
+      { id: 'sensory', prompt: "What new sound or smell fills the air?", placeholder: "e.g. Live music everywhere, fresh bread...", guidance: "Use your senses." },
+      { id: 'challenge', prompt: "What problem did the community finally solve together?", placeholder: "e.g. Traffic, noisy neighbors, boring parks...", guidance: "The win." },
+      { id: 'reflection', prompt: "Why does this change matter to you personally?", placeholder: "e.g. My kids can play outside safely...", guidance: "Make it personal." },
+      { id: 'resolution', prompt: "What fun new tradition does your block have?", placeholder: "e.g. Weekly block parties, morning yoga...", guidance: "Start a trend." }
     ]
   },
   {
     id: 'legend',
     title: 'Neighborhood Legend',
-    subtitle: 'What is the myth your block will tell?',
-    description: "Turn a local rumor into a timeless myth. Magic realism for the streets.",
+    subtitle: 'Create your own urban myth!',
+    description: "Make up a wild story about your block. The stranger, the better!",
     color: 'from-amber-400 to-orange-900',
     accent: 'text-amber-400',
     border: 'border-amber-400',
     badge: "MYTHIC",
     questions: [
-      { id: 'hook', prompt: "What is the strange or magical event that started the legend?", placeholder: "e.g. The talking cat.", guidance: "Inciting incident." },
-      { id: 'sensory', prompt: "What was the one physical object at the center of it all?", placeholder: "e.g. The old oak tree.", guidance: "The artifact." },
-      { id: 'challenge', prompt: "When the chaos started, how did the neighborhood almost fall apart?", placeholder: "e.g. Arguments over magic.", guidance: "The tension." },
-      { id: 'reflection', prompt: "What was the secret reason the main character stepped up?", placeholder: "e.g. To share the magic.", guidance: "The 'Why'." },
-      { id: 'resolution', prompt: "What is the one rule of reality that has changed forever?", placeholder: "e.g. No rain on weekends.", guidance: "The new world." }
+      { id: 'hook', prompt: "What's the weird or magical thing that happened on your block?",  placeholder: "e.g. A pizza rat that grants wishes...", guidance: "Go wild!" },
+      { id: 'sensory', prompt: "What everyday object is at the center of the legend?", placeholder: "e.g. The old mailbox, a broken streetlight...", guidance: "Pick something ordinary." },
+      { id: 'challenge', prompt: "What drama or chaos did it cause in the neighborhood?", placeholder: "e.g. Everyone argued about who saw it first...", guidance: "Stir the pot." },
+      { id: 'reflection', prompt: "Who's the unlikely hero of the story and why did they step up?", placeholder: "e.g. The quiet librarian who knew the truth...", guidance: "Introduce the hero." },
+      { id: 'resolution', prompt: "What's the one rule everyone follows now because of the legend?", placeholder: "e.g. Never whistle after midnight...", guidance: "The new rule." }
     ]
   }
 ];
 
 export const MOTIVATIONS = [
-  "You're building history.",
-  "Keep it 100%.",
-  "The future is yours to write.",
-  "Your voice matters here.",
-  "Cinema is waiting."
+  "Have fun with it!",
+  "There's no wrong answer.",
+  "Go with your gut!",
+  "The weirder, the better.",
+  "Make it yours!"
 ];
 
 export const SEED_STORIES = [

@@ -142,7 +142,7 @@ export function TypeformFlow({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isTransitioning) return;
       
-      if (e.key === 'Enter' && !e.shiftKey) {
+      if (e.key === 'Enter' && (e.shiftKey || e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         handleNext();
       } else if (e.key === 'ArrowUp' && e.metaKey) {
@@ -287,7 +287,7 @@ export function TypeformFlow({
                 
                 <div className="flex items-center gap-3">
                   <span className="text-muted-foreground font-mono text-xs hidden md:block">
-                    Press <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Enter</kbd> to continue
+                    Press <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Shift</kbd>+<kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px]">Enter</kbd> to continue
                   </span>
                   
                   <Button
