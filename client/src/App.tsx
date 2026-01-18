@@ -10,7 +10,6 @@ import StoryArcade from "@/pages/story-arcade";
 import StoryPage from "@/pages/story";
 import NotFound from "@/pages/not-found";
 
-const INTRO_SEEN_KEY = 'story-arcade-intro-seen-v2';
 
 function Router() {
   return (
@@ -23,47 +22,21 @@ function Router() {
 }
 
 function App() {
-  const [showIntro, setShowIntro] = useState(false);
-  const [introChecked, setIntroChecked] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
+  const [introChecked, setIntroChecked] = useState(true);
 
   useEffect(() => {
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const skipIntro = urlParams.get('intro') === 'skip';
-      const forceIntro = urlParams.get('intro') === 'force';
-      const replayIntro = urlParams.get('replay') === 'intro';
-      
-      // Skip intro if explicitly requested
-      if (skipIntro) {
-        localStorage.setItem(INTRO_SEEN_KEY, 'true');
-        window.history.replaceState({}, '', window.location.pathname);
-        setShowIntro(false);
-        setIntroChecked(true);
-        return;
-      }
-      
-      // Force or replay intro
-      if (forceIntro || replayIntro) {
-        if (replayIntro) localStorage.removeItem(INTRO_SEEN_KEY);
-        window.history.replaceState({}, '', window.location.pathname);
-        setShowIntro(true);
-        setIntroChecked(true);
-        return;
-      }
-      
-      // Normal flow: show intro only if not seen before
-      const hasSeenIntro = localStorage.getItem(INTRO_SEEN_KEY);
-      setShowIntro(!hasSeenIntro);
-      setIntroChecked(true);
-    } catch (e) {
-      // If localStorage is blocked, show intro
-      setShowIntro(true);
-      setIntroChecked(true);
+    // Check if skip parameter is set
+    const urlParams = new URLSearchParams(window.location.search);
+    const skipIntro = urlParams.get('intro') === 'skip';
+    
+    if (skipIntro) {
+      window.history.replaceState({}, '', window.location.pathname);
+      setShowIntro(false);
     }
   }, []);
 
   const handleIntroComplete = () => {
-    localStorage.setItem(INTRO_SEEN_KEY, 'true');
     setShowIntro(false);
   };
 
