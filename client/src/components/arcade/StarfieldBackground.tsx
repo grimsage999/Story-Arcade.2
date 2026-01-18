@@ -36,13 +36,14 @@ export function StarfieldBackground({ starCount = 100, className = '' }: Starfie
     const initStars = () => {
       starsRef.current = [];
       for (let i = 0; i < starCount; i++) {
+        const isBright = Math.random() > 0.7;
         starsRef.current.push({
           x: Math.random() * canvas.width,
           y: Math.random() * canvas.height,
-          size: Math.random() * 2 + 0.5,
-          speed: Math.random() * 0.3 + 0.1,
-          opacity: Math.random() * 0.8 + 0.2,
-          twinkleSpeed: Math.random() * 0.02 + 0.01,
+          size: isBright ? Math.random() * 3 + 1.5 : Math.random() * 2 + 0.5,
+          speed: Math.random() * 0.5 + 0.1,
+          opacity: isBright ? Math.random() * 0.4 + 0.6 : Math.random() * 0.6 + 0.3,
+          twinkleSpeed: Math.random() * 0.04 + 0.02,
           twinklePhase: Math.random() * Math.PI * 2,
         });
       }
@@ -116,37 +117,60 @@ export function StarfieldBackground({ starCount = 100, className = '' }: Starfie
 export function StaticStarfield({ className = '' }: { className?: string }) {
   return (
     <div className={`absolute inset-0 overflow-hidden pointer-events-none ${className}`} aria-hidden="true">
-      {Array.from({ length: 50 }).map((_, i) => (
-        <div
-          key={i}
-          className="absolute rounded-full bg-white animate-pulse"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            width: `${Math.random() * 2 + 1}px`,
-            height: `${Math.random() * 2 + 1}px`,
-            opacity: Math.random() * 0.6 + 0.2,
-            animationDelay: `${Math.random() * 3}s`,
-            animationDuration: `${Math.random() * 2 + 2}s`,
-          }}
-        />
-      ))}
+      {Array.from({ length: 120 }).map((_, i) => {
+        const isBright = i % 5 === 0;
+        const size = isBright ? Math.random() * 3 + 2 : Math.random() * 2 + 1;
+        return (
+          <div
+            key={i}
+            className="absolute rounded-full bg-white animate-pulse"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              width: `${size}px`,
+              height: `${size}px`,
+              opacity: isBright ? Math.random() * 0.4 + 0.6 : Math.random() * 0.5 + 0.3,
+              animationDelay: `${Math.random() * 4}s`,
+              animationDuration: `${Math.random() * 2 + 1}s`,
+              boxShadow: isBright ? '0 0 6px rgba(255,255,255,0.8), 0 0 12px rgba(200,220,255,0.4)' : 'none',
+            }}
+          />
+        );
+      })}
       
       <div
-        className="absolute w-32 h-32 rounded-full opacity-10"
+        className="absolute w-40 h-40 rounded-full opacity-15"
         style={{
-          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.4) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, transparent 70%)',
           left: '10%',
           top: '20%',
-          filter: 'blur(20px)',
+          filter: 'blur(25px)',
         }}
       />
       <div
-        className="absolute w-48 h-48 rounded-full opacity-10"
+        className="absolute w-56 h-56 rounded-full opacity-15"
         style={{
-          background: 'radial-gradient(circle, rgba(34, 211, 238, 0.4) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(34, 211, 238, 0.5) 0%, transparent 70%)',
           right: '15%',
           bottom: '30%',
+          filter: 'blur(35px)',
+        }}
+      />
+      <div
+        className="absolute w-36 h-36 rounded-full opacity-10"
+        style={{
+          background: 'radial-gradient(circle, rgba(236, 72, 153, 0.4) 0%, transparent 70%)',
+          right: '25%',
+          top: '15%',
+          filter: 'blur(30px)',
+        }}
+      />
+      <div
+        className="absolute w-44 h-44 rounded-full opacity-12"
+        style={{
+          background: 'radial-gradient(circle, rgba(251, 191, 36, 0.4) 0%, transparent 70%)',
+          left: '20%',
+          bottom: '20%',
           filter: 'blur(30px)',
         }}
       />

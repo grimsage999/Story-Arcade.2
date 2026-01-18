@@ -690,7 +690,7 @@ export default function StoryArcade() {
     return (
       <div className="min-h-screen bg-background flex flex-col font-sans text-foreground relative overflow-hidden">
         <SkipLink />
-        <StarfieldBackground starCount={80} />
+        <StarfieldBackground starCount={150} />
         <StaticStarfield />
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
