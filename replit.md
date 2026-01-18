@@ -127,3 +127,27 @@ Preferred communication style: Simple, everyday language.
 - `POST /api/inspire` - Generates AI suggestions using Gemini (gemini-2.5-flash)
 - Body: `{ sceneNumber, trackTitle, prompt, currentInput }`
 - Response: `{ suggestions: string[] }`
+
+### Forge Progress System
+
+**Component:** `client/src/components/arcade/ForgeProgress.tsx`
+
+**Status States:**
+- `running` - Shows progress bar, stage messages, estimated time
+- `timeout` - 60 second timeout with RETRY/CANCEL buttons
+- `error` - API failure with TRY AGAIN/SAVE DRAFT/VIEW ERROR DETAILS buttons
+- `success` - Triggers confetti and transitions to REVEAL
+
+**Stage Messages (every ~10s):**
+1. Synthesizing themes... (Sparkles icon)
+2. Crafting narrative... (BookOpen icon)
+3. Enhancing story... (Wand2 icon)
+4. Verifying legend... (CheckCircle icon)
+5. Publishing... (PartyPopper icon)
+
+**Implementation Details:**
+- Minimum 8-second delay ensures forging UI is visible even for fast API responses
+- Progress bar animates from 0% to 95% over 40 seconds, jumps to 100% on success
+- 60-second timeout triggers warning state with retry option
+- Error recovery preserves user inputs for retry or draft saving
+- Uses lucide-react icons (no emojis per design guidelines)
