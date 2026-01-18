@@ -58,6 +58,7 @@ export default function StoryArcade() {
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
 
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const currentDraftIdRef = useRef<string | null>(null);
 
   const { data: apiGallery, isLoading: isLoadingGallery, isError: isGalleryError } = useQuery<Story[]>({
     queryKey: ['/api/stories'],
@@ -114,19 +115,21 @@ export default function StoryArcade() {
   const performAutoSave = useCallback(() => {
     if (!activeTrack) return;
 
-    const draftId = currentDraftId || generateDraftId();
+    const draftId = currentDraftIdRef.current || generateDraftId();
+    const existingDraft = getDraft(draftId);
     const draft: Draft = {
       id: draftId,
       trackId: activeTrack.id,
       trackTitle: activeTrack.title,
       sceneNumber: currentQuestionIndex + 1,
       userInputs: answers,
-      createdAt: currentDraftId ? (getDraft(draftId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+      createdAt: existingDraft?.createdAt || new Date().toISOString(),
       lastSavedAt: new Date().toISOString(),
     };
 
     const success = saveDraft(draft);
     if (success) {
+      currentDraftIdRef.current = draftId;
       setCurrentDraftId(draftId);
       setLastSavedAt(draft.lastSavedAt);
       setSaveFailed(false);
@@ -134,7 +137,7 @@ export default function StoryArcade() {
     } else {
       setSaveFailed(true);
     }
-  }, [activeTrack, currentQuestionIndex, answers, currentDraftId]);
+  }, [activeTrack, currentQuestionIndex, answers]);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -145,6 +148,7 @@ export default function StoryArcade() {
     setActiveTrack(track);
     setAnswers({});
     setCurrentQuestionIndex(0);
+    currentDraftIdRef.current = null;
     setCurrentDraftId(null);
     setLastSavedAt(null);
     setSaveFailed(false);
@@ -191,6 +195,12 @@ export default function StoryArcade() {
 
   const generateStory = async () => {
     if (!activeTrack) return;
+    
+    if (autoSaveTimerRef.current) {
+      clearInterval(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+    }
+    
     setView('FORGING');
     setLoadingStep(0);
 
@@ -232,8 +242,9 @@ export default function StoryArcade() {
       setGeneratedStory(newStory);
     }
 
-    if (currentDraftId) {
-      deleteDraft(currentDraftId);
+    if (currentDraftIdRef.current) {
+      deleteDraft(currentDraftIdRef.current);
+      currentDraftIdRef.current = null;
       setCurrentDraftId(null);
       setDrafts(getAllDrafts());
     }
@@ -267,6 +278,7 @@ export default function StoryArcade() {
     setAnswers({});
     setCurrentQuestionIndex(0);
     setGeneratedStory(null);
+    currentDraftIdRef.current = null;
     setCurrentDraftId(null);
     setLastSavedAt(null);
     setSaveFailed(false);
@@ -297,6 +309,7 @@ export default function StoryArcade() {
     setActiveTrack(null);
     setAnswers({});
     setCurrentQuestionIndex(0);
+    currentDraftIdRef.current = null;
     setCurrentDraftId(null);
     setLastSavedAt(null);
     setSaveFailed(false);
@@ -305,14 +318,15 @@ export default function StoryArcade() {
   };
 
   const handleDiscardAndLeave = () => {
-    if (currentDraftId) {
-      deleteDraft(currentDraftId);
+    if (currentDraftIdRef.current) {
+      deleteDraft(currentDraftIdRef.current);
       setDrafts(getAllDrafts());
     }
     setShowUnsavedModal(false);
     setActiveTrack(null);
     setAnswers({});
     setCurrentQuestionIndex(0);
+    currentDraftIdRef.current = null;
     setCurrentDraftId(null);
     setLastSavedAt(null);
     setSaveFailed(false);
@@ -329,6 +343,7 @@ export default function StoryArcade() {
       setActiveTrack(track);
       setAnswers(draft.userInputs);
       setCurrentQuestionIndex(draft.sceneNumber - 1);
+      currentDraftIdRef.current = draft.id;
       setCurrentDraftId(draft.id);
       setLastSavedAt(draft.lastSavedAt);
       setSaveFailed(false);
