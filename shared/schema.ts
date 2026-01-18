@@ -1,25 +1,13 @@
-import { sql } from "drizzle-orm";
 import { pgTable, text, varchar, integer, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-});
-
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-});
-
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export * from "./models/auth";
 
 export const stories = pgTable("stories", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   shareableId: varchar("shareable_id", { length: 12 }).notNull().unique(),
+  userId: varchar("user_id"),
   trackId: text("track_id").notNull(),
   trackTitle: text("track_title").notNull(),
   author: text("author").notNull(),
@@ -35,12 +23,14 @@ export const stories = pgTable("stories", {
   answers: jsonb("answers"),
 });
 
-export const insertStorySchema = createInsertSchema(stories, {
+const baseInsertStorySchema = createInsertSchema(stories, {
   themes: z.array(z.string()),
-}).omit({
+});
+
+export const insertStorySchema = baseInsertStorySchema.omit({
   id: true,
   shareableId: true,
-});
+} as const);
 
 export type InsertStory = z.infer<typeof insertStorySchema>;
 export type Story = typeof stories.$inferSelect;

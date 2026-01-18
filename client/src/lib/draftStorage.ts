@@ -11,6 +11,7 @@ export interface Draft {
 
 export interface CompletedStory {
   id: string;
+  dbId?: number;
   title: string;
   trackId: string;
   trackTitle: string;

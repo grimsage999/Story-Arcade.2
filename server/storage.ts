@@ -1,17 +1,15 @@
-import { type Story, type InsertStory, type User, type InsertUser, users, stories } from "@shared/schema";
+import { type Story, type InsertStory, stories } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { randomBytes } from "crypto";
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
   getStories(): Promise<Story[]>;
+  getStoriesByUserId(userId: string): Promise<Story[]>;
   getStory(id: number): Promise<Story | undefined>;
   getStoryByShareableId(shareableId: string): Promise<Story | undefined>;
-  createStory(story: InsertStory): Promise<Story>;
-  deleteStory(id: number): Promise<boolean>;
+  createStory(story: InsertStory, userId?: string): Promise<Story>;
+  deleteStory(id: number, userId: string): Promise<boolean>;
 }
 
 function generateShareableId(): string {
@@ -19,23 +17,12 @@ function generateShareableId(): string {
 }
 
 export class DatabaseStorage implements IStorage {
-  async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || undefined;
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user || undefined;
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
-    return user;
-  }
-
   async getStories(): Promise<Story[]> {
     return db.select().from(stories).orderBy(desc(stories.timestamp));
+  }
+
+  async getStoriesByUserId(userId: string): Promise<Story[]> {
+    return db.select().from(stories).where(eq(stories.userId, userId)).orderBy(desc(stories.timestamp));
   }
 
   async getStory(id: number): Promise<Story | undefined> {
@@ -48,14 +35,18 @@ export class DatabaseStorage implements IStorage {
     return story || undefined;
   }
 
-  async createStory(insertStory: InsertStory): Promise<Story> {
+  async createStory(insertStory: InsertStory, userId?: string): Promise<Story> {
     const shareableId = generateShareableId();
-    const [story] = await db.insert(stories).values({ ...insertStory, shareableId }).returning();
+    const [story] = await db.insert(stories).values({ 
+      ...insertStory, 
+      shareableId, 
+      userId: userId ?? null 
+    }).returning();
     return story;
   }
 
-  async deleteStory(id: number): Promise<boolean> {
-    const result = await db.delete(stories).where(eq(stories.id, id)).returning();
+  async deleteStory(id: number, userId: string): Promise<boolean> {
+    const result = await db.delete(stories).where(and(eq(stories.id, id), eq(stories.userId, userId))).returning();
     return result.length > 0;
   }
 }

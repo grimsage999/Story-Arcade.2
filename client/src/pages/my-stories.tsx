@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Search, Trash2, Eye, Download, Copy, Link, Image, Filter, ArrowUpDown, SortDesc, SortAsc, Calendar } from 'lucide-react';
+import { BookOpen, Search, Trash2, Eye, Download, Copy, Link, Filter, ArrowUpDown, SortDesc, SortAsc, Calendar, Loader2, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/hooks/use-auth';
+import { apiRequest } from '@/lib/queryClient';
+import type { Story } from '@shared/schema';
 import { 
-  getCompletedStories, 
-  deleteCompletedStory, 
   exportStoryAsText,
   formatTimeAgo,
   type CompletedStory 
@@ -21,23 +23,50 @@ interface MyStoriesPageProps {
 
 type SortOption = 'newest' | 'oldest' | 'alphabetical';
 
-const ALL_THEMES = ['HOPE', 'GRIT', 'MYSTERY', 'COURAGE', 'WONDER', 'RESILIENCE', 'COMMUNITY', 'IDENTITY'];
+function storyToCompletedStory(story: Story): CompletedStory {
+  return {
+    id: `db_${story.id}`,
+    dbId: story.id,
+    shareableId: story.shareableId,
+    title: story.title,
+    trackId: story.trackId,
+    trackTitle: story.trackTitle,
+    content: [story.p1, story.p2, story.p3],
+    themes: story.themes,
+    createdAt: story.timestamp,
+    userInputs: (story.answers as Record<string, string>) || {},
+    insight: story.insight,
+    logline: story.logline,
+    author: story.author,
+    neighborhood: story.neighborhood,
+  };
+}
 
 export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageProps) {
-  const [stories, setStories] = useState<CompletedStory[]>([]);
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [searchQuery, setSearchQuery] = useState('');
   const [themeFilter, setThemeFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  useEffect(() => {
-    loadStories();
-  }, []);
+  const { data: dbStories = [], isLoading: storiesLoading } = useQuery<Story[]>({
+    queryKey: ['/api/stories/my'],
+    enabled: isAuthenticated,
+  });
 
-  const loadStories = () => {
-    setStories(getCompletedStories());
-  };
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest('DELETE', `/api/stories/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/stories/my'] });
+      showToast('Story deleted');
+    },
+  });
+
+  const stories: CompletedStory[] = dbStories.map(storyToCompletedStory);
 
   const filteredStories = stories
     .filter(story => {
@@ -66,10 +95,10 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
     currentPage * itemsPerPage
   );
 
-  const handleDelete = (id: string) => {
-    deleteCompletedStory(id);
-    loadStories();
-    showToast('Story deleted');
+  const handleDelete = (story: CompletedStory) => {
+    if (story.dbId) {
+      deleteMutation.mutate(story.dbId);
+    }
   };
 
   const handleCopyText = (story: CompletedStory) => {
@@ -104,6 +133,56 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
 
   const uniqueThemes = Array.from(new Set(stories.flatMap(s => s.themes)));
 
+  if (authLoading || storiesLoading) {
+    return (
+      <main 
+        id="main-content" 
+        className="max-w-4xl mx-auto p-6 pt-24 flex flex-col items-center justify-center min-h-[60vh]" 
+        data-testid="page-my-stories-loading"
+      >
+        <Loader2 className="w-8 h-8 text-cyan-400 animate-spin mb-4" />
+        <p className="text-muted-foreground font-mono text-sm">Loading your stories...</p>
+      </main>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <main 
+        id="main-content" 
+        className="max-w-4xl mx-auto p-6 pt-24" 
+        data-testid="page-my-stories-login"
+        aria-label="Login required"
+      >
+        <div className="text-center py-16 bg-card border border-card-border rounded-md">
+          <LogIn className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-2xl font-display text-foreground mb-2">Sign In to Access Your Stories</h2>
+          <p className="text-muted-foreground font-mono text-sm mb-6 max-w-md mx-auto">
+            Create an account or sign in to save your stories and access them from any device.
+          </p>
+          <div className="flex flex-col md:flex-row gap-3 justify-center">
+            <Button 
+              onClick={() => window.location.href = '/api/login'}
+              className="font-mono uppercase tracking-widest"
+              data-testid="button-login"
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              Sign In with Replit
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={onBack}
+              className="font-mono uppercase tracking-widest"
+              data-testid="button-back-home"
+            >
+              Back to Home
+            </Button>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main 
       id="main-content" 
@@ -117,7 +196,7 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
             My Stories
           </h1>
           <p className="text-muted-foreground font-mono text-xs tracking-widest">
-            {stories.length} STOR{stories.length !== 1 ? 'IES' : 'Y'} CREATED
+            {stories.length} STOR{stories.length !== 1 ? 'IES' : 'Y'} SAVED TO CLOUD
           </p>
         </div>
       </div>
@@ -266,14 +345,19 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
                     </DropdownMenu>
 
                     <Button
-                      onClick={() => handleDelete(story.id)}
+                      onClick={() => handleDelete(story)}
                       size="icon"
                       variant="ghost"
                       className="text-muted-foreground hover:text-destructive"
                       title="Delete"
+                      disabled={deleteMutation.isPending}
                       data-testid={`button-delete-${story.id}`}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      {deleteMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
