@@ -32,6 +32,17 @@ function App() {
       const urlParams = new URLSearchParams(window.location.search);
       const shouldReplay = urlParams.get('replay') === 'intro';
       const forceIntro = urlParams.get('intro') === 'force';
+      const skipIntro = urlParams.get('intro') === 'skip';
+      
+      // Skip intro if explicitly requested
+      if (skipIntro) {
+        console.log('[LogoStinger] Skip intro via URL');
+        localStorage.setItem(INTRO_SEEN_KEY, 'true');
+        window.history.replaceState({}, '', window.location.pathname);
+        setShowIntro(false);
+        setIntroChecked(true);
+        return;
+      }
       
       // Force intro bypasses all checks
       if (forceIntro) {
