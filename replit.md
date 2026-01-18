@@ -43,6 +43,7 @@ Drizzle ORM with a PostgreSQL dialect defines the schema for `users`, `sessions`
 - **Achievement Badges:** 17 unlockable badges across 4 categories (milestone, streak, track, level) with 5 rarity tiers (common, uncommon, rare, epic, legendary). Badges are awarded automatically when conditions are met (e.g., "First Story" for creating first story, "Week Warrior" for 7-day streak). Each badge awards bonus XP.
 - **Level-Up & Achievement Popups:** Celebratory notifications with retro arcade styling appear after earning XP, unlocking badges, or leveling up. Multiple badges queue and display sequentially.
 - **Badges Collection Page:** Dedicated page showing all badges organized by category, with locked/unlocked states, rarity styling, and earned dates for collected badges.
+- **Cinematic Poster Generation:** AI-generated movie poster-style images for each story, auto-generated when viewing the story reveal. Posters are created using Gemini 2.5-flash-image model with track-specific visual styles. Features include download functionality, regeneration option, and rate-limited async generation. Posters are stored as base64 data URLs in the `posterUrl` field with status tracking (`pending`, `generating`, `ready`, `failed`).
 
 **Progression Database Entities:**
 - `badges` - Badge definitions (id, name, description, icon, category, requirement, xpReward, rarity)
