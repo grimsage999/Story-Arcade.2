@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { BookOpen, Search, Trash2, Eye, Download, Copy, Link, Filter, ArrowUpDown, SortDesc, SortAsc, Calendar, Loader2, LogIn, Globe, User } from 'lucide-react';
+import { BookOpen, Search, Trash2, Eye, Download, Copy, Link, Filter, ArrowUpDown, SortDesc, SortAsc, Calendar, Loader2, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -204,21 +204,6 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
             </div>
           </div>
 
-          <div className="flex items-center gap-4 p-4 bg-card/50 border border-card-border rounded-md mb-6">
-            <User className="w-5 h-5 text-primary shrink-0" />
-            <div className="text-muted-foreground text-sm font-mono flex-1">
-              Sign in to save your own stories and access them from any device!
-            </div>
-            <Button 
-              onClick={() => window.location.href = '/api/login'}
-              size="sm"
-              className="font-mono uppercase tracking-widest text-xs shrink-0"
-              data-testid="button-login"
-            >
-              <LogIn className="w-3 h-3 mr-2" />
-              Sign In
-            </Button>
-          </div>
 
           <div className="flex flex-col md:flex-row gap-3 mb-6">
             <div className="relative flex-1">

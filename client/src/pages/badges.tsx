@@ -11,7 +11,6 @@ import {
   Sparkles, Gem,
   Joystick,
   Lock,
-  LogIn,
   ArrowLeft
 } from "lucide-react";
 
@@ -167,9 +166,6 @@ export function BadgesPage({ onBack }: BadgesPageProps) {
     { id: "level", name: "Level Rewards", icon: Star },
   ];
 
-  const handleLogin = () => {
-    window.location.href = '/api/login';
-  };
 
   if (isLoading || isLoadingBadges || allBadges.length === 0) {
     return (
@@ -215,45 +211,9 @@ export function BadgesPage({ onBack }: BadgesPageProps) {
           ACHIEVEMENTS
         </h1>
         
-        {user && progress ? (
-          <div className="flex flex-wrap gap-6 text-sm font-mono">
-            <div className="flex items-center gap-2">
-              <Star className="w-5 h-5 text-yellow-400" />
-              <span className="text-foreground">Level {progress.level}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-cyan-400" />
-              <span className="text-foreground">{progress.xp} XP</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-amber-400" />
-              <span className="text-foreground">{progress.storiesCreated} Stories</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Flame className="w-5 h-5 text-orange-400" />
-              <span className="text-foreground">{progress.currentStreak} Day Streak</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Award className="w-5 h-5 text-purple-400" />
-              <span className="text-foreground">{progress.badges.length}/{allBadges.length} Badges</span>
-            </div>
-          </div>
-        ) : (
-          <div className="flex items-center gap-4 p-4 bg-card/50 border border-card-border rounded-md">
-            <div className="text-muted-foreground text-sm font-mono flex-1">
-              Sign in to track your progress and unlock badges!
-            </div>
-            <Button 
-              onClick={handleLogin}
-              size="sm"
-              className="font-mono uppercase tracking-widest text-xs"
-              data-testid="button-login"
-            >
-              <LogIn className="w-3 h-3 mr-2" />
-              Sign In
-            </Button>
-          </div>
-        )}
+        <p className="text-muted-foreground font-mono text-sm">
+          Unlock badges by creating stories and building streaks
+        </p>
       </div>
 
       <div className="space-y-10">
@@ -272,7 +232,7 @@ export function BadgesPage({ onBack }: BadgesPageProps) {
                   {category.name}
                 </h2>
                 <span className="text-sm font-mono text-muted-foreground">
-                  {user ? `${earnedInCategory}/${categoryBadges.length}` : `${categoryBadges.length} badges`}
+                  {categoryBadges.length} badges
                 </span>
               </div>
 

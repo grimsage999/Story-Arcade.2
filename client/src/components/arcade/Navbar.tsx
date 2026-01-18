@@ -1,12 +1,9 @@
 import { useState } from 'react';
-import { Sparkles, Menu, Trophy, Home, Compass, FileText, BookOpen, Settings, LogIn, LogOut, User, Award } from 'lucide-react';
+import { Sparkles, Menu, Trophy, Home, Compass, FileText, BookOpen, Settings, Award } from 'lucide-react';
 import { SoundToggle } from './SoundToggle';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { useAuth } from '@/hooks/use-auth';
 import { XPProgressBar } from './XPProgressBar';
 import type { View } from '@/pages/story-arcade';
 
@@ -30,26 +27,6 @@ export function Navbar({
   onLogoClick 
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, isAuthenticated, logout, isLoading: authLoading } = useAuth();
-
-  const handleLogin = () => {
-    window.location.href = '/api/login';
-  };
-
-  const handleLogout = () => {
-    logout();
-  };
-
-  const getUserInitials = () => {
-    if (!user) return '?';
-    if (user.firstName && user.lastName) {
-      return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
-    }
-    if (user.email) {
-      return user.email[0].toUpperCase();
-    }
-    return '?';
-  };
 
   const handleNavClick = (targetView: View) => {
     if (!isCreating) {
@@ -380,54 +357,6 @@ export function Navbar({
           BADGES
         </button>
 
-        {!authLoading && (
-          isAuthenticated && user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="rounded-full"
-                  data-testid="button-user-menu"
-                  aria-label="User menu"
-                >
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName || 'User'} />
-                    <AvatarFallback className="bg-gradient-to-br from-cyan-400 to-blue-500 text-black text-xs font-bold">
-                      {getUserInitials()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <div className="px-2 py-1.5 text-sm font-mono">
-                  <p className="text-foreground truncate">{user.firstName || 'User'}</p>
-                  <p className="text-muted-foreground text-xs truncate">{user.email}</p>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={handleLogout}
-                  className="text-destructive cursor-pointer"
-                  data-testid="button-logout"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button 
-              variant="outline"
-              size="sm"
-              onClick={handleLogin}
-              className="font-mono text-xs tracking-widest"
-              data-testid="button-login"
-            >
-              <LogIn className="w-3 h-3 mr-1" />
-              SIGN IN
-            </Button>
-          )
-        )}
       </div>
 
       <div className="md:hidden flex items-center gap-2">
@@ -451,35 +380,6 @@ export function Navbar({
           <Trophy className="w-3 h-3" aria-hidden="true" /> {streak}
         </div>
 
-        {!authLoading && (
-          isAuthenticated && user ? (
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="rounded-full"
-              onClick={handleLogout}
-              data-testid="mobile-button-logout"
-              aria-label="Sign out"
-            >
-              <Avatar className="h-7 w-7">
-                <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName || 'User'} />
-                <AvatarFallback className="bg-gradient-to-br from-cyan-400 to-blue-500 text-black text-[10px] font-bold">
-                  {getUserInitials()}
-                </AvatarFallback>
-              </Avatar>
-            </Button>
-          ) : (
-            <Button 
-              variant="ghost"
-              size="icon"
-              onClick={handleLogin}
-              data-testid="mobile-button-login"
-              aria-label="Sign in"
-            >
-              <LogIn className="w-4 h-4" />
-            </Button>
-          )
-        )}
       </div>
     </nav>
   );
