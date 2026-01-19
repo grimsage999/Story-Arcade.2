@@ -50,30 +50,13 @@ const TOUR_STEPS: TourStep[] = [
   },
 ];
 
-const TOUR_SEEN_KEY = 'storyArcade_tourSeen';
-
 interface FeatureTourProps {
   onComplete: () => void;
-  forceShow?: boolean;
 }
 
-export function FeatureTour({ onComplete, forceShow = false }: FeatureTourProps) {
+export function FeatureTour({ onComplete }: FeatureTourProps) {
   const [currentStep, setCurrentStep] = useState(0);
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    if (forceShow) {
-      setIsVisible(true);
-      return;
-    }
-    
-    const tourSeen = localStorage.getItem(TOUR_SEEN_KEY);
-    if (!tourSeen) {
-      setIsVisible(true);
-    } else {
-      onComplete();
-    }
-  }, [forceShow, onComplete]);
+  const [isVisible, setIsVisible] = useState(true);
 
   const handleNext = () => {
     if (currentStep < TOUR_STEPS.length - 1) {
@@ -90,13 +73,11 @@ export function FeatureTour({ onComplete, forceShow = false }: FeatureTourProps)
   };
 
   const handleComplete = () => {
-    localStorage.setItem(TOUR_SEEN_KEY, 'true');
     setIsVisible(false);
     onComplete();
   };
 
   const handleSkip = () => {
-    localStorage.setItem(TOUR_SEEN_KEY, 'true');
     setIsVisible(false);
     onComplete();
   };
@@ -187,20 +168,4 @@ export function FeatureTour({ onComplete, forceShow = false }: FeatureTourProps)
       </motion.div>
     </AnimatePresence>
   );
-}
-
-export function useTourStatus() {
-  const [hasSeenTour, setHasSeenTour] = useState(true);
-
-  useEffect(() => {
-    const tourSeen = localStorage.getItem(TOUR_SEEN_KEY);
-    setHasSeenTour(!!tourSeen);
-  }, []);
-
-  const resetTour = () => {
-    localStorage.removeItem(TOUR_SEEN_KEY);
-    setHasSeenTour(false);
-  };
-
-  return { hasSeenTour, resetTour };
 }
