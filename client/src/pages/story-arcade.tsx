@@ -498,7 +498,7 @@ export default function StoryArcade() {
         neighborhood: "Sanctuary Mode",
         title: fallback.title,
         themes: fallback.themes,
-        insight: fallback.insight || "A story from the archive.",
+        insight: "A story from the archive.",
         logline: fallback.logline,
         p1: fallback.p1,
         p2: fallback.p2,
@@ -1271,49 +1271,81 @@ export default function StoryArcade() {
   }
 
   if (view === 'GALLERY') {
+    const storiesWithPosters = gallery.filter(
+      (s) => s.posterUrl && s.posterStatus === 'ready'
+    );
+    
     return (
       <div className="min-h-screen bg-background flex flex-col font-sans relative overflow-hidden">
         <SkipLink />
-        <StaticStarfield />
+        <StarfieldBackground starCount={120} className="fixed inset-0" />
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
         
-        <main id="main-content" className="flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-7xl mx-auto w-full" data-testid="view-gallery" role="main">
-          <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <main id="main-content" className="flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-7xl mx-auto w-full relative z-10" data-testid="view-gallery" role="main">
+          <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
-              <h2 className="text-3xl md:text-5xl text-foreground font-display uppercase mb-3">Community Gallery</h2>
-              <p className="text-muted-foreground font-mono text-xs md:text-sm tracking-widest">{gallery.length} STORIES IN THE ARCHIVE</p>
+              <h2 className="text-3xl md:text-5xl text-foreground font-display uppercase mb-3 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent" data-testid="text-gallery-title">Community Gallery</h2>
+              <p className="text-muted-foreground font-mono text-xs md:text-sm tracking-widest" data-testid="text-story-count">{gallery.length} STORIES IN THE ARCHIVE</p>
             </div>
             <Button 
               onClick={() => setView('TRACK_SELECT')}
-              className="bg-primary text-primary-foreground font-display uppercase tracking-widest w-full md:w-auto"
+              className="font-display uppercase tracking-widest w-full md:w-auto"
               data-testid="button-add-yours"
             >
-              Add Yours <ArrowRight className="w-4 h-4 ml-2" />
+              <Sparkles className="w-4 h-4 mr-2" /> Create Your Story
             </Button>
           </div>
 
           {gallery.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="text-muted-foreground font-mono text-sm mb-6">No stories yet. Be the first to create one!</p>
+            <div className="text-center py-20" data-testid="empty-state">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
+                <Sparkles className="w-10 h-10 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-2" data-testid="text-empty-title">No Stories Yet</h3>
+              <p className="text-muted-foreground font-mono text-sm mb-6 max-w-md mx-auto" data-testid="text-empty-message">Be the first to forge your legend and share your story with the community.</p>
               <Button 
                 onClick={() => setView('TRACK_SELECT')}
-                className="bg-primary text-primary-foreground font-display uppercase tracking-widest"
+                className="font-display uppercase tracking-widest"
+                data-testid="button-create-first"
               >
                 Create First Story
               </Button>
             </div>
           ) : (
-            <StoryGallery 
-              stories={gallery}
-              title=""
-              subtitle=""
-              showFilters={true}
-            />
+            <>
+              {storiesWithPosters.length > 0 && (
+                <div className="mb-12" data-testid="section-featured-stories">
+                  <div className="flex items-center gap-3 mb-6">
+                    <Sparkles className="w-5 h-5 text-amber-400" />
+                    <h3 className="text-lg font-display uppercase tracking-widest text-foreground" data-testid="text-featured-title">Featured Stories</h3>
+                  </div>
+                  <FeaturedStorySpotlight
+                    stories={storiesWithPosters}
+                    onViewStory={(story) => setGalleryModalStory(story)}
+                    autoPlayInterval={8000}
+                  />
+                </div>
+              )}
+              
+              <StoryGallery 
+                stories={gallery}
+                title=""
+                subtitle=""
+                showFilters={true}
+              />
+            </>
           )}
         </main>
 
         <BackToTop />
+        
+        {galleryModalStory && (
+          <StoryModal
+            story={galleryModalStory}
+            onClose={() => setGalleryModalStory(null)}
+          />
+        )}
         
         <Toast message={toast} />
       </div>
