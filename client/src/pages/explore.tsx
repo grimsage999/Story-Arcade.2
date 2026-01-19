@@ -27,7 +27,7 @@ export default function ExplorePage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-background overflow-hidden">
+    <div className="relative min-h-screen bg-background overflow-hidden arcade-floor-ambient">
       <StarfieldBackground starCount={150} className="fixed inset-0" />
       <CRTOverlay />
       

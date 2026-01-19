@@ -96,74 +96,106 @@ export function FeatureTour({ onComplete }: FeatureTourProps) {
         className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md px-4"
         data-testid="feature-tour"
       >
+        {/* Cabinet bezel frame wrapper */}
         <motion.div
-          key={step.id}
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: -10 }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="relative max-w-md w-full bg-[#0F0F13] border border-cyan-500/50 rounded-md shadow-[0_0_40px_rgba(0,255,255,0.15)]"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="cabinet-bezel p-1 crt-warmup"
         >
-          <button
-            onClick={handleSkip}
-            className="absolute top-3 right-3 p-1 text-gray-500 hover:text-white transition-colors"
-            data-testid="button-skip-tour"
-            aria-label="Skip tour"
+          <motion.div
+            key={step.id}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="relative max-w-md w-full bg-[#0A0A0E] border border-cyan-500/30 rounded-sm shadow-[inset_0_0_30px_rgba(0,0,0,0.5)] refined-scanlines"
           >
-            <X className="w-5 h-5" />
-          </button>
+            <button
+              onClick={handleSkip}
+              className="absolute top-3 right-3 p-1 text-gray-500 hover:text-cyan-400 transition-colors z-20"
+              data-testid="button-skip-tour"
+              aria-label="Skip tour"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-          <div className="p-8 text-center">
-            <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-400/20 to-fuchsia-500/20 flex items-center justify-center border border-cyan-500/30">
-                {step.icon}
-              </div>
-            </div>
-
-            <h2 className="text-xl md:text-2xl font-bold text-white mb-3">
-              {step.title}
-            </h2>
-            <p className="text-gray-400 text-sm md:text-base leading-relaxed mb-6">
-              {step.description}
-            </p>
-
-            <div className="flex justify-center gap-1.5 mb-6">
-              {TOUR_STEPS.map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    index === currentStep ? 'bg-cyan-400' : 'bg-gray-600'
-                  }`}
-                />
-              ))}
-            </div>
-
-            <div className="flex justify-center gap-3">
-              {currentStep > 0 && (
-                <Button
-                  variant="outline"
-                  onClick={handlePrev}
-                  className="gap-2"
-                  data-testid="button-tour-prev"
+            <div className="p-8 text-center relative z-10">
+              {/* Icon with phosphor glow */}
+              <div className="flex justify-center mb-6">
+                <motion.div 
+                  key={`icon-${step.id}`}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.1, duration: 0.3 }}
+                  className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-400/20 to-fuchsia-500/20 flex items-center justify-center border border-cyan-500/30"
                 >
-                  <ChevronLeft className="w-4 h-4" />
-                  Back
-                </Button>
-              )}
-              <Button
-                onClick={handleNext}
-                className="gap-2 bg-cyan-500 text-black font-bold"
-                data-testid="button-tour-next"
-              >
-                {isLastStep ? "Let's Go!" : 'Next'}
-                {!isLastStep && <ChevronRight className="w-4 h-4" />}
-              </Button>
-            </div>
+                  {step.icon}
+                </motion.div>
+              </div>
 
-            <p className="text-gray-600 text-xs font-mono mt-4">
-              {currentStep + 1} of {TOUR_STEPS.length}
-            </p>
-          </div>
+              <motion.h2 
+                key={`title-${step.id}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, duration: 0.3 }}
+                className="text-xl md:text-2xl font-bold text-white mb-3 phosphor-text"
+              >
+                {step.title}
+              </motion.h2>
+              <motion.p 
+                key={`desc-${step.id}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.3 }}
+                className="text-gray-400 text-sm md:text-base leading-relaxed mb-6"
+              >
+                {step.description}
+              </motion.p>
+
+              {/* Progress dots with subtle glow */}
+              <div className="flex justify-center gap-1.5 mb-6">
+                {TOUR_STEPS.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      index === currentStep 
+                        ? 'bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.6)]' 
+                        : index < currentStep 
+                          ? 'bg-cyan-600/50' 
+                          : 'bg-gray-700'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              <div className="flex justify-center gap-3">
+                {currentStep > 0 && (
+                  <Button
+                    variant="outline"
+                    onClick={handlePrev}
+                    className="gap-2"
+                    data-testid="button-tour-prev"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Back
+                  </Button>
+                )}
+                <Button
+                  onClick={handleNext}
+                  className="gap-2 bg-cyan-500 text-black font-bold neon-breathe"
+                  data-testid="button-tour-next"
+                >
+                  {isLastStep ? "Let's Go!" : 'Next'}
+                  {!isLastStep && <ChevronRight className="w-4 h-4" />}
+                </Button>
+              </div>
+
+              <p className="text-gray-600 text-xs font-mono mt-4 tracking-widest">
+                {currentStep + 1} / {TOUR_STEPS.length}
+              </p>
+            </div>
+          </motion.div>
         </motion.div>
       </motion.div>
     </AnimatePresence>

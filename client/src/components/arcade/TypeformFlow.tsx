@@ -194,7 +194,7 @@ export function TypeformFlow({
   }, [showOnboarding, handleDismissOnboarding]);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col bg-background relative overflow-hidden">
+    <div className="min-h-[calc(100vh-4rem)] flex flex-col bg-background relative overflow-hidden refined-scanlines">
       <AnimatePresence>
         {showOnboarding && (
           <OnboardingOverlay
@@ -275,7 +275,7 @@ export function TypeformFlow({
                   </span>
                 </div>
                 
-                <h2 className="font-display text-2xl md:text-4xl lg:text-5xl text-foreground leading-tight">
+                <h2 className="font-display text-2xl md:text-4xl lg:text-5xl text-foreground leading-tight phosphor-text">
                   {currentQuestion.prompt}
                 </h2>
                 

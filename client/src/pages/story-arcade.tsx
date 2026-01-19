@@ -747,9 +747,16 @@ export default function StoryArcade() {
         
         <main id="main-content" className="relative flex-1 flex flex-col px-6 pt-24 md:pt-32" role="main">
           <div className="z-10 max-w-5xl mx-auto space-y-8 animate-fade-in text-center mb-12">
+            {/* Classic arcade "INSERT COIN" style prompt */}
+            <div className="mb-6">
+              <span className="press-start-pulse inline-block text-primary font-mono text-xs md:text-sm tracking-[0.3em] uppercase">
+                ▸ PRESS START ◂
+              </span>
+            </div>
+            
             <button
               onClick={handleSecretDemoTrigger}
-              className="inline-block px-4 py-1.5 border border-primary/20 rounded-full bg-primary/10 text-primary font-mono text-[10px] md:text-xs tracking-[0.2em] mb-4 backdrop-blur-sm hover-elevate cursor-pointer"
+              className="inline-block px-4 py-1.5 border border-primary/20 rounded-full bg-primary/10 text-primary font-mono text-[10px] md:text-xs tracking-[0.2em] mb-4 backdrop-blur-sm hover-elevate cursor-pointer coin-slot-glow"
               data-testid="badge-version"
             >
               COME SHARE YOUR WORLD
@@ -768,7 +775,7 @@ export default function StoryArcade() {
               <Button 
                 onClick={() => setView('TRACK_SELECT')} 
                 size="lg"
-                className="w-full md:w-auto bg-primary text-primary-foreground font-display uppercase tracking-widest shadow-[0_0_15px_rgba(34,211,238,0.5)]"
+                className="w-full md:w-auto bg-primary text-primary-foreground font-display uppercase tracking-widest neon-breathe"
                 data-testid="button-create-story"
                 aria-label="Start creating a new story"
               >
@@ -798,7 +805,9 @@ export default function StoryArcade() {
           
           <div className="w-full max-w-7xl mx-auto pb-20">
             <div className="text-center mb-8">
-              <h2 className="font-display text-2xl md:text-3xl text-foreground mb-2">Community Gallery</h2>
+              <h2 className="font-display text-2xl md:text-3xl text-foreground mb-2">
+                <span className="high-score-text">Hall of Legends</span>
+              </h2>
               <p className="text-muted-foreground font-mono text-xs tracking-widest">EXPLORE {gallery.length} STORIES FROM OUR COMMUNITY</p>
             </div>
             
@@ -1008,11 +1017,14 @@ export default function StoryArcade() {
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
         
-        <main id="main-content" className="flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-5xl mx-auto w-full" data-testid="view-reveal" role="main">
+        {/* Victory shimmer overlay */}
+        <div className="absolute inset-0 pointer-events-none z-0 victory-shimmer opacity-30" />
+        
+        <main id="main-content" className="flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-5xl mx-auto w-full relative z-10" data-testid="view-reveal" role="main">
           <ArcadeCabinet showMarquee={false} variant="compact">
-            <div className="mb-8 text-center animate-fade-in">
+            <div className="mb-8 text-center screen-pulse crt-bloom">
               <CosmicMarquee title="YOUR STORY IS READY" variant="minimal" />
-              <h1 className="font-display text-3xl md:text-5xl text-foreground my-4" data-testid="text-story-title">
+              <h1 className="font-display text-3xl md:text-5xl text-foreground my-4 phosphor-text" data-testid="text-story-title">
                 {generatedStory.title}
               </h1>
               <p className="text-muted-foreground font-mono text-sm">
@@ -1022,7 +1034,7 @@ export default function StoryArcade() {
             
             <HUDOverlay showGrid={false} variant="corners" showTechReadouts={false}>
               <div className="grid md:grid-cols-[1fr_auto] gap-6 md:gap-8 mb-8">
-                <div className="bg-card border border-card-border rounded-md p-6 md:p-10 animate-fade-in">
+                <div className="bg-card border border-card-border rounded-md p-6 md:p-10 crt-warmup hall-of-fame-border">
                   <p className="text-xl md:text-2xl text-primary font-display italic mb-8 border-l-4 border-primary pl-6">
                     "{generatedStory.logline}"
                   </p>

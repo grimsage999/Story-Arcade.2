@@ -57,7 +57,7 @@ export function StoryGalleryCard({ story, index, onView }: StoryGalleryCardProps
       aria-label={`View story: ${story.title}`}
     >
       <motion.div
-        className="relative aspect-[3/4] rounded-lg overflow-hidden"
+        className="relative aspect-[3/4] rounded-md overflow-hidden cabinet-card-frame"
         animate={{
           scale: isHovered ? 1.03 : 1,
           boxShadow: isHovered 

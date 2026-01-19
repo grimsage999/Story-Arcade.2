@@ -605,3 +605,349 @@
     transform: none;
   }
 }
+
+/* ========================================
+   NOSTALGIC ARCADE ENHANCEMENTS
+   Tasteful, subtle effects for immersion
+   ======================================== */
+
+/* PRESS START text pulse - classic arcade attract mode */
+@keyframes press-start-pulse {
+  0%, 100% { 
+    opacity: 1;
+    text-shadow: 0 0 4px currentColor;
+  }
+  50% { 
+    opacity: 0.6;
+    text-shadow: 0 0 8px currentColor, 0 0 12px currentColor;
+  }
+}
+
+.press-start-pulse {
+  animation: press-start-pulse 1.5s ease-in-out infinite;
+}
+
+/* Gentle neon breathing for CTAs */
+@keyframes neon-breathe {
+  0%, 100% { 
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.3), 
+                0 0 20px hsl(var(--primary) / 0.15);
+    filter: brightness(1);
+  }
+  50% { 
+    box-shadow: 0 0 15px hsl(var(--primary) / 0.5), 
+                0 0 30px hsl(var(--primary) / 0.25),
+                0 0 45px hsl(var(--primary) / 0.1);
+    filter: brightness(1.05);
+  }
+}
+
+.neon-breathe {
+  animation: neon-breathe 3s ease-in-out infinite;
+}
+
+/* Soft CRT warmup glow effect */
+@keyframes crt-warmup {
+  0% { 
+    opacity: 0;
+    filter: brightness(0.5) blur(4px);
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 0.7;
+    filter: brightness(0.9) blur(1px);
+    transform: scale(0.995);
+  }
+  100% { 
+    opacity: 1;
+    filter: brightness(1) blur(0);
+    transform: scale(1);
+  }
+}
+
+.crt-warmup {
+  animation: crt-warmup 0.6s ease-out forwards;
+}
+
+/* Pixel fade transition */
+@keyframes pixel-fade-in {
+  0% { 
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  100% { 
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.pixel-fade-in {
+  animation: pixel-fade-in 0.4s steps(8) forwards;
+}
+
+/* Cabinet bezel frame effect */
+.cabinet-bezel {
+  position: relative;
+  border: 3px solid hsl(240 6% 20%);
+  border-radius: 4px;
+  box-shadow: 
+    inset 0 0 20px hsl(0 0% 0% / 0.5),
+    0 0 0 1px hsl(240 6% 25%),
+    0 4px 20px hsl(0 0% 0% / 0.4);
+  background: linear-gradient(
+    135deg,
+    hsl(240 8% 8%) 0%,
+    hsl(240 8% 6%) 50%,
+    hsl(240 8% 5%) 100%
+  );
+}
+
+.cabinet-bezel::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  background: linear-gradient(
+    180deg,
+    hsl(240 6% 18%) 0%,
+    hsl(240 6% 12%) 50%,
+    hsl(240 6% 8%) 100%
+  );
+  border-radius: 6px;
+  z-index: -1;
+}
+
+/* Coin slot visual cue */
+@keyframes coin-glow {
+  0%, 100% { 
+    box-shadow: 0 0 4px hsl(45 93% 58% / 0.3);
+  }
+  50% { 
+    box-shadow: 0 0 8px hsl(45 93% 58% / 0.6), 
+                0 0 16px hsl(45 93% 58% / 0.3);
+  }
+}
+
+.coin-slot-glow {
+  animation: coin-glow 2s ease-in-out infinite;
+  border: 1px solid hsl(45 93% 58% / 0.4);
+  border-radius: 9999px;
+}
+
+/* Phosphor text glow for typewriter effect */
+@keyframes phosphor-glow {
+  0%, 100% { 
+    text-shadow: 0 0 2px hsl(var(--primary) / 0.4);
+  }
+  50% { 
+    text-shadow: 0 0 4px hsl(var(--primary) / 0.6), 
+                 0 0 8px hsl(var(--primary) / 0.3);
+  }
+}
+
+.phosphor-text {
+  animation: phosphor-glow 2s ease-in-out infinite;
+  color: hsl(var(--foreground));
+}
+
+/* Screen pulse for reveals */
+@keyframes screen-pulse {
+  0% { 
+    opacity: 0.8;
+    transform: scale(0.99);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.01);
+    filter: brightness(1.1);
+  }
+  100% { 
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+.screen-pulse {
+  animation: screen-pulse 0.5s ease-out;
+}
+
+/* CRT bloom effect for reveals */
+@keyframes crt-bloom {
+  0% { 
+    filter: brightness(1.5) blur(4px);
+    opacity: 0;
+  }
+  30% {
+    filter: brightness(1.2) blur(2px);
+    opacity: 0.8;
+  }
+  100% { 
+    filter: brightness(1) blur(0);
+    opacity: 1;
+  }
+}
+
+.crt-bloom {
+  animation: crt-bloom 0.8s ease-out forwards;
+}
+
+/* Refined scanline overlay */
+.refined-scanlines {
+  position: relative;
+}
+
+.refined-scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    hsl(0 0% 0% / 0.015) 2px,
+    hsl(0 0% 0% / 0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* High score board styling */
+.high-score-text {
+  font-family: var(--font-mono);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  background: linear-gradient(
+    180deg,
+    hsl(45 93% 70%) 0%,
+    hsl(45 93% 58%) 50%,
+    hsl(35 90% 50%) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  filter: drop-shadow(0 0 4px hsl(45 93% 58% / 0.5));
+}
+
+/* Joystick icon decoration */
+.joystick-icon {
+  transition: transform 0.2s ease;
+}
+
+.joystick-icon:hover {
+  animation: joystick-wiggle 0.4s ease-in-out;
+}
+
+/* Arcade floor ambient effect */
+@keyframes ambient-glow-shift {
+  0%, 100% { 
+    background-position: 0% 50%;
+  }
+  50% { 
+    background-position: 100% 50%;
+  }
+}
+
+.arcade-floor-ambient {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--primary) / 0.03) 0%,
+    hsl(292 84% 61% / 0.03) 25%,
+    hsl(45 93% 58% / 0.03) 50%,
+    hsl(292 84% 61% / 0.03) 75%,
+    hsl(var(--primary) / 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: ambient-glow-shift 10s ease-in-out infinite;
+}
+
+/* Hall of Fame styling */
+.hall-of-fame-border {
+  border: 2px solid transparent;
+  background: 
+    linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
+    linear-gradient(
+      135deg,
+      hsl(45 93% 58% / 0.6) 0%,
+      hsl(45 93% 58% / 0.2) 25%,
+      hsl(292 84% 61% / 0.2) 50%,
+      hsl(45 93% 58% / 0.2) 75%,
+      hsl(45 93% 58% / 0.6) 100%
+    ) border-box;
+  border-radius: 8px;
+}
+
+/* Victory celebration accents */
+@keyframes victory-shimmer {
+  0% { 
+    background-position: -200% 0;
+  }
+  100% { 
+    background-position: 200% 0;
+  }
+}
+
+.victory-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(45 93% 58% / 0.2) 25%,
+    hsl(45 93% 58% / 0.4) 50%,
+    hsl(45 93% 58% / 0.2) 75%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: victory-shimmer 2s ease-in-out;
+}
+
+/* Cabinet card frame for gallery */
+.cabinet-card-frame {
+  position: relative;
+  background: hsl(var(--card));
+  border: 1px solid hsl(240 6% 16%);
+  border-radius: 4px;
+}
+
+.cabinet-card-frame::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    hsl(var(--primary) / 0.4) 50%,
+    transparent 100%
+  );
+  border-radius: 2px;
+}
+
+/* Reduced motion support for new effects */
+@media (prefers-reduced-motion: reduce) {
+  .press-start-pulse,
+  .neon-breathe,
+  .crt-warmup,
+  .pixel-fade-in,
+  .phosphor-text,
+  .screen-pulse,
+  .crt-bloom,
+  .coin-slot-glow,
+  .arcade-floor-ambient,
+  .victory-shimmer {
+    animation: none !important;
+  }
+  
+  .press-start-pulse {
+    opacity: 1;
+  }
+  
+  .crt-warmup,
+  .pixel-fade-in,
+  .crt-bloom {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}

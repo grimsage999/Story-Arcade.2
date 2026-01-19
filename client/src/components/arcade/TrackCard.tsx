@@ -1,4 +1,4 @@
-import { Rewind, Zap, MapPin, ArrowRight } from 'lucide-react';
+import { Rewind, Zap, MapPin, ArrowRight, Gamepad2 } from 'lucide-react';
 import type { Track } from '@shared/schema';
 
 interface TrackCardProps {
@@ -25,15 +25,27 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
     : track.id === 'future' 
     ? 'hover:border-cyan-400' 
     : 'hover:border-amber-400';
+    
+  const glowColor = track.id === 'origin'
+    ? 'group-hover:shadow-[0_0_30px_rgba(217,70,239,0.2)]'
+    : track.id === 'future'
+    ? 'group-hover:shadow-[0_0_30px_rgba(34,211,238,0.2)]'
+    : 'group-hover:shadow-[0_0_30px_rgba(251,191,36,0.2)]';
 
   return (
     <button 
       onClick={() => onSelect(track)}
-      className={`group relative min-h-[220px] md:h-[360px] bg-card border border-card-border ${borderHoverClass} p-6 md:p-8 flex flex-col justify-between cursor-pointer transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_0_40px_rgba(0,0,0,0.4)] overflow-hidden rounded-md active:scale-[0.98] text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400`}
+      className={`group relative min-h-[220px] md:h-[360px] bg-card border border-card-border ${borderHoverClass} ${glowColor} p-6 md:p-8 flex flex-col justify-between cursor-pointer transition-all duration-300 hover:-translate-y-2 overflow-hidden rounded-md active:scale-[0.98] text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cyan-400`}
       data-testid={`card-track-${track.id}`}
       aria-label={`Select ${track.title} track: ${track.subtitle}. ${track.questions.length} questions.`}
     >
       <div className={`absolute inset-0 bg-gradient-to-br ${track.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
+      
+      {/* Subtle joystick decoration in corner */}
+      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-30 transition-opacity duration-300">
+        <Gamepad2 className="w-5 h-5 text-muted-foreground joystick-icon" aria-hidden="true" />
+      </div>
+      
       <div className="relative z-10 flex flex-col h-full">
         <div className="flex justify-between items-start mb-6 gap-2 flex-wrap">
           <div className="p-3 rounded-md bg-secondary border border-border shadow-inner group-hover:scale-110 transition-transform duration-300">
@@ -56,10 +68,15 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
             {track.description}
           </p>
         </div>
+        
+        {/* Footer with high-score styling and coin slot */}
         <div className="mt-auto pt-6 border-t border-border/50 flex items-center justify-between gap-2 text-[10px] font-mono text-muted-foreground group-hover:text-foreground transition-colors flex-wrap">
-          <span>{track.questions.length} QUESTIONS</span>
-          <span className="flex items-center">
-            INSERT <ArrowRight className="w-3 h-3 ml-2 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
+          <span className="high-score-text group-hover:opacity-100 opacity-70 transition-opacity">
+            {track.questions.length} SCENES
+          </span>
+          <span className="flex items-center gap-2 coin-slot-glow px-2 py-0.5 group-hover:border-amber-400/60">
+            <span className="text-amber-400/80">INSERT</span>
+            <ArrowRight className="w-3 h-3 text-amber-400 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
           </span>
         </div>
       </div>
