@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { BookOpen, Search, Trash2, Eye, Download, Copy, Link, Filter, ArrowUpDown, SortDesc, SortAsc, Calendar, Loader2, Globe } from 'lucide-react';
+import { BookOpen, Search, Trash2, Eye, Download, Copy, Link, Filter, ArrowUpDown, SortDesc, SortAsc, Calendar, Loader2, Globe, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -19,6 +19,7 @@ import {
 
 interface MyStoriesPageProps {
   onViewStory?: (story: CompletedStory) => void;
+  onEditStory?: (story: CompletedStory) => void;
   onBack?: () => void;
   showToast?: (message: string) => void;
 }
@@ -44,7 +45,7 @@ function storyToCompletedStory(story: Story): CompletedStory {
   };
 }
 
-export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageProps) {
+export function MyStoriesPage({ onViewStory, onEditStory, onBack, showToast }: MyStoriesPageProps) {
   const [, navigate] = useLocation();
   const { user, isLoading: authLoading, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
@@ -431,6 +432,16 @@ export function MyStoriesPage({ onViewStory, onBack, showToast }: MyStoriesPageP
                       data-testid={`button-view-${story.id}`}
                     >
                       <Eye className="w-3 h-3 mr-1" /> View
+                    </Button>
+
+                    <Button
+                      onClick={() => onEditStory?.(story)}
+                      size="sm"
+                      variant="outline"
+                      className="font-mono uppercase tracking-widest text-[10px]"
+                      data-testid={`button-edit-${story.id}`}
+                    >
+                      <Pencil className="w-3 h-3 mr-1" /> Edit
                     </Button>
                     
                     <DropdownMenu>

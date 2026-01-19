@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertStorySchema } from "@shared/schema";
+import { insertStorySchema, updateStorySchema, insertDraftSchema, updateDraftSchema } from "@shared/schema";
 import { registerInspireRoutes } from "./routes/inspire";
 import { isAuthenticated } from "./replit_integrations/auth";
 import { 
@@ -266,6 +266,148 @@ export async function registerRoutes(
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch poster status" });
+    }
+  });
+
+  // Update a story (for edit flow) - requires authentication and ownership
+  app.put("/api/stories/:id", requireAuth, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.user.claims.sub;
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid story ID" });
+      }
+      
+      const story = await storage.getStory(id);
+      if (!story) {
+        return res.status(404).json({ error: "Story not found" });
+      }
+      
+      // Verify ownership: story must belong to authenticated user
+      // Public stories (userId === null) cannot be edited
+      if (!story.userId || story.userId !== userId) {
+        return res.status(403).json({ error: "You can only edit your own stories" });
+      }
+      
+      // Validate update payload
+      const parseResult = updateStorySchema.safeParse(req.body);
+      if (!parseResult.success) {
+        return res.status(400).json({ 
+          error: "Invalid update data", 
+          details: parseResult.error.flatten() 
+        });
+      }
+      
+      const updatedStory = await storage.updateStory(id, parseResult.data);
+      res.json(updatedStory);
+    } catch (error) {
+      console.error("Error updating story:", error);
+      res.status(500).json({ error: "Failed to update story" });
+    }
+  });
+
+  // ============ DRAFTS API ============
+  
+  // Get all drafts for a session
+  app.get("/api/drafts", async (req, res) => {
+    try {
+      const sessionId = req.query.sessionId as string;
+      if (!sessionId) {
+        return res.status(400).json({ error: "Session ID required" });
+      }
+      const sessionDrafts = await storage.getDraftsBySession(sessionId);
+      res.json(sessionDrafts);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch drafts" });
+    }
+  });
+
+  // Get a single draft
+  app.get("/api/drafts/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid draft ID" });
+      }
+      const draft = await storage.getDraft(id);
+      if (!draft) {
+        return res.status(404).json({ error: "Draft not found" });
+      }
+      res.json(draft);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch draft" });
+    }
+  });
+
+  // Create a new draft (with Zod validation)
+  app.post("/api/drafts", async (req, res) => {
+    try {
+      const parseResult = insertDraftSchema.safeParse(req.body);
+      
+      if (!parseResult.success) {
+        return res.status(400).json({ 
+          error: "Invalid draft data", 
+          details: parseResult.error.flatten() 
+        });
+      }
+      
+      // Ensure currentQuestionIndex has a default if not provided
+      const draftData = {
+        ...parseResult.data,
+        currentQuestionIndex: parseResult.data.currentQuestionIndex ?? 0,
+      };
+      
+      const draft = await storage.createDraft(draftData);
+      res.status(201).json(draft);
+    } catch (error) {
+      console.error("Error creating draft:", error);
+      res.status(500).json({ error: "Failed to create draft" });
+    }
+  });
+
+  // Update a draft (with Zod validation)
+  app.put("/api/drafts/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid draft ID" });
+      }
+      
+      const parseResult = updateDraftSchema.safeParse(req.body);
+      
+      if (!parseResult.success) {
+        return res.status(400).json({ 
+          error: "Invalid update data", 
+          details: parseResult.error.flatten() 
+        });
+      }
+      
+      const draft = await storage.updateDraft(id, parseResult.data);
+      if (!draft) {
+        return res.status(404).json({ error: "Draft not found" });
+      }
+      res.json(draft);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update draft" });
+    }
+  });
+
+  // Delete a draft
+  app.delete("/api/drafts/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const sessionId = req.query.sessionId as string;
+      if (isNaN(id) || !sessionId) {
+        return res.status(400).json({ error: "Invalid request" });
+      }
+      const deleted = await storage.deleteDraft(id, sessionId);
+      if (!deleted) {
+        return res.status(404).json({ error: "Draft not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete draft" });
     }
   });
 

@@ -1,8 +1,38 @@
-import { pgTable, text, varchar, integer, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, jsonb, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 export * from "./models/auth";
+
+// Server-backed drafts table for cross-device sync
+export const drafts = pgTable("drafts", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  sessionId: varchar("session_id", { length: 64 }).notNull(),
+  trackId: text("track_id").notNull(),
+  trackTitle: text("track_title").notNull(),
+  answers: jsonb("answers").notNull(),
+  currentQuestionIndex: integer("current_question_index").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertDraftSchema = createInsertSchema(drafts, {
+  answers: z.record(z.string(), z.string()),
+  currentQuestionIndex: z.number().optional().default(0),
+}).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateDraftSchema = z.object({
+  answers: z.record(z.string(), z.string()).optional(),
+  currentQuestionIndex: z.number().optional(),
+});
+
+export type Draft = typeof drafts.$inferSelect;
+export type InsertDraft = z.infer<typeof insertDraftSchema>;
+export type UpdateDraft = z.infer<typeof updateDraftSchema>;
 
 export const stories = pgTable("stories", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
@@ -34,7 +64,21 @@ export const insertStorySchema = baseInsertStorySchema.omit({
   shareableId: true,
 } as const);
 
+export const updateStorySchema = z.object({
+  title: z.string().optional(),
+  logline: z.string().optional(),
+  themes: z.array(z.string()).optional(),
+  insight: z.string().optional(),
+  p1: z.string().optional(),
+  p2: z.string().optional(),
+  p3: z.string().optional(),
+  answers: z.record(z.string(), z.string()).optional(),
+  posterUrl: z.string().nullable().optional(),
+  posterStatus: z.string().optional(),
+});
+
 export type InsertStory = z.infer<typeof insertStorySchema>;
+export type UpdateStory = z.infer<typeof updateStorySchema>;
 export type Story = typeof stories.$inferSelect;
 
 export const questionSchema = z.object({

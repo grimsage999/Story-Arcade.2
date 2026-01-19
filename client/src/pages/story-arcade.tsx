@@ -34,6 +34,8 @@ import { FeaturedStorySpotlight } from '@/components/arcade/FeaturedStorySpotlig
 import { StoryGallery } from '@/components/arcade/StoryGallery';
 import { StoryGalleryCard } from '@/components/arcade/StoryGalleryCard';
 import { TypeformFlow } from '@/components/arcade/TypeformFlow';
+import { EditStoryFlow } from '@/components/arcade/EditStoryFlow';
+import { FeatureTour } from '@/components/arcade/FeatureTour';
 import { useIdleTimer } from '@/hooks/useIdleTimer';
 import { checkContentSafety, getFallbackStory } from '@/lib/contentSafety';
 import { arcadeSounds } from '@/lib/arcadeSounds';
@@ -107,6 +109,8 @@ export default function StoryArcade() {
   const [showScreensaver, setShowScreensaver] = useState(false);
   const [contentWarning, setContentWarning] = useState<string | null>(null);
   const [contentBlocked, setContentBlocked] = useState(false);
+  const [editingStory, setEditingStory] = useState<CompletedStory | null>(null);
+  const [showTour, setShowTour] = useState(true);
 
   const { data: apiGallery, isLoading: isLoadingGallery, isError: isGalleryError } = useQuery<Story[]>({
     queryKey: ['/api/stories'],
@@ -727,6 +731,12 @@ export default function StoryArcade() {
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
         
+        {showTour && (
+          <FeatureTour 
+            onComplete={() => setShowTour(false)} 
+          />
+        )}
+        
         {recoveryDraft && (
           <DraftRecoveryBanner 
             draft={recoveryDraft}
@@ -1209,6 +1219,15 @@ export default function StoryArcade() {
       setGalleryModalStory(storyForView);
     };
 
+    const handleEditStory = (story: CompletedStory) => {
+      setEditingStory(story);
+    };
+
+    const handleEditSave = (updatedStory: Story) => {
+      setEditingStory(null);
+      showToast('Story updated successfully!');
+    };
+
     return (
       <div className="min-h-screen bg-background flex flex-col font-sans relative">
         <SkipLink />
@@ -1216,12 +1235,22 @@ export default function StoryArcade() {
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
         <MyStoriesPage 
           onViewStory={handleViewCompletedStory}
+          onEditStory={handleEditStory}
           onBack={() => setView('ATTRACT')}
           showToast={showToast}
         />
         
         {galleryModalStory && (
           <StoryModal story={galleryModalStory} onClose={() => setGalleryModalStory(null)} />
+        )}
+
+        {editingStory && (
+          <EditStoryFlow
+            story={editingStory}
+            onClose={() => setEditingStory(null)}
+            onSave={handleEditSave}
+            showToast={showToast}
+          />
         )}
         
         <Toast message={toast} />
