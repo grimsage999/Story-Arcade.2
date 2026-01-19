@@ -103,6 +103,42 @@ Drizzle ORM with a PostgreSQL dialect defines the schema for `users`, `sessions`
   - Touch-optimized for kiosk environments
   - Supported colors: cyan, fuchsia, amber, violet
 
+### Micro-Games System
+
+Track-specific playable mini-games that progress as users answer story questions, plus personalized game levels generated from completed stories.
+
+**Game Engine (`client/src/components/arcade/games/`):**
+- `GameEngine.tsx`: Core canvas-based engine with sprite system, collision detection, 60fps animation loops, and procedural level generation utilities
+- Shared utilities: seeded random generation, text-to-seed hashing, platform/collectible/decoration generators
+- Consistent architecture across all game types
+
+**Track-Specific Games (visible during TypeformFlow on lg+ screens):**
+- `OriginGame.tsx`: Side-scrolling platformer with purple/cyan palette, pixel art character, neighborhood-themed backgrounds, platforms, and trees
+- `FutureCityGame.tsx`: Cyber runner with neon blue/cyan aesthetics, data nodes as collectibles, circuit platforms, and urban skyline
+- `LegendGame.tsx`: Quest adventure with amber/orange mythical theme, treasure chests, stone platforms, and fantasy landscape
+
+**Game Panel Integration:**
+- Split-screen layout: questions on left, game on right (lg+ screens only, hidden on mobile)
+- Toggle button to show/hide game panel
+- Progress synchronization: game character advances as questions are answered
+- Track-specific game renders based on selected story track
+
+**Personalized Game (appears on Reveal view):**
+- `PersonalizedGame.tsx`: Full playable platformer generated from story content
+- Procedural generation seeded by story title, paragraphs, and neighborhood
+- Track-specific color palette and theme
+- Player controls: Arrow keys/WASD to move, Space/W to jump
+- Collectibles (10 points each), goal star (100 bonus points)
+- Game states: idle (shows play button), playing (keyboard active), complete (shows score + replay/share)
+
+**Technical Details:**
+- Canvas rendering at 320x200 (preview) or 400x300 (full game) for performance
+- requestAnimationFrame loops with cleanup on unmount
+- Collision detection via bounding box intersection
+- Pixel-art character with walk animation frames
+- Keyboard event handling with arrow keys, WASD, and Space
+- Respects prefers-reduced-motion for accessibility
+
 **Progression Database Entities:**
 - `badges` - Badge definitions (id, name, description, icon, category, requirement, xpReward, rarity)
 - `user_badges` - Junction table tracking earned badges per user (userId, badgeId, earnedAt)
