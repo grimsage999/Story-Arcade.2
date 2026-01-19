@@ -9,6 +9,7 @@ import { Toast } from '@/components/arcade/Toast';
 import { Navbar } from '@/components/arcade/Navbar';
 import { TrackCard } from '@/components/arcade/TrackCard';
 import { StoryCard } from '@/components/arcade/StoryCard';
+import { PersonalizedGame } from '@/components/arcade/games';
 import { DraftRecoveryBanner } from '@/components/arcade/DraftRecoveryBanner';
 import { UnsavedStoryModal } from '@/components/arcade/UnsavedStoryModal';
 import { DraftsList } from '@/components/arcade/DraftsList';
@@ -1158,8 +1159,23 @@ export default function StoryArcade() {
               </Button>
             </div>
             
+            {/* Personalized Mini-Game */}
+            <div className="mt-8 pt-8 border-t border-border">
+              <div className="text-center mb-4">
+                <p className="text-xs font-mono text-muted-foreground tracking-widest mb-1">YOUR STORY WORLD</p>
+                <h3 className="font-display text-lg text-foreground">Play Your Personalized Game</h3>
+                <p className="text-xs text-muted-foreground mt-1">A unique level generated from your story</p>
+              </div>
+              <div className="max-w-lg mx-auto">
+                <PersonalizedGame 
+                  story={generatedStory} 
+                  onShare={handleShare}
+                />
+              </div>
+            </div>
+            
             {/* Action buttons */}
-            <div className="flex flex-col md:flex-row gap-3 justify-center">
+            <div className="flex flex-col md:flex-row gap-3 justify-center mt-8">
               <Button 
                 variant="outline"
                 onClick={() => setView('GALLERY')}

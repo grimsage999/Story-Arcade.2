@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, Check, ArrowRight, Sparkles } from 'lucide-react';
+import { ChevronDown, ChevronUp, Check, ArrowRight, Sparkles, Gamepad2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Track } from '@shared/schema';
 import { MOTIVATIONS } from '@/lib/tracks';
@@ -8,6 +8,7 @@ import { checkContentSafety } from '@/lib/contentSafety';
 import { OnboardingOverlay } from './OnboardingOverlay';
 import { VoiceMicButton } from './VoiceMicButton';
 import { SceneExamples } from './SceneExamples';
+import { OriginGame, FutureCityGame, LegendGame } from './games';
 
 interface TypeformFlowProps {
   track: Track;
@@ -74,6 +75,8 @@ export function TypeformFlow({
   const [contentWarning, setContentWarning] = useState<string | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [interimVoiceText, setInterimVoiceText] = useState('');
+  const [showGame, setShowGame] = useState(true);
+  const [gameProgress, setGameProgress] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const questions = track.questions;
@@ -180,6 +183,31 @@ export function TypeformFlow({
     setTimeout(() => textareaRef.current?.focus(), 100);
   }, []);
 
+  const handleGameProgress = useCallback((progress: number) => {
+    setGameProgress(progress);
+  }, []);
+
+  const renderGameForTrack = () => {
+    const gameProps = {
+      currentQuestion: currentIndex,
+      totalQuestions: questions.length,
+      isAnswered: isValid,
+      storyInputs: answers,
+      onGameProgress: handleGameProgress,
+    };
+
+    switch (track.id) {
+      case 'origin':
+        return <OriginGame {...gameProps} />;
+      case 'future':
+        return <FutureCityGame {...gameProps} />;
+      case 'legend':
+        return <LegendGame {...gameProps} />;
+      default:
+        return <OriginGame {...gameProps} />;
+    }
+  };
+
   useEffect(() => {
     if (showOnboarding) {
       const handleEnter = (e: KeyboardEvent) => {
@@ -225,44 +253,98 @@ export function TypeformFlow({
             </span>
           </div>
           
-          <div className="flex items-center gap-2">
-            {questions.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => {
-                  if (i < currentIndex || (i <= currentIndex && isValid)) {
-                    setDirection(i > currentIndex ? 1 : -1);
-                    setIsTransitioning(true);
-                    updateIndex(i);
-                    setTimeout(() => setIsTransitioning(false), 400);
-                  }
-                }}
-                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                  i === currentIndex 
-                    ? 'bg-primary scale-125 shadow-[0_0_10px_rgba(34,211,238,0.8)]'
-                    : i < currentIndex || (answers[questions[i].id]?.length ?? 0) >= 5
-                      ? 'bg-primary/60'
-                      : 'bg-secondary'
-                }`}
-                aria-label={`Go to question ${i + 1}`}
-                disabled={i > currentIndex && !isValid}
-              />
-            ))}
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowGame(!showGame)}
+              className="font-mono text-[10px] gap-1.5 hidden md:flex"
+              data-testid="button-toggle-game"
+            >
+              <Gamepad2 className="w-3 h-3" />
+              {showGame ? 'HIDE GAME' : 'SHOW GAME'}
+            </Button>
+            
+            <div className="flex items-center gap-2">
+              {questions.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    if (i < currentIndex || (i <= currentIndex && isValid)) {
+                      setDirection(i > currentIndex ? 1 : -1);
+                      setIsTransitioning(true);
+                      updateIndex(i);
+                      setTimeout(() => setIsTransitioning(false), 400);
+                    }
+                  }}
+                  className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                    i === currentIndex 
+                      ? 'bg-primary scale-125 shadow-[0_0_10px_rgba(34,211,238,0.8)]'
+                      : i < currentIndex || (answers[questions[i].id]?.length ?? 0) >= 5
+                        ? 'bg-primary/60'
+                        : 'bg-secondary'
+                  }`}
+                  aria-label={`Go to question ${i + 1}`}
+                  disabled={i > currentIndex && !isValid}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="flex-1 flex items-center justify-center px-6 py-8">
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            key={currentIndex}
-            custom={direction}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            className="w-full max-w-3xl mx-auto"
-          >
+      <div className="flex-1 flex px-6 py-8 gap-6">
+        <AnimatePresence>
+          {showGame && (
+            <motion.div
+              initial={{ opacity: 0, x: -20, width: 0 }}
+              animate={{ opacity: 1, x: 0, width: 'auto' }}
+              exit={{ opacity: 0, x: -20, width: 0 }}
+              transition={{ duration: 0.3 }}
+              className="hidden lg:flex flex-col items-center justify-center"
+              data-testid="game-panel"
+            >
+              <div className="w-[320px] flex flex-col gap-3">
+                <div className="text-center">
+                  <p className="font-mono text-[10px] text-muted-foreground tracking-widest mb-1">
+                    YOUR ADVENTURE
+                  </p>
+                  <div className="h-1 w-full bg-secondary rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-primary to-accent"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${gameProgress}%` }}
+                      transition={{ duration: 0.5 }}
+                    />
+                  </div>
+                </div>
+                
+                {renderGameForTrack()}
+                
+                <div className="text-center space-y-1">
+                  <p className="font-mono text-[9px] text-primary/60">
+                    Answer questions to advance your character
+                  </p>
+                  <p className="font-mono text-[8px] text-muted-foreground/50">
+                    Stage {currentIndex + 1} of {questions.length}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        <div className="flex-1 flex items-center justify-center">
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={currentIndex}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className="w-full max-w-3xl mx-auto"
+            >
             <div className="space-y-8">
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
@@ -400,8 +482,9 @@ export function TypeformFlow({
                 </p>
               </div>
             </div>
-          </motion.div>
-        </AnimatePresence>
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
 
       <div className="fixed bottom-6 right-6 flex gap-2 z-40">
