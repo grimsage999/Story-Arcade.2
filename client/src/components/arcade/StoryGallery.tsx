@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import type { Story } from '@shared/schema';
 import { StoryGalleryCard } from './StoryGalleryCard';
+import { PremiumStoryCard } from './PremiumStoryCard';
 import { StoryModal } from './StoryModal';
-import { Search, Filter, Grid3X3, LayoutGrid } from 'lucide-react';
+import { Search, Filter, Grid3X3, LayoutGrid, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface StoryGalleryProps {
@@ -11,6 +12,7 @@ interface StoryGalleryProps {
   title?: string;
   subtitle?: string;
   showFilters?: boolean;
+  usePremiumCards?: boolean;
 }
 
 type LayoutMode = 'grid' | 'masonry';
@@ -20,12 +22,14 @@ export function StoryGallery({
   stories, 
   title = "Community Stories",
   subtitle = "Explore the mythology of our community",
-  showFilters = true 
+  showFilters = true,
+  usePremiumCards = false
 }: StoryGalleryProps) {
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [trackFilter, setTrackFilter] = useState<TrackFilter>('all');
   const [layoutMode, setLayoutMode] = useState<LayoutMode>('grid');
+  const [showPremium, setShowPremium] = useState(usePremiumCards);
 
   const filteredStories = stories.filter((story) => {
     const query = searchQuery.toLowerCase();
@@ -121,6 +125,21 @@ export function StoryGallery({
                 <LayoutGrid className="w-4 h-4" />
               </button>
             </div>
+
+            <button
+              onClick={() => setShowPremium(!showPremium)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition-all focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+                showPremium 
+                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' 
+                  : 'bg-muted/30 text-muted-foreground border border-transparent'
+              }`}
+              aria-label="Toggle premium card style"
+              aria-pressed={showPremium}
+              data-testid="toggle-premium-cards"
+            >
+              <Sparkles className="w-3 h-3" />
+              CINEMA
+            </button>
           </div>
         </motion.div>
       )}
@@ -153,12 +172,22 @@ export function StoryGallery({
           `}
         >
           {filteredStories.map((story, index) => (
-            <StoryGalleryCard
-              key={story.id}
-              story={story}
-              index={index}
-              onView={setSelectedStory}
-            />
+            showPremium ? (
+              <PremiumStoryCard
+                key={story.id}
+                story={story}
+                index={index}
+                onView={setSelectedStory}
+                size="medium"
+              />
+            ) : (
+              <StoryGalleryCard
+                key={story.id}
+                story={story}
+                index={index}
+                onView={setSelectedStory}
+              />
+            )
           ))}
         </motion.div>
       )}
