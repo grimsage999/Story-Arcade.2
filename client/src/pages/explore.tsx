@@ -9,7 +9,7 @@ import { StoryGallery } from '@/components/arcade/StoryGallery';
 import { StoryModal } from '@/components/arcade/StoryModal';
 import { CRTOverlay } from '@/components/arcade/CRTOverlay';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Sparkles, Users, Zap } from 'lucide-react';
+import { ArrowLeft, Sparkles, Users, Zap, Monitor } from 'lucide-react';
 
 export default function ExplorePage() {
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
@@ -62,6 +62,15 @@ export default function ExplorePage() {
               </div>
               
               <div className="flex items-center gap-3">
+                <Link href="/gallery-mode">
+                  <Button 
+                    variant="outline"
+                    data-testid="button-gallery-mode"
+                  >
+                    <Monitor className="w-4 h-4 mr-2" />
+                    Gallery Mode
+                  </Button>
+                </Link>
                 <Link href="/">
                   <Button 
                     data-testid="button-create-story"

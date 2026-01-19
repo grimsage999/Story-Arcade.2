@@ -11,6 +11,7 @@ import StoryPage from "@/pages/story";
 import { BadgesPage } from "@/pages/badges";
 import { MyStoriesPage } from "@/pages/my-stories";
 import ExplorePage from "@/pages/explore";
+import GalleryModePage from "@/pages/gallery-mode";
 import NotFound from "@/pages/not-found";
 
 
@@ -22,6 +23,7 @@ function Router() {
       <Route path="/badges">{() => <BadgesPage />}</Route>
       <Route path="/my-stories">{() => <MyStoriesPage />}</Route>
       <Route path="/explore">{() => <ExplorePage />}</Route>
+      <Route path="/gallery-mode">{() => <GalleryModePage />}</Route>
       <Route component={NotFound} />
     </Switch>
   );
