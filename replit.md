@@ -66,6 +66,43 @@ Drizzle ORM with a PostgreSQL dialect defines the schema for `users`, `sessions`
   - `StoryGalleryCard`: Poster-focused cards with hover effects revealing title, logline, author, and neighborhood; CRT scanline overlays; track-based gradient placeholders for pending posters
   - `StoryGallery`: Responsive grid layout with search functionality (searches title, logline, author, track, neighborhood), track filtering (Origin/Legend/Future/All), grid/masonry layout toggle, and staggered entrance animations
 
+### B2B2C Features (Museums, Events, Education)
+
+- **Explore Page (/explore):** Dedicated public gallery page with:
+  - Featured story spotlight carousel with auto-cycling
+  - Animated starfield background
+  - Track-based filtering (Origin/Future/Legend)
+  - Search functionality across title, logline, author, neighborhood
+  - Grid and masonry layout options
+  - Gateway to Gallery Mode
+
+- **Premium Story Cards:** Enhanced cinematic movie poster aesthetics for social sharing:
+  - `PremiumStoryCard`: Film frame aesthetic with sprocket holes on left/right edges
+  - Film grain overlay effect (SVG noise pattern)
+  - Track-based gradient borders (origin=fuchsia/violet, future=cyan/blue, legend=amber/red)
+  - "Story Arcade" branding watermark
+  - CINEMA toggle in StoryGallery to switch between standard and premium card styles
+
+- **Gallery Mode (/gallery-mode):** "Hall of Legends" fullscreen display for museums and events:
+  - `HallOfLegends`: Cinematic auto-cycling story showcase (8s intervals)
+  - Track-based gradient backgrounds
+  - Poster display with blur backdrop
+  - Story metadata (title, logline, themes, author, neighborhood)
+  - Keyboard navigation (Arrow keys, Space for play/pause, Escape to exit)
+  - Auto-hiding controls (3s timeout on mouse inactivity)
+  - Progress bar during auto-play
+  - CRT scanline overlay
+
+- **Kiosk Mode (/kiosk):** Event-ready interface for high-throughput story creation:
+  - `KioskMode`: Full-screen immersive landing experience
+  - URL parameter branding customization: ?event=, ?color=, ?accent=, ?message=
+  - Animated glow effects and pulsing CTA button
+  - Three-step process explanation
+  - Optional queue indicator for busy events
+  - Idle detection with "Tap anywhere" prompt
+  - Touch-optimized for kiosk environments
+  - Supported colors: cyan, fuchsia, amber, violet
+
 **Progression Database Entities:**
 - `badges` - Badge definitions (id, name, description, icon, category, requirement, xpReward, rarity)
 - `user_badges` - Junction table tracking earned badges per user (userId, badgeId, earnedAt)
