@@ -1,0 +1,501 @@
+{
+  "id": "4a084a47-61c7-43ad-b332-78ba7f171ee2",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.drafts": {
+      "name": "drafts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "drafts_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "track_id": {
+          "name": "track_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "track_title": {
+          "name": "track_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "answers": {
+          "name": "answers",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "current_question_index": {
+          "name": "current_question_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.stories": {
+      "name": "stories",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "stories_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "shareable_id": {
+          "name": "shareable_id",
+          "type": "varchar(12)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "track_id": {
+          "name": "track_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "track_title": {
+          "name": "track_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "author": {
+          "name": "author",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "neighborhood": {
+          "name": "neighborhood",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "themes": {
+          "name": "themes",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "insight": {
+          "name": "insight",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "logline": {
+          "name": "logline",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "p1": {
+          "name": "p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "p2": {
+          "name": "p2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "p3": {
+          "name": "p3",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "answers": {
+          "name": "answers",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "poster_url": {
+          "name": "poster_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "poster_status": {
+          "name": "poster_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'pending'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "stories_shareable_id_unique": {
+          "name": "stories_shareable_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "shareable_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.badges": {
+      "name": "badges",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "icon": {
+          "name": "icon",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "requirement": {
+          "name": "requirement",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "xp_reward": {
+          "name": "xp_reward",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "rarity": {
+          "name": "rarity",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'common'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sessions": {
+      "name": "sessions",
+      "schema": "",
+      "columns": {
+        "sid": {
+          "name": "sid",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "sess": {
+          "name": "sess",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expire": {
+          "name": "expire",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "IDX_session_expire": {
+          "name": "IDX_session_expire",
+          "columns": [
+            {
+              "expression": "expire",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.user_badges": {
+      "name": "user_badges",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "user_badges_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "badge_id": {
+          "name": "badge_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "earned_at": {
+          "name": "earned_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "first_name": {
+          "name": "first_name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_name": {
+          "name": "last_name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "profile_image_url": {
+          "name": "profile_image_url",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "xp": {
+          "name": "xp",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "level": {
+          "name": "level",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "stories_created": {
+          "name": "stories_created",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "current_streak": {
+          "name": "current_streak",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "longest_streak": {
+          "name": "longest_streak",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "last_story_date": {
+          "name": "last_story_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_email_unique": {
+          "name": "users_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

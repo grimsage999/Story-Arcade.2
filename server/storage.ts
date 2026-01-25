@@ -1,7 +1,13 @@
 import { type Story, type InsertStory, stories, type Draft, type InsertDraft, drafts } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, or, isNull } from "drizzle-orm";
 import { randomBytes } from "crypto";
+
+/** Owner context for draft operations */
+export interface DraftOwner {
+  userId?: string;      // For authenticated users
+  sessionId?: string;   // For anonymous users
+}
 
 export interface IStorage {
   // Stories
@@ -13,13 +19,16 @@ export interface IStorage {
   updateStory(id: number, updates: Partial<InsertStory>): Promise<Story | undefined>;
   deleteStory(id: number, userId: string): Promise<boolean>;
   updateStoryPoster(id: number, posterUrl: string | null, status: string): Promise<Story | undefined>;
-  
-  // Drafts
-  getDraftsBySession(sessionId: string): Promise<Draft[]>;
+
+  // Drafts - updated to use DraftOwner for ownership
+  getDraftsByOwner(owner: DraftOwner): Promise<Draft[]>;
   getDraft(id: number): Promise<Draft | undefined>;
-  createDraft(draft: Omit<InsertDraft, 'id'>): Promise<Draft>;
+  createDraft(draft: InsertDraft): Promise<Draft>;
   updateDraft(id: number, updates: Partial<InsertDraft>): Promise<Draft | undefined>;
-  deleteDraft(id: number, sessionId: string): Promise<boolean>;
+  deleteDraft(id: number, owner: DraftOwner): Promise<boolean>;
+
+  // Legacy method for backward compatibility (deprecated)
+  getDraftsBySession(sessionId: string): Promise<Draft[]>;
 }
 
 function generateShareableId(): string {
@@ -77,8 +86,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Draft methods
+
+  /**
+   * Get drafts by owner. For authenticated users, matches by userId.
+   * For anonymous users, matches by sessionId (with null userId).
+   */
+  async getDraftsByOwner(owner: DraftOwner): Promise<Draft[]> {
+    if (owner.userId) {
+      // Authenticated user: match by userId
+      return db.select().from(drafts).where(eq(drafts.userId, owner.userId)).orderBy(desc(drafts.updatedAt));
+    } else if (owner.sessionId) {
+      // Anonymous user: match by sessionId where userId is null
+      return db.select().from(drafts).where(
+        and(
+          eq(drafts.sessionId, owner.sessionId),
+          isNull(drafts.userId)
+        )
+      ).orderBy(desc(drafts.updatedAt));
+    }
+    return [];
+  }
+
+  /**
+   * @deprecated Use getDraftsByOwner instead
+   */
   async getDraftsBySession(sessionId: string): Promise<Draft[]> {
-    return db.select().from(drafts).where(eq(drafts.sessionId, sessionId)).orderBy(desc(drafts.updatedAt));
+    return this.getDraftsByOwner({ sessionId });
   }
 
   async getDraft(id: number): Promise<Draft | undefined> {
@@ -86,7 +119,7 @@ export class DatabaseStorage implements IStorage {
     return draft || undefined;
   }
 
-  async createDraft(draft: Omit<InsertDraft, 'id'>): Promise<Draft> {
+  async createDraft(draft: InsertDraft): Promise<Draft> {
     const [newDraft] = await db.insert(drafts).values(draft).returning();
     return newDraft;
   }
@@ -99,9 +132,28 @@ export class DatabaseStorage implements IStorage {
     return draft || undefined;
   }
 
-  async deleteDraft(id: number, sessionId: string): Promise<boolean> {
-    const result = await db.delete(drafts).where(and(eq(drafts.id, id), eq(drafts.sessionId, sessionId))).returning();
-    return result.length > 0;
+  /**
+   * Delete a draft. Verifies ownership before deletion.
+   */
+  async deleteDraft(id: number, owner: DraftOwner): Promise<boolean> {
+    if (owner.userId) {
+      // Authenticated user: verify by userId
+      const result = await db.delete(drafts).where(
+        and(eq(drafts.id, id), eq(drafts.userId, owner.userId))
+      ).returning();
+      return result.length > 0;
+    } else if (owner.sessionId) {
+      // Anonymous user: verify by sessionId and null userId
+      const result = await db.delete(drafts).where(
+        and(
+          eq(drafts.id, id),
+          eq(drafts.sessionId, owner.sessionId),
+          isNull(drafts.userId)
+        )
+      ).returning();
+      return result.length > 0;
+    }
+    return false;
   }
 }
 

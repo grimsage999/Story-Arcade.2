@@ -37,8 +37,28 @@ export function getSoundEnabled(): boolean {
   return true;
 }
 
+let musicEnabled = true;
+
+export function setMusicEnabled(enabled: boolean): void {
+  musicEnabled = enabled;
+  if (typeof window !== "undefined") {
+    localStorage.setItem("arcade-music-enabled", JSON.stringify(enabled));
+  }
+}
+
+export function getMusicEnabled(): boolean {
+  if (typeof window !== "undefined") {
+    const stored = localStorage.getItem("arcade-music-enabled");
+    if (stored !== null) {
+      return JSON.parse(stored);
+    }
+  }
+  return true;
+}
+
 export function initSoundPreference(): void {
   soundEnabled = getSoundEnabled();
+  musicEnabled = getMusicEnabled();
 }
 
 function playTone(
@@ -50,57 +70,57 @@ function playTone(
   decay: number = 0.1
 ): void {
   if (!soundEnabled) return;
-  
+
   const ctx = getAudioContext();
   if (!ctx) return;
-  
+
   const oscillator = ctx.createOscillator();
   const gainNode = ctx.createGain();
-  
+
   oscillator.type = type;
   oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
-  
+
   gainNode.gain.setValueAtTime(0, ctx.currentTime);
   gainNode.gain.linearRampToValueAtTime(volume, ctx.currentTime + attack);
   gainNode.gain.linearRampToValueAtTime(volume * 0.7, ctx.currentTime + attack + decay);
   gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + duration);
-  
+
   oscillator.connect(gainNode);
   gainNode.connect(ctx.destination);
-  
+
   oscillator.start(ctx.currentTime);
   oscillator.stop(ctx.currentTime + duration);
 }
 
 function playNoise(duration: number, volume: number = 0.05): void {
   if (!soundEnabled) return;
-  
+
   const ctx = getAudioContext();
   if (!ctx) return;
-  
+
   const bufferSize = ctx.sampleRate * duration;
   const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
   const data = buffer.getChannelData(0);
-  
+
   for (let i = 0; i < bufferSize; i++) {
     data[i] = Math.random() * 2 - 1;
   }
-  
+
   const source = ctx.createBufferSource();
   const gainNode = ctx.createGain();
   const filter = ctx.createBiquadFilter();
-  
+
   filter.type = "highpass";
   filter.frequency.setValueAtTime(3000, ctx.currentTime);
-  
+
   source.buffer = buffer;
   gainNode.gain.setValueAtTime(volume, ctx.currentTime);
   gainNode.gain.linearRampToValueAtTime(0, ctx.currentTime + duration);
-  
+
   source.connect(filter);
   filter.connect(gainNode);
   gainNode.connect(ctx.destination);
-  
+
   source.start(ctx.currentTime);
 }
 
@@ -203,6 +223,17 @@ export const arcadeSounds = {
     ];
     melody.forEach(({ freq, delay, type }) => {
       setTimeout(() => playTone(freq, 0.25, type, 0.1, 0.02, 0.1), delay);
+    });
+  },
+
+  posterReady: () => {
+    const notes = [
+      { freq: 659, delay: 0, duration: 0.15, type: "sine" as OscillatorType },
+      { freq: 880, delay: 100, duration: 0.15, type: "sine" as OscillatorType },
+      { freq: 1319, delay: 200, duration: 0.2, type: "sine" as OscillatorType },
+    ];
+    notes.forEach(({ freq, delay, duration, type }) => {
+      setTimeout(() => playTone(freq, duration, type, 0.15, 0.01, 0.05), delay);
     });
   },
 };

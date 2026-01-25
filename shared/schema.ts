@@ -5,9 +5,11 @@ import { z } from "zod";
 export * from "./models/auth";
 
 // Server-backed drafts table for cross-device sync
+// Ownership: For authenticated users, use userId. For anonymous users, use sessionId.
 export const drafts = pgTable("drafts", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
-  sessionId: varchar("session_id", { length: 64 }).notNull(),
+  sessionId: varchar("session_id", { length: 64 }), // For anonymous users (nullable for authenticated)
+  userId: varchar("user_id"), // For authenticated users (nullable for anonymous)
   trackId: text("track_id").notNull(),
   trackTitle: text("track_title").notNull(),
   answers: jsonb("answers").notNull(),
@@ -19,11 +21,15 @@ export const drafts = pgTable("drafts", {
 export const insertDraftSchema = createInsertSchema(drafts, {
   answers: z.record(z.string(), z.string()),
   currentQuestionIndex: z.number().optional().default(0),
+  sessionId: z.string().max(64).optional(),
+  userId: z.string().optional(),
 }).omit({
-  id: true,
   createdAt: true,
   updatedAt: true,
-});
+}).refine(
+  (data) => data.sessionId || data.userId,
+  { message: "Either sessionId or userId must be provided" }
+);
 
 export const updateDraftSchema = z.object({
   answers: z.record(z.string(), z.string()).optional(),
@@ -60,9 +66,8 @@ const baseInsertStorySchema = createInsertSchema(stories, {
 });
 
 export const insertStorySchema = baseInsertStorySchema.omit({
-  id: true,
   shareableId: true,
-} as const);
+});
 
 export const updateStorySchema = z.object({
   title: z.string().optional(),

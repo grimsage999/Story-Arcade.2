@@ -1,9 +1,12 @@
 import { useEffect, useCallback, createContext, useContext, useState } from "react";
-import { arcadeSounds, getSoundEnabled, setSoundEnabled, initSoundPreference } from "@/lib/arcadeSounds";
+import { arcadeSounds, getSoundEnabled, setSoundEnabled, initSoundPreference, getMusicEnabled, setMusicEnabled } from "@/lib/arcadeSounds";
+import { ArcadeMusic } from "./ArcadeMusic";
 
 interface ArcadeSoundContextType {
   enabled: boolean;
+  musicEnabled: boolean;
   toggle: () => void;
+  toggleMusic: () => void;
   playSound: (sound: keyof typeof arcadeSounds) => void;
 }
 
@@ -12,7 +15,13 @@ const ArcadeSoundContext = createContext<ArcadeSoundContextType | null>(null);
 export function useArcadeSoundContext() {
   const context = useContext(ArcadeSoundContext);
   if (!context) {
-    return { enabled: true, toggle: () => {}, playSound: () => {} };
+    return {
+      enabled: true,
+      musicEnabled: true,
+      toggle: () => {},
+      toggleMusic: () => {},
+      playSound: () => {}
+    };
   }
   return context;
 }
@@ -34,12 +43,14 @@ const HOVER_EXCLUDED = [
 
 export function ArcadeSoundProvider({ children }: { children: React.ReactNode }) {
   const [enabled, setEnabled] = useState(true);
+  const [musicEnabled, setMusicEnabledState] = useState(true);
   const lastHoverTime = { current: 0 };
   const hoverThrottleMs = 80;
 
   useEffect(() => {
     initSoundPreference();
     setEnabled(getSoundEnabled());
+    setMusicEnabledState(getMusicEnabled());
   }, []);
 
   const toggle = useCallback(() => {
@@ -50,6 +61,12 @@ export function ArcadeSoundProvider({ children }: { children: React.ReactNode })
       arcadeSounds.click();
     }
   }, [enabled]);
+
+  const toggleMusic = useCallback(() => {
+    const newValue = !musicEnabled;
+    setMusicEnabledState(newValue);
+    setMusicEnabled(newValue);
+  }, [musicEnabled]);
 
   const playSound = useCallback((sound: keyof typeof arcadeSounds) => {
     if (enabled) {
@@ -72,7 +89,7 @@ export function ArcadeSoundProvider({ children }: { children: React.ReactNode })
       if (!(target instanceof Element)) return;
       if (!target.matches(INTERACTIVE_SELECTORS)) return;
       if (isExcluded(target)) return;
-      
+
       const now = Date.now();
       if (now - lastHoverTime.current > hoverThrottleMs) {
         lastHoverTime.current = now;
@@ -86,7 +103,7 @@ export function ArcadeSoundProvider({ children }: { children: React.ReactNode })
       const interactiveEl = target.closest(INTERACTIVE_SELECTORS);
       if (!interactiveEl) return;
       if (isExcluded(interactiveEl)) return;
-      
+
       arcadeSounds.click();
     };
 
@@ -124,8 +141,9 @@ export function ArcadeSoundProvider({ children }: { children: React.ReactNode })
   }, [enabled]);
 
   return (
-    <ArcadeSoundContext.Provider value={{ enabled, toggle, playSound }}>
+    <ArcadeSoundContext.Provider value={{ enabled, musicEnabled, toggle, toggleMusic, playSound }}>
       {children}
+      <ArcadeMusic enabled={musicEnabled} volume={0.3} />
     </ArcadeSoundContext.Provider>
   );
 }

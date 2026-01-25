@@ -1,82 +1,90 @@
 import { useCallback, useEffect, useState, useRef } from "react";
-import { arcadeSounds, setSoundEnabled, getSoundEnabled, initSoundPreference, SoundType } from "@/lib/arcadeSounds";
+import { arcadeSounds, setSoundEnabled, getSoundEnabled, initSoundPreference, SoundType, setMusicEnabled, getMusicEnabled } from "@/lib/arcadeSounds";
 
 export function useArcadeSounds() {
-  const [enabled, setEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabledState] = useState(true);
+  const [musicEnabled, setMusicEnabledState] = useState(true);
   const lastHoverTime = useRef(0);
   const hoverThrottleMs = 100;
 
   useEffect(() => {
     initSoundPreference();
-    setEnabled(getSoundEnabled());
+    setSoundEnabledState(getSoundEnabled());
+    setMusicEnabledState(getMusicEnabled());
   }, []);
 
-  const toggle = useCallback(() => {
-    const newValue = !enabled;
-    setEnabled(newValue);
+  const toggleSound = useCallback(() => {
+    const newValue = !soundEnabled;
+    setSoundEnabledState(newValue);
     setSoundEnabled(newValue);
     if (newValue) {
       arcadeSounds.click();
     }
-  }, [enabled]);
+  }, [soundEnabled]);
+
+  const toggleMusic = useCallback(() => {
+    const newValue = !musicEnabled;
+    setMusicEnabledState(newValue);
+    setMusicEnabled(newValue);
+  }, [musicEnabled]);
 
   const play = useCallback((sound: SoundType) => {
-    if (enabled) {
+    if (soundEnabled) {
       arcadeSounds[sound]();
     }
-  }, [enabled]);
+  }, [soundEnabled]);
 
   const playHover = useCallback(() => {
     const now = Date.now();
     if (now - lastHoverTime.current > hoverThrottleMs) {
       lastHoverTime.current = now;
-      if (enabled) {
+      if (soundEnabled) {
         arcadeSounds.hover();
       }
     }
-  }, [enabled]);
+  }, [soundEnabled]);
 
   const playClick = useCallback(() => {
-    if (enabled) {
+    if (soundEnabled) {
       arcadeSounds.click();
     }
-  }, [enabled]);
+  }, [soundEnabled]);
 
   const playSelect = useCallback(() => {
-    if (enabled) {
+    if (soundEnabled) {
       arcadeSounds.select();
     }
-  }, [enabled]);
+  }, [soundEnabled]);
 
   const playSuccess = useCallback(() => {
-    if (enabled) {
+    if (soundEnabled) {
       arcadeSounds.success();
     }
-  }, [enabled]);
+  }, [soundEnabled]);
 
   const playLevelUp = useCallback(() => {
-    if (enabled) {
+    if (soundEnabled) {
       arcadeSounds.levelUp();
     }
-  }, [enabled]);
+  }, [soundEnabled]);
 
   const playAchievement = useCallback(() => {
-    if (enabled) {
+    if (soundEnabled) {
       arcadeSounds.achievement();
     }
-  }, [enabled]);
+  }, [soundEnabled]);
 
-  const getInteractionProps = useCallback((options?: { 
-    hoverSound?: boolean; 
+  const getInteractionProps = useCallback((options?: {
+    hoverSound?: boolean;
     clickSound?: boolean;
     hoverVariant?: "default" | "alt";
   }) => {
     const { hoverSound = true, clickSound = true, hoverVariant = "default" } = options || {};
-    
+
     return {
       onMouseEnter: hoverSound ? () => {
         const now = Date.now();
-        if (now - lastHoverTime.current > hoverThrottleMs && enabled) {
+        if (now - lastHoverTime.current > hoverThrottleMs && soundEnabled) {
           lastHoverTime.current = now;
           if (hoverVariant === "alt") {
             arcadeSounds.hoverAlt();
@@ -86,16 +94,18 @@ export function useArcadeSounds() {
         }
       } : undefined,
       onClick: clickSound ? () => {
-        if (enabled) {
+        if (soundEnabled) {
           arcadeSounds.click();
         }
       } : undefined,
     };
-  }, [enabled]);
+  }, [soundEnabled]);
 
   return {
-    enabled,
-    toggle,
+    soundEnabled,
+    musicEnabled,
+    toggleSound,
+    toggleMusic,
     play,
     playHover,
     playClick,
@@ -109,9 +119,11 @@ export function useArcadeSounds() {
 
 export function useSoundToggle() {
   const [enabled, setEnabled] = useState(true);
+  const [musicEnabled, setMusicEnabledState] = useState(true);
 
   useEffect(() => {
     setEnabled(getSoundEnabled());
+    setMusicEnabledState(getMusicEnabled());
   }, []);
 
   const toggle = useCallback(() => {
@@ -123,5 +135,16 @@ export function useSoundToggle() {
     }
   }, [enabled]);
 
-  return { enabled, toggle };
+  const toggleMusic = useCallback(() => {
+    const newValue = !musicEnabled;
+    setMusicEnabledState(newValue);
+    setMusicEnabled(newValue);
+  }, [musicEnabled]);
+
+  return {
+    enabled,
+    musicEnabled,
+    toggle,
+    toggleMusic
+  };
 }

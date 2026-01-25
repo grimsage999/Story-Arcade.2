@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { ChevronRight, ChevronLeft, ArrowRight, Shuffle, Share2, Eye, RefreshCw, Copy, Check, Link, Twitter, Facebook, MessageCircle, Sparkles, Download } from 'lucide-react';
 import type { Track, Story } from '@shared/schema';
@@ -9,7 +10,7 @@ import { Toast } from '@/components/arcade/Toast';
 import { Navbar } from '@/components/arcade/Navbar';
 import { TrackCard } from '@/components/arcade/TrackCard';
 import { StoryCard } from '@/components/arcade/StoryCard';
-import { PersonalizedGame } from '@/components/arcade/games';
+import { PersonalizedGame, OriginGame, FutureCityGame, LegendGame } from '@/components/arcade/games';
 import { DraftRecoveryBanner } from '@/components/arcade/DraftRecoveryBanner';
 import { UnsavedStoryModal } from '@/components/arcade/UnsavedStoryModal';
 import { DraftsList } from '@/components/arcade/DraftsList';
@@ -38,18 +39,19 @@ import { TypeformFlow } from '@/components/arcade/TypeformFlow';
 import { EditStoryFlow } from '@/components/arcade/EditStoryFlow';
 import { FeatureTour } from '@/components/arcade/FeatureTour';
 import { useIdleTimer } from '@/hooks/useIdleTimer';
+import { useStoryCreation, type View } from '@/hooks/use-story-creation';
 import { checkContentSafety, getFallbackStory } from '@/lib/contentSafety';
 import { arcadeSounds } from '@/lib/arcadeSounds';
 import { Button } from '@/components/ui/button';
 import type { Badge, ProgressionReward } from '@/hooks/use-progression';
 import { queryClient, apiRequest } from '@/lib/queryClient';
-import { 
-  type Draft, 
+import {
+  type Draft,
   type CompletedStory,
-  getAllDrafts, 
-  getDraft, 
-  saveDraft, 
-  deleteDraft, 
+  getAllDrafts,
+  getDraft,
+  saveDraft,
+  deleteDraft,
   generateDraftId,
   saveCompletedStory,
   getCompletedStories,
@@ -59,7 +61,7 @@ import { DraftsPage } from '@/pages/drafts';
 import { MyStoriesPage } from '@/pages/my-stories';
 import { BadgesPage } from '@/pages/badges';
 
-export type View = 'ATTRACT' | 'TRACK_SELECT' | 'QUESTIONS' | 'FORGING' | 'REVEAL' | 'GALLERY' | 'DRAFTS' | 'MY_STORIES' | 'BADGES';
+export type { View } from '@/hooks/use-story-creation';
 
 const LOADING_STEPS = [
   "INITIALIZING STORY ENGINE...",
@@ -72,11 +74,41 @@ const LOADING_STEPS = [
 const AUTO_SAVE_INTERVAL = 10000;
 
 export default function StoryArcade() {
-  const [view, setView] = useState<View>('ATTRACT');
-  const [activeTrack, setActiveTrack] = useState<Track | null>(null);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [generatedStory, setGeneratedStory] = useState<Story | null>(null);
+  // Use the story creation hook for core state management
+  const {
+    view,
+    setView,
+    activeTrack,
+    setActiveTrack,
+    answers,
+    setAnswers,
+    currentQuestionIndex,
+    setCurrentQuestionIndex,
+    generatedStory,
+    setGeneratedStory,
+    currentDraftId,
+    lastSavedAt,
+    saveFailed,
+    drafts,
+    recoveryDraft,
+    isCreating,
+    currentScene,
+    totalScenes,
+    handleTrackSelect,
+    handleAnswerChange: updateAnswer,
+    nextQuestion: advanceQuestion,
+    prevQuestion,
+    performAutoSave,
+    startOver,
+    handleResumeDraft,
+    handleDiscardRecoveryDraft,
+    handleDeleteDraft,
+    handleSaveDraftAndLeave: saveDraftAndLeave,
+    handleDiscardAndLeave: discardAndLeave,
+    clearCurrentDraft,
+  } = useStoryCreation();
+
+  // UI state (not part of core creation flow)
   const [loadingStep, setLoadingStep] = useState(0);
   const [demoCount, setDemoCount] = useState(0);
   const [galleryModalStory, setGalleryModalStory] = useState<Story | null>(null);
@@ -84,26 +116,17 @@ export default function StoryArcade() {
   const [streak, setStreak] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const [inputError, setInputError] = useState(false);
-
-  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
-  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
-  const [saveFailed, setSaveFailed] = useState(false);
-  const [drafts, setDrafts] = useState<Draft[]>([]);
-  const [recoveryDraft, setRecoveryDraft] = useState<Draft | null>(null);
   const [showUnsavedModal, setShowUnsavedModal] = useState(false);
 
-  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const currentDraftIdRef = useRef<string | null>(null);
-  
   const [inspireUsage, setInspireUsage] = useState<Record<number, number>>({});
   const [showTooltip, setShowTooltip] = useState(false);
   const [hasTyped, setHasTyped] = useState(false);
-  
+
   const [forgeStatus, setForgeStatus] = useState<ForgeStatus>('running');
   const [forgeError, setForgeError] = useState<{ message: string; code?: string } | undefined>();
   const forgeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
-  
+
   const [pendingBadges, setPendingBadges] = useState<Badge[]>([]);
   const [currentBadge, setCurrentBadge] = useState<Badge | null>(null);
   const [levelUpLevel, setLevelUpLevel] = useState<number | null>(null);
@@ -112,6 +135,20 @@ export default function StoryArcade() {
   const [contentBlocked, setContentBlocked] = useState(false);
   const [editingStory, setEditingStory] = useState<CompletedStory | null>(null);
   const [showTour, setShowTour] = useState(true);
+
+  // Refs for auto-save timer (managed by hook now, but we need ref for clearing during forge)
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Handle auto-transition for celebration view
+  useEffect(() => {
+    if (view === 'CELEBRATION' && generatedStory) {
+      const timer = setTimeout(() => {
+        setView('REVEAL');
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [view, generatedStory]);
 
   const { data: apiGallery, isLoading: isLoadingGallery, isError: isGalleryError } = useQuery<Story[]>({
     queryKey: ['/api/stories'],
@@ -165,70 +202,13 @@ export default function StoryArcade() {
     },
   });
 
-  const isCreating = view === 'QUESTIONS' || view === 'FORGING';
-  const currentScene = currentQuestionIndex + 1;
-  const totalScenes = activeTrack?.questions.length || 5;
-
+  // Load streak from localStorage on mount
   useEffect(() => {
     const savedStreak = localStorage.getItem('story_arcade_streak');
     if (savedStreak) {
       setStreak(parseInt(savedStreak));
     }
-
-    const allDrafts = getAllDrafts();
-    setDrafts(allDrafts);
-
-    if (allDrafts.length > 0) {
-      setRecoveryDraft(allDrafts[0]);
-    }
-
-    cleanupOldDrafts();
   }, []);
-
-  useEffect(() => {
-    if (isCreating && activeTrack && Object.keys(answers).length > 0) {
-      if (autoSaveTimerRef.current) {
-        clearInterval(autoSaveTimerRef.current);
-      }
-
-      autoSaveTimerRef.current = setInterval(() => {
-        performAutoSave();
-      }, AUTO_SAVE_INTERVAL);
-
-      return () => {
-        if (autoSaveTimerRef.current) {
-          clearInterval(autoSaveTimerRef.current);
-        }
-      };
-    }
-  }, [isCreating, activeTrack, answers, currentQuestionIndex]);
-
-  const performAutoSave = useCallback(() => {
-    if (!activeTrack) return;
-
-    const draftId = currentDraftIdRef.current || generateDraftId();
-    const existingDraft = getDraft(draftId);
-    const draft: Draft = {
-      id: draftId,
-      trackId: activeTrack.id,
-      trackTitle: activeTrack.title,
-      sceneNumber: currentQuestionIndex + 1,
-      userInputs: answers,
-      createdAt: existingDraft?.createdAt || new Date().toISOString(),
-      lastSavedAt: new Date().toISOString(),
-    };
-
-    const success = saveDraft(draft);
-    if (success) {
-      currentDraftIdRef.current = draftId;
-      setCurrentDraftId(draftId);
-      setLastSavedAt(draft.lastSavedAt);
-      setSaveFailed(false);
-      setDrafts(getAllDrafts());
-    } else {
-      setSaveFailed(true);
-    }
-  }, [activeTrack, currentQuestionIndex, answers]);
 
   const showToast = useCallback((msg: string) => {
     setToast(msg);
@@ -251,65 +231,60 @@ export default function StoryArcade() {
     setLevelUpLevel(null);
   };
 
-  const handleTrackSelect = (track: Track) => {
-    setActiveTrack(track);
-    setAnswers({});
-    setCurrentQuestionIndex(0);
-    currentDraftIdRef.current = null;
-    setCurrentDraftId(null);
-    setLastSavedAt(null);
-    setSaveFailed(false);
+  // Wrapper for track selection with UI state reset
+  const onTrackSelect = (track: Track) => {
+    handleTrackSelect(track);
     setInspireUsage({});
     setHasTyped(false);
     setShowTooltip(false);
-    setView('QUESTIONS');
   };
 
+  // Wrapper for answer change with content safety
   const handleAnswerChange = (text: string) => {
     if (!activeTrack) return;
     const qId = activeTrack.questions[currentQuestionIndex].id;
-    
+
     const safety = checkContentSafety(text);
     if (!safety.isClean) {
       setContentWarning("Please keep content family-friendly for our community.");
       setContentBlocked(true);
-      setAnswers(prev => ({ ...prev, [qId]: safety.sanitizedText }));
+      updateAnswer(qId, safety.sanitizedText);
     } else {
       setContentWarning(null);
       setContentBlocked(false);
-      setAnswers(prev => ({ ...prev, [qId]: text }));
+      updateAnswer(qId, text);
     }
-    
+
     setInputError(false);
-    
+
     if (!hasTyped) {
       setHasTyped(true);
       setShowTooltip(false);
     }
   };
-  
+
   const handleTextareaFocus = () => {
     if (!hasTyped) {
       setShowTooltip(true);
     }
   };
-  
+
   const handleExampleClick = (example: string) => {
     if (!activeTrack) return;
     const qId = activeTrack.questions[currentQuestionIndex].id;
-    setAnswers(prev => ({ ...prev, [qId]: example }));
+    updateAnswer(qId, example);
     setInputError(false);
     setHasTyped(true);
   };
-  
+
   const handleInspireClick = (suggestion: string) => {
     if (!activeTrack) return;
     const qId = activeTrack.questions[currentQuestionIndex].id;
-    setAnswers(prev => ({ ...prev, [qId]: suggestion }));
+    updateAnswer(qId, suggestion);
     setInputError(false);
     setHasTyped(true);
   };
-  
+
   const handleInspireUse = () => {
     const sceneNum = currentQuestionIndex + 1;
     setInspireUsage(prev => ({
@@ -318,9 +293,11 @@ export default function StoryArcade() {
     }));
   };
 
+  // Wrapper for next question with UI feedback
   const nextQuestion = () => {
     if (!activeTrack) return;
     const currentQ = activeTrack.questions[currentQuestionIndex];
+
     if ((answers[currentQ.id] || '').length < 5) {
       setInputError(true);
       return;
@@ -330,24 +307,17 @@ export default function StoryArcade() {
       showToast("Hidden power unlocked!");
     }
 
-    if (currentQuestionIndex < activeTrack.questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
+    const result = advanceQuestion();
+    if (result.canProceed) {
       setHasTyped(false);
       setShowTooltip(false);
-    } else {
-      setShowConfetti(true);
-      setTimeout(() => {
-        setShowConfetti(false);
-        generateStory();
-      }, 2000);
-    }
-  };
-
-  const prevQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
-    } else {
-      setView('TRACK_SELECT');
+      if (result.shouldGenerate) {
+        setShowConfetti(true);
+        setTimeout(() => {
+          setShowConfetti(false);
+          generateStory();
+        }, 2000);
+      }
     }
   };
 
@@ -459,13 +429,9 @@ export default function StoryArcade() {
         shareableId: newStory.shareableId,
       };
       saveCompletedStory(completedStory);
-      
-      if (currentDraftIdRef.current) {
-        deleteDraft(currentDraftIdRef.current);
-        currentDraftIdRef.current = null;
-        setCurrentDraftId(null);
-        setDrafts(getAllDrafts());
-      }
+
+      // Clear the draft now that story is complete
+      clearCurrentDraft();
 
       const newStreak = streak + 1;
       setStreak(newStreak);
@@ -475,7 +441,7 @@ export default function StoryArcade() {
       arcadeSounds.storyComplete();
       setTimeout(() => {
         setShowConfetti(false);
-        setView('REVEAL');
+        setView('CELEBRATION');
       }, 1500);
     } catch (error) {
       if (forgeTimeoutRef.current) {
@@ -513,12 +479,12 @@ export default function StoryArcade() {
       setGeneratedStory(fallbackStory);
       setForgeStatus('success');
       showToast("Story created in sanctuary mode");
-      
+
       setShowConfetti(true);
       arcadeSounds.storyComplete();
       setTimeout(() => {
         setShowConfetti(false);
-        setView('REVEAL');
+        setView('CELEBRATION');
       }, 1500);
     }
   };
@@ -541,15 +507,7 @@ export default function StoryArcade() {
     if (forgeTimeoutRef.current) {
       clearTimeout(forgeTimeoutRef.current);
     }
-    setActiveTrack(null);
-    setAnswers({});
-    setCurrentQuestionIndex(0);
-    currentDraftIdRef.current = null;
-    setCurrentDraftId(null);
-    setLastSavedAt(null);
-    setSaveFailed(false);
-    setDrafts(getAllDrafts());
-    setView('TRACK_SELECT');
+    startOver();
   };
 
   const handleSecretDemoTrigger = () => {
@@ -567,18 +525,6 @@ export default function StoryArcade() {
       setTimeout(() => generateStory(), 500);
       setDemoCount(0);
     }
-  };
-
-  const startOver = () => {
-    setActiveTrack(null);
-    setAnswers({});
-    setCurrentQuestionIndex(0);
-    setGeneratedStory(null);
-    currentDraftIdRef.current = null;
-    setCurrentDraftId(null);
-    setLastSavedAt(null);
-    setSaveFailed(false);
-    setView('TRACK_SELECT');
   };
 
   const getStoryShareUrl = () => {
@@ -658,65 +604,23 @@ export default function StoryArcade() {
   };
 
   const handleSaveDraftAndLeave = () => {
-    performAutoSave();
+    saveDraftAndLeave();
     setShowUnsavedModal(false);
-    setActiveTrack(null);
-    setAnswers({});
-    setCurrentQuestionIndex(0);
-    currentDraftIdRef.current = null;
-    setCurrentDraftId(null);
-    setLastSavedAt(null);
-    setSaveFailed(false);
-    setView('ATTRACT');
     showToast("Draft saved!");
   };
 
   const handleDiscardAndLeave = () => {
-    if (currentDraftIdRef.current) {
-      deleteDraft(currentDraftIdRef.current);
-      setDrafts(getAllDrafts());
-    }
+    discardAndLeave();
     setShowUnsavedModal(false);
-    setActiveTrack(null);
-    setAnswers({});
-    setCurrentQuestionIndex(0);
-    currentDraftIdRef.current = null;
-    setCurrentDraftId(null);
-    setLastSavedAt(null);
-    setSaveFailed(false);
-    setView('ATTRACT');
   };
 
   const handleContinueCreating = () => {
     setShowUnsavedModal(false);
   };
 
-  const handleResumeDraft = (draft: Draft) => {
-    const track = TRACKS.find(t => t.id === draft.trackId);
-    if (track) {
-      setActiveTrack(track);
-      setAnswers(draft.userInputs);
-      setCurrentQuestionIndex(draft.sceneNumber - 1);
-      currentDraftIdRef.current = draft.id;
-      setCurrentDraftId(draft.id);
-      setLastSavedAt(draft.lastSavedAt);
-      setSaveFailed(false);
-      setRecoveryDraft(null);
-      setView('QUESTIONS');
-    }
-  };
-
-  const handleDiscardRecoveryDraft = () => {
-    if (recoveryDraft) {
-      deleteDraft(recoveryDraft.id);
-      setDrafts(getAllDrafts());
-    }
-    setRecoveryDraft(null);
-  };
-
-  const handleDeleteDraft = (draftId: string) => {
-    deleteDraft(draftId);
-    setDrafts(getAllDrafts());
+  // Wrapper for delete draft with toast feedback
+  const onDeleteDraft = (draftId: string) => {
+    handleDeleteDraft(draftId);
     showToast("Draft deleted");
   };
 
@@ -873,13 +777,13 @@ export default function StoryArcade() {
             <DraftsList 
               drafts={drafts}
               onContinue={handleResumeDraft}
-              onDelete={handleDeleteDraft}
+              onDelete={onDeleteDraft}
             />
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
             {TRACKS.map(track => (
-              <TrackCard key={track.id} track={track} onSelect={handleTrackSelect} />
+              <TrackCard key={track.id} track={track} onSelect={onTrackSelect} />
             ))}
           </div>
         </main>
@@ -969,15 +873,15 @@ export default function StoryArcade() {
         <SkipLink />
         <CRTOverlay />
         {showConfetti && <Confetti active={showConfetti} />}
-        <Navbar 
-          onViewChange={setView} 
-          currentView={view} 
+        <Navbar
+          onViewChange={setView}
+          currentView={view}
           streak={streak}
           isCreating={true}
           currentScene={totalScenes}
           totalScenes={totalScenes}
         />
-        
+
         <main id="main-content" className="text-center px-6 animate-fade-in relative" data-testid="view-forging" role="main">
           <OrbitalRings variant={forgeStatus === 'running' ? 'intense' : 'subtle'} showCoordinates={true} animate={forgeStatus === 'running'}>
             <HUDOverlay showGrid={true} variant="full" label="FORGE">
@@ -993,7 +897,7 @@ export default function StoryArcade() {
                     </div>
                   </div>
                 )}
-                
+
                 <ForgeProgress
                   status={forgeStatus}
                   errorDetails={forgeError}
@@ -1005,57 +909,175 @@ export default function StoryArcade() {
             </HUDOverlay>
           </OrbitalRings>
         </main>
-        
+
+        <Toast message={toast} />
+      </div>
+    );
+  }
+
+  if (view === 'CELEBRATION' && generatedStory) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center font-sans relative">
+        <SkipLink />
+        <CRTOverlay />
+        <Confetti active={true} />
+        <Navbar
+          onViewChange={setView}
+          currentView={view}
+          streak={streak}
+          isCreating={true}
+          currentScene={totalScenes}
+          totalScenes={totalScenes}
+        />
+
+        <main id="main-content" className="text-center px-6 animate-fade-in relative z-10" data-testid="view-celebration" role="main">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <motion.div
+              initial={{ scale: 0, rotate: -10 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20, mass: 0.8 }}
+              className="relative"
+            >
+              <div className="w-32 h-32 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 flex items-center justify-center shadow-2xl shadow-emerald-500/30">
+                <Check className="w-16 h-16 text-white" />
+              </div>
+            </motion.div>
+          </div>
+
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="mt-48"
+          >
+            <h2 className="font-display text-4xl md:text-5xl text-foreground mb-4">
+              Your Legend is Complete!
+            </h2>
+            <p className="text-muted-foreground font-mono text-sm md:text-base">
+              Prepare to witness your story unfold
+            </p>
+          </motion.div>
+        </main>
+
         <Toast message={toast} />
       </div>
     );
   }
 
   if (view === 'REVEAL' && generatedStory) {
+    // Animation variants for staggered reveal
+    const revealContainerVariants = {
+      hidden: { opacity: 0 },
+      visible: {
+        opacity: 1,
+        transition: {
+          staggerChildren: 0.3,
+          delayChildren: 0.2,
+        },
+      },
+    };
+
+    const revealItemVariants = {
+      hidden: { opacity: 0, y: 20 },
+      visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+      },
+    };
+
     return (
       <div className="min-h-screen bg-background flex flex-col font-sans relative">
         <SkipLink />
         <CRTOverlay />
         <Navbar onViewChange={setView} currentView={view} streak={streak} />
-        
+
         {/* Victory shimmer overlay */}
         <div className="absolute inset-0 pointer-events-none z-0 victory-shimmer opacity-30" />
-        
+
         <main id="main-content" className="flex-1 p-6 md:p-12 pt-32 md:pt-36 max-w-5xl mx-auto w-full relative z-10" data-testid="view-reveal" role="main">
           <ArcadeCabinet showMarquee={false} variant="compact">
             <div className="mb-8 text-center screen-pulse crt-bloom">
               <CosmicMarquee title="YOUR STORY IS READY" variant="minimal" />
-              <h1 className="font-display text-3xl md:text-5xl text-foreground my-4 phosphor-text" data-testid="text-story-title">
+              <motion.h1
+                className="font-display text-3xl md:text-5xl text-foreground my-4 phosphor-text"
+                data-testid="text-story-title"
+                variants={revealItemVariants}
+                initial="hidden"
+                animate="visible"
+              >
                 {generatedStory.title}
-              </h1>
+              </motion.h1>
               <p className="text-muted-foreground font-mono text-sm">
                 {generatedStory.trackTitle} • {generatedStory.neighborhood}
               </p>
             </div>
-            
+
             <HUDOverlay showGrid={false} variant="corners" showTechReadouts={false}>
-              <div className="grid md:grid-cols-[1fr_auto] gap-6 md:gap-8 mb-8">
+              <motion.div
+                className="grid md:grid-cols-[1fr_auto] gap-6 md:gap-8 mb-8"
+                variants={revealContainerVariants}
+                initial="hidden"
+                animate="visible"
+                key={generatedStory?.id || 'reveal'}
+              >
                 <div className="bg-card border border-card-border rounded-md p-6 md:p-10 crt-warmup hall-of-fame-border">
-                  <p className="text-xl md:text-2xl text-primary font-display italic mb-8 border-l-4 border-primary pl-6">
+                  <motion.p
+                    className="text-xl md:text-2xl text-primary font-display italic mb-8 border-l-4 border-primary pl-6"
+                    variants={revealItemVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
                     "{generatedStory.logline}"
-                  </p>
-                  
-                  <div className="space-y-6 text-foreground leading-relaxed text-base md:text-lg">
-                    <p data-testid="text-story-p1">{generatedStory.p1}</p>
-                    <p data-testid="text-story-p2">{generatedStory.p2}</p>
-                    <p data-testid="text-story-p3">{generatedStory.p3}</p>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 mt-8 pt-6 border-t border-border flex-wrap">
+                  </motion.p>
+
+                  <motion.div
+                    className="space-y-6 text-foreground leading-relaxed text-base md:text-lg"
+                    variants={revealContainerVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <motion.p
+                      data-testid="text-story-p1"
+                      variants={revealItemVariants}
+                      initial="hidden"
+                      animate="visible"
+                    >
+                      {generatedStory.p1}
+                    </motion.p>
+                    <motion.p
+                      data-testid="text-story-p2"
+                      variants={revealItemVariants}
+                      initial="hidden"
+                      animate="visible"
+                    >
+                      {generatedStory.p2}
+                    </motion.p>
+                    <motion.p
+                      data-testid="text-story-p3"
+                      variants={revealItemVariants}
+                      initial="hidden"
+                      animate="visible"
+                    >
+                      {generatedStory.p3}
+                    </motion.p>
+                  </motion.div>
+
+                  <motion.div
+                    className="flex items-center gap-2 mt-8 pt-6 border-t border-border flex-wrap"
+                    variants={revealItemVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
                     {generatedStory.themes.map((theme) => (
-                      <span 
+                      <span
                         key={theme}
                         className="px-3 py-1 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-mono"
                       >
                         {theme}
                       </span>
                     ))}
-                  </div>
+                  </motion.div>
                 </div>
                 
                 <div className="animate-fade-in md:sticky md:top-24 self-start">
@@ -1105,7 +1127,7 @@ export default function StoryArcade() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </HUDOverlay>
           
             <div className="animate-fade-in space-y-4">
@@ -1167,10 +1189,7 @@ export default function StoryArcade() {
                 <p className="text-xs text-muted-foreground mt-1">A unique level generated from your story</p>
               </div>
               <div className="max-w-lg mx-auto">
-                <PersonalizedGame 
-                  story={generatedStory} 
-                  onShare={handleShare}
-                />
+                <PersonalizedGame story={generatedStory} onShare={handleShare} />
               </div>
             </div>
             

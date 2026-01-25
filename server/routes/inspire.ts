@@ -1,5 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { GoogleGenAI } from "@google/genai";
+import { routesLogger } from "../logger";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
@@ -62,8 +63,8 @@ Return ONLY a JSON array of 3 strings, nothing else. Example:
 
       res.json({ suggestions: suggestions.slice(0, 3) });
     } catch (error) {
-      console.error("Error generating suggestions:", error);
-      res.status(500).json({ 
+      routesLogger.error({ err: error }, "Error generating suggestions");
+      res.status(500).json({
         error: "Failed to generate suggestions",
         suggestions: [
           "An unexpected discovery that changed everything",

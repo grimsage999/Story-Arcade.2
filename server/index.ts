@@ -1,3 +1,7 @@
+// Import config first to validate environment variables before anything else
+import { config } from "./config";
+import { logger, routesLogger } from "./logger";
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
@@ -23,21 +27,11 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
-export function log(message: string, source = "express") {
-  const formattedTime = new Date().toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  });
-
-  console.log(`${formattedTime} [${source}] ${message}`);
-}
-
+// HTTP request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+  let capturedJsonResponse: Record<string, unknown> | undefined = undefined;
 
   const originalResJson = res.json;
   res.json = function (bodyJson, ...args) {
@@ -48,12 +42,13 @@ app.use((req, res, next) => {
   res.on("finish", () => {
     const duration = Date.now() - start;
     if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      log(logLine);
+      routesLogger.info({
+        method: req.method,
+        path,
+        status: res.statusCode,
+        duration,
+        response: capturedJsonResponse,
+      }, `${req.method} ${path} ${res.statusCode} in ${duration}ms`);
     }
   });
 
@@ -65,11 +60,11 @@ app.use((req, res, next) => {
   registerAuthRoutes(app);
   await registerRoutes(httpServer, app);
 
-  app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+  app.use((err: Error & { status?: number; statusCode?: number }, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    console.error("Internal Server Error:", err);
+    logger.error({ err, status }, 'Internal Server Error');
 
     if (res.headersSent) {
       return next(err);
@@ -81,7 +76,7 @@ app.use((req, res, next) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (process.env.NODE_ENV === "production") {
+  if (config.isProduction) {
     serveStatic(app);
   } else {
     const { setupVite } = await import("./vite");
@@ -92,15 +87,14 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || "5000", 10);
   httpServer.listen(
     {
-      port,
+      port: config.port,
       host: "0.0.0.0",
       reusePort: true,
     },
     () => {
-      log(`serving on port ${port}`);
+      logger.info({ port: config.port }, `Server listening on port ${config.port}`);
     },
   );
 })();

@@ -7,12 +7,13 @@ import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { authStorage } from "./storage";
+import { config as appConfig } from "../../config";
 
 const getOidcConfig = memoize(
   async () => {
     return await client.discovery(
-      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      process.env.REPL_ID!
+      new URL(appConfig.issuerUrl),
+      appConfig.replId
     );
   },
   { maxAge: 3600 * 1000 }
@@ -22,13 +23,13 @@ export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
+    conString: appConfig.databaseUrl,
+    createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
   });
   return session({
-    secret: process.env.SESSION_SECRET!,
+    secret: appConfig.sessionSecret,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
@@ -66,7 +67,7 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  const config = await getOidcConfig();
+  const oidcConfig = await getOidcConfig();
 
   const verify: VerifyFunction = async (
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
@@ -88,7 +89,7 @@ export async function setupAuth(app: Express) {
       const strategy = new Strategy(
         {
           name: strategyName,
-          config,
+          config: oidcConfig,
           scope: "openid email profile offline_access",
           callbackURL: `https://${domain}/api/callback`,
         },
@@ -121,8 +122,8 @@ export async function setupAuth(app: Express) {
   app.get("/api/logout", (req, res) => {
     req.logout(() => {
       res.redirect(
-        client.buildEndSessionUrl(config, {
-          client_id: process.env.REPL_ID!,
+        client.buildEndSessionUrl(oidcConfig, {
+          client_id: appConfig.replId,
           post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
         }).href
       );

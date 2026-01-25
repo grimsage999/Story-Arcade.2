@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Download, RefreshCw, Sparkles, Wand2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { arcadeSounds } from "@/lib/arcadeSounds";
 
 interface PosterStatus {
   posterUrl: string | null;
@@ -32,6 +33,8 @@ export function StoryPoster({ storyId, storyTitle, trackId = "origin", autoGener
   const [hasTriggered, setHasTriggered] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState(0);
   const [rateLimitUntil, setRateLimitUntil] = useState<number | null>(null);
+  const [isRevealing, setIsRevealing] = useState(false);
+  const prevStatus = useRef<string | undefined>(undefined);
   const { toast } = useToast();
 
   const { data: posterStatus } = useQuery<PosterStatus>({
@@ -45,29 +48,55 @@ export function StoryPoster({ storyId, storyTitle, trackId = "origin", autoGener
     },
   });
 
+  // Detect transition from generating to ready and trigger cinematic reveal
+  useEffect(() => {
+    if (prevStatus.current && prevStatus.current !== "ready" && posterStatus?.status === "ready") {
+      setIsRevealing(true);
+      arcadeSounds.posterReady(); // Play the new sound effect
+
+      // Reset the revealing state after animation completes
+      const timer = setTimeout(() => {
+        setIsRevealing(false);
+      }, 2000); // Match animation duration
+
+      return () => clearTimeout(timer);
+    }
+
+    prevStatus.current = posterStatus?.status;
+  }, [posterStatus?.status]);
+
   const generateMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", `/api/stories/${storyId}/poster`);
       const data = await res.json();
-      
+
       if (!res.ok && res.status !== 202) {
         if (res.status === 429) {
           throw new Error("RATE_LIMIT");
         }
+        console.error("Poster generation API error:", res.status, data);
         throw new Error(data.error || "Failed to generate poster");
       }
       return data;
     },
     onSuccess: () => {
+      console.log("Poster generation request successful, invalidating queries");
       queryClient.invalidateQueries({ queryKey: ["/api/stories", storyId, "poster"] });
     },
     onError: (error: Error) => {
+      console.error("Poster generation mutation error:", error);
       if (error.message === "RATE_LIMIT") {
         setRateLimitUntil(Date.now() + RATE_LIMIT_COOLDOWN_MS);
         setCooldownRemaining(Math.ceil(RATE_LIMIT_COOLDOWN_MS / 1000));
         toast({
           title: "Slow down!",
           description: "Too many poster requests. Please wait a minute.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Poster generation failed",
+          description: error.message || "Unable to create poster. Please try again.",
           variant: "destructive",
         });
       }
@@ -121,18 +150,39 @@ export function StoryPoster({ storyId, storyTitle, trackId = "origin", autoGener
   if (hasPoster) {
     return (
       <AnimatePresence mode="wait">
-        <motion.div 
-          className="relative group" 
+        <motion.div
+          className="relative group"
           data-testid="story-poster-container"
           initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
+          animate={{
+            opacity: 1,
+            scale: 1,
+            // Apply pulse effect when revealing for the first time
+            boxShadow: isRevealing
+              ? ["0 0 0 0px rgba(255, 215, 0, 0.7)", "0 0 0 10px rgba(255, 215, 0, 0.3)", "0 0 0 0px rgba(255, 215, 0, 0)"]
+              : `0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 215, 0, 0.1)`
+          }}
+          transition={{
+            duration: isRevealing ? 2 : 0.5,
+            ease: isRevealing ? "easeOut" : "easeOut",
+            times: isRevealing ? [0, 0.3, 1] : undefined
+          }}
         >
-          <motion.div 
+          <motion.div
             className="aspect-[2/3] w-full max-w-xs mx-auto rounded-lg overflow-hidden border-2 border-primary/30 shadow-lg shadow-primary/20"
             initial={{ y: 20 }}
-            animate={{ y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
+            animate={{
+              y: 0,
+              scale: isRevealing ? [0.95, 1.05, 1] : 1  // Scale effect during reveal
+            }}
+            transition={{
+              duration: isRevealing ? 2 : 0.6,
+              ease: isRevealing ? "easeInOut" : "easeOut",
+              scale: {
+                duration: 0.8,
+                ease: "easeInOut"
+              }
+            }}
           >
             <motion.img
               src={posterStatus.posterUrl!}
@@ -140,8 +190,17 @@ export function StoryPoster({ storyId, storyTitle, trackId = "origin", autoGener
               className="w-full h-full object-cover"
               data-testid="poster-image"
               initial={{ filter: "blur(10px)" }}
-              animate={{ filter: "blur(0px)" }}
-              transition={{ duration: 0.4, delay: 0.2 }}
+              animate={{
+                filter: isRevealing
+                  ? ["blur(10px) brightness(0.8) contrast(1)", "blur(5px) brightness(1.2) contrast(1.1)", "blur(0px) brightness(1) contrast(1)"]
+                  : "blur(0px)"
+              }}
+              transition={{
+                duration: isRevealing ? 2 : 0.4,
+                delay: isRevealing ? 0 : 0.2,
+                ease: isRevealing ? "easeOut" : "easeOut",
+                times: isRevealing ? [0, 0.3, 1] : undefined
+              }}
             />
           </motion.div>
           <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">

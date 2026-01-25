@@ -6,9 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/use-auth';
-import { apiRequest } from '@/lib/queryClient';
+import { useStories } from '@/hooks/use-stories';
 import type { Story } from '@shared/schema';
 import { StaticStarfield } from '@/components/arcade/StarfieldBackground';
 import { 
@@ -47,8 +46,15 @@ function storyToCompletedStory(story: Story): CompletedStory {
 
 export function MyStoriesPage({ onViewStory, onEditStory, onBack, showToast }: MyStoriesPageProps) {
   const [, navigate] = useLocation();
-  const { user, isLoading: authLoading, isAuthenticated } = useAuth();
-  const queryClient = useQueryClient();
+  const { isLoading: authLoading, isAuthenticated } = useAuth();
+  const {
+    myStories: dbStories,
+    stories: communityStories,
+    isLoadingMyStories: storiesLoading,
+    isLoadingStories: communityLoading,
+    deleteStory
+  } = useStories();
+
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [searchQuery, setSearchQuery] = useState('');
   const [themeFilter, setThemeFilter] = useState<string>('all');
@@ -70,26 +76,6 @@ export function MyStoriesPage({ onViewStory, onEditStory, onBack, showToast }: M
       navigate('/');
     }
   };
-
-  const { data: dbStories = [], isLoading: storiesLoading } = useQuery<Story[]>({
-    queryKey: ['/api/stories/my'],
-    enabled: isAuthenticated,
-  });
-
-  const { data: communityStories = [], isLoading: communityLoading } = useQuery<Story[]>({
-    queryKey: ['/api/stories'],
-    enabled: !isAuthenticated,
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest('DELETE', `/api/stories/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/stories/my'] });
-      showToast?.('Story deleted');
-    },
-  });
 
   const stories: CompletedStory[] = dbStories.map(storyToCompletedStory);
 
@@ -122,7 +108,9 @@ export function MyStoriesPage({ onViewStory, onEditStory, onBack, showToast }: M
 
   const handleDelete = (story: CompletedStory) => {
     if (story.dbId) {
-      deleteMutation.mutate(story.dbId);
+      deleteStory.mutate(story.dbId, {
+        onSuccess: () => showToast?.('Story deleted'),
+      });
     }
   };
 
@@ -477,10 +465,10 @@ export function MyStoriesPage({ onViewStory, onEditStory, onBack, showToast }: M
                       variant="ghost"
                       className="text-muted-foreground hover:text-destructive"
                       title="Delete"
-                      disabled={deleteMutation.isPending}
+                      disabled={deleteStory.isPending}
                       data-testid={`button-delete-${story.id}`}
                     >
-                      {deleteMutation.isPending ? (
+                      {deleteStory.isPending ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
                         <Trash2 className="w-4 h-4" />

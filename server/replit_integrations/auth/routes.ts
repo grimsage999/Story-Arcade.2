@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { authStorage } from "./storage";
 import { isAuthenticated } from "./replitAuth";
+import { authLogger } from "../../logger";
 
 // Register auth-specific routes
 export function registerAuthRoutes(app: Express): void {
@@ -11,7 +12,7 @@ export function registerAuthRoutes(app: Express): void {
       const user = await authStorage.getUser(userId);
       res.json(user);
     } catch (error) {
-      console.error("Error fetching user:", error);
+      authLogger.error({ err: error }, "Error fetching user");
       res.status(500).json({ message: "Failed to fetch user" });
     }
   });

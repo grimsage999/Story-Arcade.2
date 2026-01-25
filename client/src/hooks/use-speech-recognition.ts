@@ -25,10 +25,55 @@ interface UseSpeechRecognitionReturn {
   reset: () => void;
 }
 
+// Web Speech API types (not included in standard TypeScript DOM lib)
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message?: string;
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+  confidence: number;
+}
+
+interface SpeechRecognitionResultItem {
+  isFinal: boolean;
+  length: number;
+  [index: number]: SpeechRecognitionAlternative;
+}
+
+interface SpeechRecognitionResultList {
+  length: number;
+  [index: number]: SpeechRecognitionResultItem;
+}
+
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+
+interface SpeechRecognitionInstance extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  maxAlternatives: number;
+  onstart: ((this: SpeechRecognitionInstance, ev: Event) => void) | null;
+  onresult: ((this: SpeechRecognitionInstance, ev: SpeechRecognitionEvent) => void) | null;
+  onerror: ((this: SpeechRecognitionInstance, ev: SpeechRecognitionErrorEvent) => void) | null;
+  onend: ((this: SpeechRecognitionInstance, ev: Event) => void) | null;
+  start(): void;
+  stop(): void;
+  abort(): void;
+}
+
+interface SpeechRecognitionConstructor {
+  new(): SpeechRecognitionInstance;
+}
+
 declare global {
   interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
+    SpeechRecognition: SpeechRecognitionConstructor;
+    webkitSpeechRecognition: SpeechRecognitionConstructor;
   }
 }
 
@@ -47,7 +92,7 @@ export function useSpeechRecognition(
   const [finalTranscript, setFinalTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
   
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const isStoppingRef = useRef(false);
   const shouldRestartRef = useRef(false);
   const onResultRef = useRef(onResult);

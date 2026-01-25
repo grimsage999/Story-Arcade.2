@@ -33,7 +33,6 @@ function Router() {
 
 function App() {
   const [showIntro, setShowIntro] = useState(true);
-  const [introChecked, setIntroChecked] = useState(true);
 
   useEffect(() => {
     // Check if skip parameter is set
@@ -49,10 +48,6 @@ function App() {
   const handleIntroComplete = () => {
     setShowIntro(false);
   };
-
-  if (!introChecked) {
-    return null;
-  }
 
   return (
     <QueryClientProvider client={queryClient}>
