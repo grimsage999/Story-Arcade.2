@@ -1,148 +1,36 @@
 # Story Arcade
 
 ## Overview
-
-Story Arcade is a community mythology engine designed to transform personal stories into cinematic narratives. Users engage by selecting themed "tracks," answering guided questions, and receiving generated story cards. The project aims to provide a gamified, retro arcade experience with features like CRT effects, celebratory confetti, and story streaks, fostering creativity and community through shared storytelling.
+Story Arcade is a community mythology engine that transforms personal stories into cinematic narratives. It offers a gamified, retro arcade experience where users select themed "tracks," answer guided questions, and receive generated story cards. The project aims to foster creativity and community through shared storytelling, featuring elements like CRT effects, confetti, and story streaks. Its vision includes potential B2B2C applications for museums, events, and education, with features like "Gallery Mode" and "Kiosk Mode" to showcase stories and facilitate high-throughput story creation.
 
 ## User Preferences
-
 Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
 ### Frontend
-
-The frontend is built with React 18, TypeScript, and Vite, utilizing Wouter for client-side routing and TanStack Query for server state management. Styling is handled with Tailwind CSS, custom arcade-themed design tokens, and shadcn/ui components, featuring a dark-first design with neon accents and CRT scanline effects. Key design decisions include a component-based architecture separating arcade-specific elements from base UI, and extensive use of custom fonts. The application is mobile-first, with responsive design elements, touch optimization, and particle effects adjusted for mobile devices. Accessibility (WCAG 2.1 AA Compliance) is a core consideration, with semantic HTML, keyboard navigation, screen reader support, and accessible modal/form patterns implemented throughout.
+The frontend is built with React 18, TypeScript, Vite, Wouter for routing, and TanStack Query for server state management. Styling utilizes Tailwind CSS, custom arcade-themed design tokens, and shadcn/ui components, featuring a dark-first design with neon accents and CRT scanline effects. It prioritizes a mobile-first, responsive design with touch optimization and accessibility (WCAG 2.1 AA Compliance). Core features include an animated logo stinger on first visit, visual hover effects, and an immersive arcade cabinet aesthetic with decorative components like `ArcadeCabinet`, `CosmicMarquee`, `OrbitalRings`, and `HUDOverlay`.
 
 ### Backend
-
-The backend uses Express 5 on Node.js with TypeScript, providing RESTful API endpoints under the `/api/` prefix that return JSON responses. Storage is abstracted via an `IStorage` interface, implemented with a PostgreSQL-backed `DatabaseStorage` class.
+The backend uses Express 5 on Node.js with TypeScript, providing RESTful API endpoints for JSON responses. Storage is abstracted via an `IStorage` interface, implemented with a PostgreSQL-backed `DatabaseStorage` class.
 
 ### Authentication
-
-Authentication is managed using Replit Auth (OIDC) via Passport.js, with session storage in PostgreSQL. This system supports various providers like Google and GitHub, securely handling user login, session management, and protecting specific routes.
+Authentication is managed using Replit Auth (OIDC) via Passport.js, with session storage in PostgreSQL, supporting providers like Google and GitHub for secure user login and session management.
 
 ### Data Layer
+Drizzle ORM with a PostgreSQL dialect defines the schema for `users`, `sessions`, and `stories` entities. Zod schemas provide runtime validation.
 
-Drizzle ORM with a PostgreSQL dialect defines the schema for `users`, `sessions`, and `stories` entities. Zod schemas generated from Drizzle provide runtime validation.
-
-**Entities:**
-- `users` - User profiles from Replit Auth (id, email, firstName, lastName, profileImageUrl, timestamps)
-- `sessions` - PostgreSQL session storage for authentication (sid, sess, expire)
-- `stories` - User-generated stories with optional userId for ownership, track reference, content paragraphs, themes, and metadata
-
-### Features
-
-- **Cross-Device Story Persistence:** Stories are saved to PostgreSQL and associated with authenticated users via userId, enabling access from any device after login.
-- **Draft Auto-Save System:** Stories are automatically saved to `localStorage` every 10 seconds during creation, with a maximum of 5 drafts, auto-cleanup of older drafts, and UI components for recovery and navigation protection.
-- **Shareable Story Links:** Each story receives a unique 8-character base64url shareable ID, enabling public sharing via dedicated `/story/:shareableId` URLs.
-- **Social Sharing System:** Comprehensive sharing across the app with Twitter, Facebook, WhatsApp share buttons and copy link functionality. Features include Open Graph meta tags for rich social previews, share buttons on story reveal page, public story page, StoryCard, and StoryModal components. Native Web Share API with fallback to clipboard copy.
-- **Typeform-Style Question Flow:** Immersive single-question-at-a-time story creation experience with full-screen centered layout, large typography, smooth Framer Motion slide transitions, keyboard navigation (Enter to advance, Cmd+Up/Escape to go back), progress bar with glow effects, dot indicators for question navigation, and floating navigation buttons.
-- **Interactive Guidance System:** Includes "Scene Examples" for pre-written prompts, a "Character Progress" indicator with visual feedback, and "AI-Powered Inspire Me" suggestions generated via the Gemini API.
-- **Forge Progress System:** Provides real-time feedback during story generation with progress bars, stage messages, and options for retrying or saving drafts in case of errors.
-- **My Stories Management:** Authenticated users can view, search, filter, sort, and manage their completed stories from the "My Stories" page, with options for export and deletion.
-- **XP & Level Progression System:** Authenticated users earn XP for creating stories, with a 20-level progression system. XP thresholds increase progressively (100, 200, 350... up to 10,000 XP). The XP progress bar appears in the navbar showing current level and progress to next level.
-- **Achievement Badges:** 17 unlockable badges across 4 categories (milestone, streak, track, level) with 5 rarity tiers (common, uncommon, rare, epic, legendary). Badges are awarded automatically when conditions are met (e.g., "First Story" for creating first story, "Week Warrior" for 7-day streak). Each badge awards bonus XP.
-- **Level-Up & Achievement Popups:** Celebratory notifications with retro arcade styling appear after earning XP, unlocking badges, or leveling up. Multiple badges queue and display sequentially.
-- **Badges Collection Page:** Dedicated page showing all badges organized by category, with locked/unlocked states, rarity styling, and earned dates for collected badges.
-- **Cinematic Poster Generation:** AI-generated movie poster-style images for each story, auto-generated when viewing the story reveal. Posters are created using Gemini 2.5-flash-image model with track-specific visual styles. Features include download functionality, regeneration option, and rate-limited async generation. Posters are stored as base64 data URLs in the `posterUrl` field with status tracking (`pending`, `generating`, `ready`, `failed`).
-- **Retro Arcade Sound System:** Web Audio API-based synthesized 8-bit sound effects that play on interactive element hover/click. Features include global event delegation via ArcadeSoundProvider, SoundToggle component in Navbar with localStorage persistence for user preference, throttled hover sounds (80-100ms) to prevent audio spam, and dedicated sounds for achievements, level-ups, and story completion. Sound types: hover (short blip), click (percussive), achievement (ascending arpeggio), levelUp (fanfare), storyComplete (triumphant chord sequence).
-- **Visual Hover Effects:** CSS-based arcade-styled hover animations including neon glow effects, scanline shimmer, CRT distortion, and pixel animations. Effects respect `prefers-reduced-motion` media query for accessibility.
-- **Animated Logo Stinger:** First-visit intro animation featuring a 10-second cinematic sequence:
-  - `LogoStinger`: Canvas-based starfield with nebula overlays, faceted 5-pointed star with dual-tone gradients (blue/cyan left, gold/magenta right), animated shard assembly, glow pulse, and "STORY ARCADE" title reveal
-  - Shows once on first visit (tracked via localStorage 'story-arcade-intro-seen')
-  - Click-to-skip functionality for impatient users
-  - Respects `prefers-reduced-motion` for accessibility (shows static end state for 2 seconds instead)
-- **Arcade Cabinet Aesthetics:** Immersive arcade cabinet experience with decorative components:
-  - `ArcadeCabinet`: Bezel frame wrapper with side panels, stripe patterns, and control panel decorations
-  - `CosmicMarquee`: Animated header with stars, planets, and shooting star effects
-  - `OrbitalRings`: Targeting circle animations with coordinate displays for the forging experience
-  - `HUDOverlay`: Corner brackets and tech readouts for sci-fi HUD aesthetic
-  - `TVWallGallery`: Multi-screen TV wall effect with geometric stripe patterns and rotating CRT glow colors (cyan, pink, fuchsia, teal, amber, violet)
-- **Visual Story Gallery:** Immersive poster-focused gallery showcasing community stories:
-  - `StarfieldBackground`: Animated canvas-based starfield with twinkling stars, falling animation, and radial glow effects
-  - `StaticStarfield`: CSS-based decorative stars with pulse animations and nebula-like gradient effects
-  - `FeaturedStorySpotlight`: Auto-cycling carousel (6s intervals) showcasing stories with completed posters, navigation controls, and progress dots
-  - `StoryGalleryCard`: Poster-focused cards with hover effects revealing title, logline, author, and neighborhood; CRT scanline overlays; track-based gradient placeholders for pending posters
-  - `StoryGallery`: Responsive grid layout with search functionality (searches title, logline, author, track, neighborhood), track filtering (Origin/Legend/Future/All), grid/masonry layout toggle, and staggered entrance animations
-
-### B2B2C Features (Museums, Events, Education)
-
-- **Explore Page (/explore):** Dedicated public gallery page with:
-  - Featured story spotlight carousel with auto-cycling
-  - Animated starfield background
-  - Track-based filtering (Origin/Future/Legend)
-  - Search functionality across title, logline, author, neighborhood
-  - Grid and masonry layout options
-  - Gateway to Gallery Mode
-
-- **Premium Story Cards:** Enhanced cinematic movie poster aesthetics for social sharing:
-  - `PremiumStoryCard`: Film frame aesthetic with sprocket holes on left/right edges
-  - Film grain overlay effect (SVG noise pattern)
-  - Track-based gradient borders (origin=fuchsia/violet, future=cyan/blue, legend=amber/red)
-  - "Story Arcade" branding watermark
-  - CINEMA toggle in StoryGallery to switch between standard and premium card styles
-
-- **Gallery Mode (/gallery-mode):** "Hall of Legends" fullscreen display for museums and events:
-  - `HallOfLegends`: Cinematic auto-cycling story showcase (8s intervals)
-  - Track-based gradient backgrounds
-  - Poster display with blur backdrop
-  - Story metadata (title, logline, themes, author, neighborhood)
-  - Keyboard navigation (Arrow keys, Space for play/pause, Escape to exit)
-  - Auto-hiding controls (3s timeout on mouse inactivity)
-  - Progress bar during auto-play
-  - CRT scanline overlay
-
-- **Kiosk Mode (/kiosk):** Event-ready interface for high-throughput story creation:
-  - `KioskMode`: Full-screen immersive landing experience
-  - URL parameter branding customization: ?event=, ?color=, ?accent=, ?message=
-  - Animated glow effects and pulsing CTA button
-  - Three-step process explanation
-  - Optional queue indicator for busy events
-  - Idle detection with "Tap anywhere" prompt
-  - Touch-optimized for kiosk environments
-  - Supported colors: cyan, fuchsia, amber, violet
-
-### Micro-Games System
-
-Track-specific playable mini-games that progress as users answer story questions, plus personalized game levels generated from completed stories.
-
-**Game Engine (`client/src/components/arcade/games/`):**
-- `GameEngine.tsx`: Core canvas-based engine with sprite system, collision detection, 60fps animation loops, and procedural level generation utilities
-- Shared utilities: seeded random generation, text-to-seed hashing, platform/collectible/decoration generators
-- Consistent architecture across all game types
-
-**Track-Specific Games (visible during TypeformFlow on lg+ screens):**
-- `OriginGame.tsx`: Side-scrolling platformer with purple/cyan palette, pixel art character, neighborhood-themed backgrounds, platforms, and trees
-- `FutureCityGame.tsx`: Cyber runner with neon blue/cyan aesthetics, data nodes as collectibles, circuit platforms, and urban skyline
-- `LegendGame.tsx`: Quest adventure with amber/orange mythical theme, treasure chests, stone platforms, and fantasy landscape
-
-**Game Panel Integration:**
-- Split-screen layout: questions on left, game on right (lg+ screens only, hidden on mobile)
-- Toggle button to show/hide game panel
-- Progress synchronization: game character advances as questions are answered
-- Track-specific game renders based on selected story track
-
-**Personalized Game (appears on Reveal view):**
-- `PersonalizedGame.tsx`: Full playable platformer generated from story content
-- Procedural generation seeded by story title, paragraphs, and neighborhood
-- Track-specific color palette and theme
-- Player controls: Arrow keys/WASD to move, Space/W to jump
-- Collectibles (10 points each), goal star (100 bonus points)
-- Game states: idle (shows play button), playing (keyboard active), complete (shows score + replay/share)
-
-**Technical Details:**
-- Canvas rendering at 320x200 (preview) or 400x300 (full game) for performance
-- requestAnimationFrame loops with cleanup on unmount
-- Collision detection via bounding box intersection
-- Pixel-art character with walk animation frames
-- Keyboard event handling with arrow keys, WASD, and Space
-- Respects prefers-reduced-motion for accessibility
-
-**Progression Database Entities:**
-- `badges` - Badge definitions (id, name, description, icon, category, requirement, xpReward, rarity)
-- `user_badges` - Junction table tracking earned badges per user (userId, badgeId, earnedAt)
-- `users` - Extended with xp, level, currentStreak, longestStreak, lastStoryDate fields
+### Key Features
+- **Story Management:** Cross-device story persistence, draft auto-save to `localStorage`, shareable links with unique IDs, and a social sharing system with Open Graph meta tags. Authenticated users can manage their stories on a dedicated "My Stories" page.
+- **Interactive Story Creation:** A Typeform-style question flow with full-screen layout, Framer Motion transitions, keyboard navigation, progress indicators, "Scene Examples," "Character Progress," and AI-powered "Inspire Me" suggestions.
+- **Gamification:** XP & Level Progression (20 levels), 17 unlockable Achievement Badges across 4 categories and 5 rarity tiers, with celebratory popups for level-ups and achievements.
+- **Cinematic Experience:** AI-generated movie poster-style images for each story using Gemini 2.5-flash-image model, a retro arcade sound system using Web Audio API for 8-bit sound effects, and a visual story gallery with a `StarfieldBackground` and `FeaturedStorySpotlight` carousel.
+- **B2B2C Features:**
+    - **Explore Page:** A public gallery with a featured story carousel, animated starfield, track-based filtering, and search functionality.
+    - **Premium Story Cards:** Enhanced cinematic movie poster aesthetics with film frame design, grain overlay, and track-based gradient borders.
+    - **Gallery Mode (`/gallery-mode`):** A fullscreen, auto-cycling story showcase for museums and events with cinematic transitions and CRT scanline overlays.
+    - **Kiosk Mode (`/kiosk`):** An event-ready, full-screen immersive interface optimized for high-throughput story creation with URL parameter branding customization and idle detection.
+- **Micro-Games System:** Canvas-based `GameEngine` with track-specific mini-games (`OriginGame`, `FutureCityGame`, `LegendGame`) integrated into the question flow on larger screens. Additionally, a `PersonalizedGame` is generated from story content, seeded by title, paragraphs, and neighborhood, offering a full playable platformer experience on the story reveal view.
 
 ## External Dependencies
 
@@ -150,4 +38,9 @@ Track-specific playable mini-games that progress as users answer story questions
 - **UI Libraries:** Radix UI, Embla Carousel, Recharts, Vaul, cmdk
 - **Replit-Specific:** `@replit/vite-plugin-runtime-error-modal`, `@replit/vite-plugin-cartographer`, `@replit/dev-banner`
 - **Session Management:** `connect-pg-simple`, `express-session`
-- **AI Integration:** Google Gemini API (gemini-2.5-flash) for AI suggestions
+- **AI Integration:** A multi-provider abstraction layer with automatic fallback:
+    - **Anthropic** (via Replit integration) - Claude models for story generation.
+    - **Gemini** (via Replit integration) - Gemini models for story and poster generation.
+    - **Perplexity** (via user API key) - Perplexity models for story generation.
+    - **Fallback** - Template-based generation when other AI providers fail.
+    The system uses a circuit breaker pattern and configurable fallback order via `AI_PROVIDER_FALLBACK_ORDER` environment variable.
