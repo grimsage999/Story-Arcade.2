@@ -1,15 +1,24 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI } from "@google/genai";
 import type { AIProvider, AIStoryInput, AIStoryOutput, AIPosterInput, AIPosterOutput } from "./aiProvider.interface";
 import { storyLogger, posterLogger } from "../../logger";
 
-export class AnthropicProvider implements AIProvider {
-  private anthropic: Anthropic;
-  private readonly name = "anthropic";
+export class GeminiProvider implements AIProvider {
+  private ai: GoogleGenAI;
+  private readonly name = "gemini";
 
   constructor() {
-    this.anthropic = new Anthropic({
-      apiKey: process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY,
-      baseURL: process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL,
+    const apiKey = process.env.AI_INTEGRATIONS_GEMINI_API_KEY;
+    const baseUrl = process.env.AI_INTEGRATIONS_GEMINI_BASE_URL;
+    
+    if (!apiKey) {
+      throw new Error("Gemini API key is required but not provided");
+    }
+    
+    this.ai = new GoogleGenAI({
+      apiKey,
+      httpOptions: baseUrl ? {
+        baseUrl,
+      } : undefined,
     });
   }
 
@@ -63,46 +72,113 @@ Respond with ONLY valid JSON in this exact format (no other text):
 }`;
 
     try {
-      const message = await this.anthropic.messages.create({
-        model: "claude-sonnet-4-5",
-        max_tokens: 1024,
-        messages: [{ role: "user", content: prompt }],
+      const response = await this.ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
       });
 
-      const content = message.content[0];
-      if (content.type !== "text") {
-        throw new Error("Unexpected response type");
-      }
-
-      const story = this.parseStoryJSON(content.text);
+      const text = response.text || "";
+      const story = this.parseStoryJSON(text);
 
       if (!this.validateStory(story)) {
         throw new Error("Invalid story structure from AI response");
       }
 
-      // Ensure title isn't too long
       if (story.title.split(' ').length > 8) {
         story.title = story.title.split(' ').slice(0, 6).join(' ');
       }
 
+      storyLogger.info({ provider: this.name }, "Successfully generated story with Gemini");
       return story;
     } catch (error) {
-      storyLogger.error({ err: error }, "Error generating story with Anthropic provider");
+      storyLogger.error({ err: error }, "Error generating story with Gemini provider");
       throw error;
     }
   }
 
   async generatePoster(input: AIPosterInput): Promise<AIPosterOutput | null> {
-    throw new Error("Poster generation not implemented for Anthropic provider");
+    try {
+      const trackStyles: Record<string, { visual: string; mood: string; colors: string }> = {
+        origin: {
+          visual: "intimate portrait style, single figure silhouette, dramatic shadows",
+          mood: "introspective, transformative, deeply personal",
+          colors: "warm amber tones, deep shadows, golden hour lighting"
+        },
+        future: {
+          visual: "futuristic cityscape, neon-lit streets, holographic elements, flying vehicles",
+          mood: "hopeful, innovative, community-focused",
+          colors: "cyan and magenta neon, deep blues, electric highlights"
+        },
+        legend: {
+          visual: "urban street scene, magical elements emerging, neighborhood setting",
+          mood: "mysterious, whimsical, folkloric magic",
+          colors: "twilight purples, street lamp gold, ethereal glows"
+        },
+      };
+
+      const style = trackStyles[input.trackId] || trackStyles.origin;
+      const themeKeywords = input.themes.slice(0, 3).join(", ");
+      const storyContent = [input.p1, input.p2, input.p3].filter(Boolean).join(" ");
+      const storyExcerpt = storyContent.slice(0, 300);
+
+      const prompt = `Create a stunning cinematic movie poster for this story:
+
+STORY: "${input.title}"
+"${input.logline}"
+
+NARRATIVE ESSENCE:
+${storyExcerpt}
+
+KEY THEMES: ${themeKeywords}
+
+VISUAL DIRECTION:
+- Style: ${style.visual}
+- Mood: ${style.mood}
+- Color palette: ${style.colors}
+
+POSTER REQUIREMENTS:
+- Cinematic movie poster composition (portrait orientation)
+- Dramatic lighting that evokes the story's emotional core
+- Visual elements that directly relate to the story's content
+- Bold, evocative imagery - this should feel like a real movie poster
+- High production value, theatrical quality
+- ABSOLUTELY NO TEXT OR WORDS in the image - purely visual
+- The image should make viewers curious about the story
+
+Create an image that captures the soul of this specific story.`;
+
+      const response = await this.ai.models.generateContent({
+        model: "gemini-2.5-flash-image",
+        contents: prompt,
+      });
+
+      const parts = response.candidates?.[0]?.content?.parts;
+      if (!parts || parts.length === 0) {
+        posterLogger.warn({ provider: this.name }, "No parts in Gemini response");
+        return null;
+      }
+
+      for (const part of parts) {
+        if (part.inlineData?.data && part.inlineData?.mimeType) {
+          posterLogger.info({ provider: this.name }, "Successfully generated poster with Gemini");
+          return {
+            imageUrl: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
+          };
+        }
+      }
+
+      return null;
+    } catch (error) {
+      posterLogger.error({ err: error }, "Error generating poster with Gemini provider");
+      throw error;
+    }
   }
 
   async isHealthy(): Promise<boolean> {
     try {
-      // Simple health check by making a minimal API call using supported model
-      await this.anthropic.messages.create({
-        model: "claude-haiku-4-5",
-        max_tokens: 10,
-        messages: [{ role: "user", content: "Say 'health check'" }],
+      await this.ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: [{ role: "user", parts: [{ text: "Say 'health check'" }] }],
       });
       return true;
     } catch (error) {
@@ -115,21 +191,17 @@ Respond with ONLY valid JSON in this exact format (no other text):
   }
 
   private parseStoryJSON(text: string): AIStoryOutput {
-    // Clean up the text - remove markdown code blocks if present
     let cleanText = text.trim();
 
-    // Remove ```json or ``` wrappers
     if (cleanText.startsWith('```')) {
       cleanText = cleanText.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
     }
 
-    // Try to extract JSON object
     const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       throw new Error("Could not find JSON in response");
     }
 
-    // Parse and return
     return JSON.parse(jsonMatch[0]) as AIStoryOutput;
   }
 

@@ -1,5 +1,7 @@
 import type { AIProvider, AIStoryInput, AIStoryOutput, AIPosterInput, AIPosterOutput } from "./providers/aiProvider.interface";
 import { AnthropicProvider } from "./providers/anthropicProvider";
+import { GeminiProvider } from "./providers/geminiProvider";
+import { PerplexityProvider } from "./providers/perplexityProvider";
 import { FallbackProvider } from "./providers/fallbackProvider";
 import { storyLogger, posterLogger } from "../logger";
 
@@ -17,22 +19,51 @@ export class AIManager {
 
   constructor() {
     // Initialize providers based on configuration
-    const providerOrder = process.env.AI_PROVIDER_FALLBACK_ORDER?.split(',') || ['anthropic', 'fallback'];
+    const providerOrder = process.env.AI_PROVIDER_FALLBACK_ORDER?.split(',') || ['anthropic', 'gemini', 'perplexity', 'fallback'];
     
     for (const providerName of providerOrder) {
-      switch(providerName.trim()) {
-        case 'anthropic':
-          if (process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY) {
-            this.providers.push(new AnthropicProvider());
-          }
-          break;
-        case 'fallback':
-          this.providers.push(new FallbackProvider());
-          break;
-        default:
-          console.warn(`Unknown AI provider: ${providerName}`);
+      try {
+        switch(providerName.trim()) {
+          case 'anthropic':
+            if (process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY) {
+              this.providers.push(new AnthropicProvider());
+              storyLogger.info("Anthropic provider initialized");
+            } else {
+              storyLogger.debug("Anthropic provider skipped - no API key");
+            }
+            break;
+          case 'gemini':
+            if (process.env.AI_INTEGRATIONS_GEMINI_API_KEY) {
+              this.providers.push(new GeminiProvider());
+              storyLogger.info("Gemini provider initialized");
+            } else {
+              storyLogger.debug("Gemini provider skipped - no API key");
+            }
+            break;
+          case 'perplexity':
+            if (process.env.PERPLEXITY_API_KEY || process.env.perplex) {
+              this.providers.push(new PerplexityProvider());
+              storyLogger.info("Perplexity provider initialized");
+            } else {
+              storyLogger.debug("Perplexity provider skipped - no API key");
+            }
+            break;
+          case 'fallback':
+            this.providers.push(new FallbackProvider());
+            storyLogger.info("Fallback provider initialized");
+            break;
+          default:
+            console.warn(`Unknown AI provider: ${providerName}`);
+        }
+      } catch (error) {
+        storyLogger.warn({ 
+          provider: providerName, 
+          error: error instanceof Error ? error.message : String(error) 
+        }, "Failed to initialize AI provider");
       }
     }
+
+    storyLogger.info({ providerCount: this.providers.length }, "AI Manager initialized with providers");
 
     // Initialize circuit breakers for each provider
     for (const provider of this.providers) {

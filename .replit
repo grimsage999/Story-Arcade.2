@@ -45,5 +45,5 @@ expertMode = true
 [userenv]
 
 [userenv.shared]
-AI_PROVIDER_FALLBACK_ORDER = "anthropic,gemini,fallback"
+AI_PROVIDER_FALLBACK_ORDER = "anthropic,gemini,perplexity,fallback"
 AI_HEALTH_CHECK_INTERVAL = "30000"

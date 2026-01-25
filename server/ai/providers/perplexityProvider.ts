@@ -1,16 +1,20 @@
-import Anthropic from "@anthropic-ai/sdk";
 import type { AIProvider, AIStoryInput, AIStoryOutput, AIPosterInput, AIPosterOutput } from "./aiProvider.interface";
 import { storyLogger, posterLogger } from "../../logger";
 
-export class AnthropicProvider implements AIProvider {
-  private anthropic: Anthropic;
-  private readonly name = "anthropic";
+export class PerplexityProvider implements AIProvider {
+  private readonly name = "perplexity";
+  private readonly apiKey: string;
+  private readonly baseUrl: string;
 
   constructor() {
-    this.anthropic = new Anthropic({
-      apiKey: process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY,
-      baseURL: process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL,
-    });
+    const apiKey = process.env.PERPLEXITY_API_KEY || process.env.perplex;
+    
+    if (!apiKey) {
+      throw new Error("Perplexity API key is required but not provided");
+    }
+    
+    this.apiKey = apiKey;
+    this.baseUrl = "https://api.perplexity.ai";
   }
 
   async generateStory(input: AIStoryInput): Promise<AIStoryOutput> {
@@ -63,48 +67,75 @@ Respond with ONLY valid JSON in this exact format (no other text):
 }`;
 
     try {
-      const message = await this.anthropic.messages.create({
-        model: "claude-sonnet-4-5",
-        max_tokens: 1024,
-        messages: [{ role: "user", content: prompt }],
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "sonar",
+          messages: [
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          max_tokens: 1024,
+        }),
       });
 
-      const content = message.content[0];
-      if (content.type !== "text") {
-        throw new Error("Unexpected response type");
+      if (!response.ok) {
+        throw new Error(`Perplexity API error: ${response.status} ${response.statusText}`);
       }
 
-      const story = this.parseStoryJSON(content.text);
+      const data = await response.json();
+      const text = data.choices?.[0]?.message?.content || "";
+
+      const story = this.parseStoryJSON(text);
 
       if (!this.validateStory(story)) {
         throw new Error("Invalid story structure from AI response");
       }
 
-      // Ensure title isn't too long
       if (story.title.split(' ').length > 8) {
         story.title = story.title.split(' ').slice(0, 6).join(' ');
       }
 
+      storyLogger.info({ provider: this.name }, "Successfully generated story with Perplexity");
       return story;
     } catch (error) {
-      storyLogger.error({ err: error }, "Error generating story with Anthropic provider");
+      storyLogger.error({ err: error }, "Error generating story with Perplexity provider");
       throw error;
     }
   }
 
   async generatePoster(input: AIPosterInput): Promise<AIPosterOutput | null> {
-    throw new Error("Poster generation not implemented for Anthropic provider");
+    posterLogger.info({ provider: this.name }, "Perplexity does not support image generation");
+    return null;
   }
 
   async isHealthy(): Promise<boolean> {
     try {
-      // Simple health check by making a minimal API call using supported model
-      await this.anthropic.messages.create({
-        model: "claude-haiku-4-5",
-        max_tokens: 10,
-        messages: [{ role: "user", content: "Say 'health check'" }],
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${this.apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "sonar",
+          messages: [
+            {
+              role: "user",
+              content: "Say 'health check'"
+            }
+          ],
+          max_tokens: 10,
+        }),
       });
-      return true;
+
+      return response.ok;
     } catch (error) {
       return false;
     }
@@ -115,21 +146,17 @@ Respond with ONLY valid JSON in this exact format (no other text):
   }
 
   private parseStoryJSON(text: string): AIStoryOutput {
-    // Clean up the text - remove markdown code blocks if present
     let cleanText = text.trim();
 
-    // Remove ```json or ``` wrappers
     if (cleanText.startsWith('```')) {
       cleanText = cleanText.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
     }
 
-    // Try to extract JSON object
     const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       throw new Error("Could not find JSON in response");
     }
 
-    // Parse and return
     return JSON.parse(jsonMatch[0]) as AIStoryOutput;
   }
 
