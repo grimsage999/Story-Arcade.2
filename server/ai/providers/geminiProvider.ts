@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Modality } from "@google/genai";
 import type { AIProvider, AIStoryInput, AIStoryOutput, AIPosterInput, AIPosterOutput } from "./aiProvider.interface";
 import { storyLogger, posterLogger } from "../../logger";
 
@@ -17,6 +17,7 @@ export class GeminiProvider implements AIProvider {
     this.ai = new GoogleGenAI({
       apiKey,
       httpOptions: baseUrl ? {
+        apiVersion: "",
         baseUrl,
       } : undefined,
     });
@@ -163,7 +164,10 @@ Create an image that captures the soul of this specific story.`;
       const apiCallStart = Date.now();
       const response = await this.ai.models.generateContent({
         model: "gemini-2.5-flash-image",
-        contents: prompt,
+        contents: [{ role: "user", parts: [{ text: prompt }] }],
+        config: {
+          responseModalities: [Modality.TEXT, Modality.IMAGE],
+        },
       });
       const apiCallDuration = Date.now() - apiCallStart;
 
