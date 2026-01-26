@@ -305,13 +305,25 @@ export async function registerRoutes(
         return res.status(202).json({ status: "generating", message: "Poster generation already in progress" });
       }
 
-      posterLogger.info({ storyId: id }, 'Starting poster generation');
+      posterLogger.info({
+        storyId: id,
+        title: story.title,
+        trackId: story.trackId,
+        geminiKeyConfigured: !!process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
+      }, '[POSTER_ROUTE] Starting poster generation');
       await storage.updateStoryPoster(id, null, "generating");
       res.status(202).json({ status: "generating", message: "Poster generation started" });
 
       (async () => {
+        const bgStartTime = Date.now();
         try {
-          posterLogger.debug({ storyId: id }, 'Calling generatePosterImage');
+          posterLogger.debug({
+            storyId: id,
+            title: story.title,
+            loglineLength: story.logline?.length || 0,
+            themesCount: story.themes?.length || 0,
+          }, '[POSTER_ROUTE] Calling generatePosterImage');
+
           const posterUrl = await generatePosterImage({
             title: story.title,
             logline: story.logline,
@@ -323,15 +335,32 @@ export async function registerRoutes(
             p3: story.p3,
           });
 
+          const bgDuration = Date.now() - bgStartTime;
+
           if (posterUrl) {
-            posterLogger.info({ storyId: id }, 'Successfully generated poster, updating DB');
+            posterLogger.info({
+              storyId: id,
+              durationMs: bgDuration,
+              posterUrlLength: posterUrl.length,
+              posterUrlPrefix: posterUrl.substring(0, 50),
+            }, '[POSTER_ROUTE] Successfully generated poster, updating DB');
             await storage.updateStoryPoster(id, posterUrl, "ready");
           } else {
-            posterLogger.warn({ storyId: id }, 'Failed to generate poster, setting status to failed');
+            posterLogger.warn({
+              storyId: id,
+              durationMs: bgDuration,
+            }, '[POSTER_ROUTE] generatePosterImage returned null, setting status to failed');
             await storage.updateStoryPoster(id, null, "failed");
           }
-        } catch (error) {
-          posterLogger.error({ err: error, storyId: id }, 'Background poster generation error');
+        } catch (error: any) {
+          const bgDuration = Date.now() - bgStartTime;
+          posterLogger.error({
+            err: error,
+            storyId: id,
+            durationMs: bgDuration,
+            errorMessage: error?.message,
+            errorName: error?.name,
+          }, '[POSTER_ROUTE] Background poster generation error');
           await storage.updateStoryPoster(id, null, "failed");
         }
       })();

@@ -1,0 +1,53 @@
+ Completed Changes Summary                                                                                                              
+                                                                                                                                         
+  Files Created                                                                                                                          
+  ┌────────────────────────────────────────────────┬───────────────────────────────────────────────────┐                                 
+  │                      File                      │                      Purpose                      │                                 
+  ├────────────────────────────────────────────────┼───────────────────────────────────────────────────┤                                 
+  │ client/src/components/arcade/ErrorBoundary.tsx │ Reusable error boundary with GameErrorFallback UI │                                 
+  └────────────────────────────────────────────────┴───────────────────────────────────────────────────┘                                 
+  Files Modified                                                                                                                         
+  ┌─────────────────────────────────────────────────────────┬────────────────────────────────────────────────────────┐                   
+  │                          File                           │                        Changes                         │                   
+  ├─────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────┤                   
+  │ client/src/components/arcade/games/PersonalizedGame.tsx │ Wrapped games in ErrorBoundary with retry/home actions │                   
+  ├─────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────┤                   
+  │ server/config.ts:153-160                                │ Added [POSTER_CONFIG] startup diagnostic               │                   
+  ├─────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────┤                   
+  │ server/posterGenerator.ts:88-100                        │ Added [POSTER_DEBUG] logging with timing               │                   
+  ├─────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────┤                   
+  │ server/ai/aiManager.ts:106-163                          │ Added [AI_MANAGER_POSTER] provider chain tracing       │                   
+  ├─────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────┤                   
+  │ server/ai/providers/geminiProvider.ts:99-175            │ Added [GEMINI_POSTER] API call logging                 │                   
+  ├─────────────────────────────────────────────────────────┼────────────────────────────────────────────────────────┤                   
+  │ server/routes.ts:308-349                                │ Added [POSTER_ROUTE] request/response logging          │                   
+  └─────────────────────────────────────────────────────────┴────────────────────────────────────────────────────────┘                   
+  ---                                                                                                                                    
+  How to Debug Poster Issues                                                                                                             
+                                                                                                                                         
+  1. Check startup logs for configuration:                                                                                               
+  [POSTER_CONFIG] Gemini/poster generation configuration                                                                                 
+    geminiApiKeySet: true/false                                                                                                          
+    geminiApiKeyLength: 39                                                                                                               
+    providerFallbackOrder: "anthropic,gemini,fallback"                                                                                   
+                                                                                                                                         
+  2. Trace a poster generation request:                                                                                                  
+  [POSTER_ROUTE] POST /api/stories/:id/poster received                                                                                   
+  [POSTER_DEBUG] Starting poster generation for "Story Title"                                                                            
+  [AI_MANAGER_POSTER] Attempting provider: gemini                                                                                        
+  [GEMINI_POSTER] Calling Gemini API...                                                                                                  
+  [GEMINI_POSTER] Response received in 2345ms                                                                                            
+                                                                                                                                         
+  3. If you see fallback being used:                                                                                                     
+  [POSTER_DEBUG] AI manager returned null, falling back to SVG                                                                           
+  This means Gemini failed and SVG text-poster is being generated instead of an image.                                                   
+                                                                                                                                         
+  ---                                                                                                                                    
+  Next Step: Check API Key                                                                                                               
+                                                                                                                                         
+  Run the server and look for this in startup logs:                                                                                      
+  [POSTER_CONFIG] geminiApiKeySet: false                                                                                                 
+                                                                                                                                         
+  If false, add AI_INTEGRATIONS_GEMINI_API_KEY to your Replit Secrets or .env file. That's likely why you're getting text-on-gradient    
+  instead of actual AI-generated poster images.                                                                                          
+                                                  

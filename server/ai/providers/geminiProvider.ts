@@ -97,6 +97,13 @@ Respond with ONLY valid JSON in this exact format (no other text):
   }
 
   async generatePoster(input: AIPosterInput): Promise<AIPosterOutput | null> {
+    const startTime = Date.now();
+    posterLogger.info({
+      provider: this.name,
+      title: input.title,
+      trackId: input.trackId,
+    }, "[GEMINI_POSTER] Starting poster generation");
+
     try {
       const trackStyles: Record<string, { visual: string; mood: string; colors: string }> = {
         origin: {
@@ -147,29 +154,78 @@ POSTER REQUIREMENTS:
 
 Create an image that captures the soul of this specific story.`;
 
+      posterLogger.debug({
+        provider: this.name,
+        promptLength: prompt.length,
+        model: "gemini-2.5-flash-image",
+      }, "[GEMINI_POSTER] Calling Gemini API");
+
+      const apiCallStart = Date.now();
       const response = await this.ai.models.generateContent({
         model: "gemini-2.5-flash-image",
         contents: prompt,
       });
+      const apiCallDuration = Date.now() - apiCallStart;
+
+      posterLogger.debug({
+        provider: this.name,
+        apiCallDurationMs: apiCallDuration,
+        hasCandidates: !!response.candidates,
+        candidatesCount: response.candidates?.length || 0,
+        firstCandidateHasContent: !!response.candidates?.[0]?.content,
+      }, "[GEMINI_POSTER] Gemini API response received");
 
       const parts = response.candidates?.[0]?.content?.parts;
       if (!parts || parts.length === 0) {
-        posterLogger.warn({ provider: this.name }, "No parts in Gemini response");
+        posterLogger.warn({
+          provider: this.name,
+          responseKeys: response ? Object.keys(response) : [],
+          candidateKeys: response.candidates?.[0] ? Object.keys(response.candidates[0]) : [],
+        }, "[GEMINI_POSTER] No parts in Gemini response");
         return null;
       }
 
+      posterLogger.debug({
+        provider: this.name,
+        partsCount: parts.length,
+        partTypes: parts.map(p => ({
+          hasText: !!p.text,
+          hasInlineData: !!p.inlineData,
+          mimeType: p.inlineData?.mimeType,
+        })),
+      }, "[GEMINI_POSTER] Processing response parts");
+
       for (const part of parts) {
         if (part.inlineData?.data && part.inlineData?.mimeType) {
-          posterLogger.info({ provider: this.name }, "Successfully generated poster with Gemini");
+          const totalDuration = Date.now() - startTime;
+          posterLogger.info({
+            provider: this.name,
+            totalDurationMs: totalDuration,
+            mimeType: part.inlineData.mimeType,
+            dataLength: part.inlineData.data.length,
+          }, "[GEMINI_POSTER] Successfully generated poster with Gemini");
           return {
             imageUrl: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`
           };
         }
       }
 
+      posterLogger.warn({
+        provider: this.name,
+        partsCount: parts.length,
+      }, "[GEMINI_POSTER] No inline data found in any part");
       return null;
-    } catch (error) {
-      posterLogger.error({ err: error }, "Error generating poster with Gemini provider");
+    } catch (error: any) {
+      const totalDuration = Date.now() - startTime;
+      posterLogger.error({
+        err: error,
+        provider: this.name,
+        errorName: error?.name,
+        errorMessage: error?.message,
+        errorStatus: error?.status,
+        errorCode: error?.code,
+        totalDurationMs: totalDuration,
+      }, "[GEMINI_POSTER] Error generating poster with Gemini provider");
       throw error;
     }
   }

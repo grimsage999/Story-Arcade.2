@@ -129,6 +129,9 @@ export const config = {
       apiKey: process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
       baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
     },
+    perplexity: {
+      apiKey: process.env.PERPLEXITY_API_KEY || process.env.perplex,
+    },
   },
 } as const;
 
@@ -144,4 +147,14 @@ configLogger.info({
   replId: config.replId ? 'configured' : 'missing',
   anthropicAi: config.ai.anthropic.apiKey ? 'configured' : 'not configured (fallback)',
   geminiAi: config.ai.gemini.apiKey ? 'configured' : 'not configured (fallback)',
+  perplexityAi: config.ai.perplexity.apiKey ? 'configured' : 'not configured (fallback)',
 }, 'Service status');
+
+// Detailed poster generation diagnostic info
+configLogger.info({
+  geminiApiKeySet: !!process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
+  geminiApiKeyLength: process.env.AI_INTEGRATIONS_GEMINI_API_KEY?.length || 0,
+  geminiBaseUrlSet: !!process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
+  geminiBaseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || 'not set (using default)',
+  providerFallbackOrder: process.env.AI_PROVIDER_FALLBACK_ORDER || 'anthropic,gemini,fallback (default)',
+}, '[POSTER_CONFIG] Gemini/poster generation configuration');

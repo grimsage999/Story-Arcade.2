@@ -86,8 +86,25 @@ Create an image that captures the soul of this specific story.`;
 }
 
 export async function generatePosterImage(story: StoryData): Promise<string | null> {
+  const startTime = Date.now();
+  posterLogger.info({
+    storyTitle: story.title,
+    trackId: story.trackId,
+    themesCount: story.themes.length,
+  }, "[POSTER_DEBUG] Starting poster generation");
+
   try {
+    // Log environment configuration for debugging
+    posterLogger.debug({
+      geminiKeyAvailable: !!process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
+      geminiKeyLength: process.env.AI_INTEGRATIONS_GEMINI_API_KEY?.length || 0,
+      geminiBaseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL || 'default',
+      providerOrder: process.env.AI_PROVIDER_FALLBACK_ORDER || 'not set',
+    }, "[POSTER_DEBUG] Environment configuration");
+
     // First try using the AI manager which may have a provider that supports poster generation
+    posterLogger.debug({ storyTitle: story.title }, "[POSTER_DEBUG] Calling AI manager generatePoster");
+
     const result = await aiManager.generatePoster({
       title: story.title,
       logline: story.logline,
@@ -99,51 +116,87 @@ export async function generatePosterImage(story: StoryData): Promise<string | nu
       p3: story.p3
     });
 
+    const aiManagerDuration = Date.now() - startTime;
+    posterLogger.debug({
+      hasResult: !!result,
+      hasImageUrl: !!(result && result.imageUrl),
+      imageUrlPrefix: result?.imageUrl?.substring(0, 50),
+      durationMs: aiManagerDuration,
+    }, "[POSTER_DEBUG] AI manager response received");
+
     if (result && result.imageUrl) {
-      posterLogger.info({ storyTitle: story.title }, "Successfully generated poster via AI manager");
+      posterLogger.info({
+        storyTitle: story.title,
+        durationMs: aiManagerDuration,
+        imageUrlLength: result.imageUrl.length,
+      }, "[POSTER_DEBUG] Successfully generated poster via AI manager");
       return result.imageUrl;
     }
 
+    posterLogger.warn({ storyTitle: story.title }, "[POSTER_DEBUG] AI manager returned null/empty, falling through to legacy Gemini");
+
     // If AI manager didn't provide a result, fall back to the original Gemini implementation
     if (!process.env.AI_INTEGRATIONS_GEMINI_API_KEY) {
-      posterLogger.info("Skipping AI poster generation due to missing API key, using fallback");
+      posterLogger.info("[POSTER_DEBUG] Skipping AI poster generation due to missing API key, using fallback");
       return generateFallbackPoster(story);
     }
 
     // Log the API key and base URL availability for debugging
-    posterLogger.info({ storyTitle: story.title }, "Poster generation started");
+    posterLogger.info({ storyTitle: story.title }, "[POSTER_DEBUG] Falling back to legacy Gemini implementation");
     posterLogger.debug({
       apiKeyAvailable: !!process.env.AI_INTEGRATIONS_GEMINI_API_KEY,
       baseUrl: process.env.AI_INTEGRATIONS_GEMINI_BASE_URL,
-    }, "AI configuration");
+    }, "[POSTER_DEBUG] Legacy AI configuration");
 
     const prompt = buildPosterPrompt(story);
-    posterLogger.debug({ promptLength: prompt.length }, "Generated poster prompt");
+    posterLogger.debug({ promptLength: prompt.length }, "[POSTER_DEBUG] Generated poster prompt");
 
+    let attemptCount = 0;
     const resultOriginal = await pRetry(
       async () => {
-        posterLogger.debug("Attempting to call Gemini API...");
+        attemptCount++;
+        const attemptStart = Date.now();
+        posterLogger.debug({ attempt: attemptCount }, "[POSTER_DEBUG] Attempting to call Gemini API (legacy)...");
+
         const response = await ai.models.generateContent({
           model: "gemini-2.5-flash-image",
           contents: prompt,
         });
 
-        posterLogger.debug("Gemini API response received, checking candidates...");
+        const attemptDuration = Date.now() - attemptStart;
+        posterLogger.debug({
+          attempt: attemptCount,
+          durationMs: attemptDuration,
+          hasCandidates: !!response.candidates,
+          candidatesCount: response.candidates?.length || 0,
+        }, "[POSTER_DEBUG] Gemini API response received (legacy), checking candidates...");
+
         const parts = response.candidates?.[0]?.content?.parts;
         if (!parts || parts.length === 0) {
-          posterLogger.error({ response }, "No parts in Gemini response");
+          posterLogger.error({
+            response: JSON.stringify(response).substring(0, 500),
+            attempt: attemptCount,
+          }, "[POSTER_DEBUG] No parts in Gemini response (legacy)");
           throw new Error("No image generated");
         }
 
         for (const part of parts) {
-          posterLogger.debug({ partType: typeof part, hasInlineData: !!part.inlineData }, "Processing part");
+          posterLogger.debug({
+            partType: typeof part,
+            hasInlineData: !!part.inlineData,
+            mimeType: part.inlineData?.mimeType,
+            dataLength: part.inlineData?.data?.length || 0,
+          }, "[POSTER_DEBUG] Processing part (legacy)");
           if (part.inlineData?.data && part.inlineData?.mimeType) {
-            posterLogger.info("Successfully generated image data");
+            posterLogger.info({
+              mimeType: part.inlineData.mimeType,
+              dataLength: part.inlineData.data.length,
+            }, "[POSTER_DEBUG] Successfully generated image data (legacy)");
             return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
           }
         }
 
-        posterLogger.error({ partsCount: parts.length }, "No image data found in response parts");
+        posterLogger.error({ partsCount: parts.length, attempt: attemptCount }, "[POSTER_DEBUG] No image data found in response parts (legacy)");
         throw new Error("No image data in response");
       },
       {
@@ -154,18 +207,27 @@ export async function generatePosterImage(story: StoryData): Promise<string | nu
       }
     );
 
-    posterLogger.info("Poster generation completed successfully");
+    const totalDuration = Date.now() - startTime;
+    posterLogger.info({
+      durationMs: totalDuration,
+      attempts: attemptCount,
+    }, "[POSTER_DEBUG] Poster generation completed successfully (legacy)");
     return resultOriginal;
   } catch (error: any) {
+    const totalDuration = Date.now() - startTime;
     posterLogger.error({
       err: error,
       name: error?.name,
+      message: error?.message,
       status: error?.status,
       code: error?.code,
-    }, "Poster generation failed");
+      stack: error?.stack?.substring(0, 500),
+      durationMs: totalDuration,
+      storyTitle: story.title,
+    }, "[POSTER_DEBUG] Poster generation failed");
 
     // If AI generation fails, fall back to generating a simple poster
-    posterLogger.info("Using fallback poster generation due to AI failure");
+    posterLogger.info({ storyTitle: story.title }, "[POSTER_DEBUG] Using fallback poster generation due to AI failure");
     return generateFallbackPoster(story);
   }
 }

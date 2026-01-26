@@ -104,28 +104,77 @@ export class AIManager {
   }
 
   async generatePoster(input: AIPosterInput): Promise<AIPosterOutput | null> {
+    const startTime = Date.now();
+    posterLogger.info({
+      title: input.title,
+      trackId: input.trackId,
+      providersCount: this.providers.length,
+      providerNames: this.providers.map(p => p.getName()),
+    }, "[AI_MANAGER_POSTER] Starting poster generation with provider fallback chain");
+
     for (const provider of this.providers) {
-      if (this.isCircuitOpen(provider.getName())) {
+      const providerName = provider.getName();
+
+      if (this.isCircuitOpen(providerName)) {
+        posterLogger.debug({
+          provider: providerName,
+          reason: "circuit_open",
+        }, "[AI_MANAGER_POSTER] Skipping provider due to open circuit");
         continue; // Skip providers with open circuits
       }
 
+      posterLogger.debug({
+        provider: providerName,
+        title: input.title,
+      }, "[AI_MANAGER_POSTER] Attempting poster generation with provider");
+
       try {
+        const providerStart = Date.now();
         const result = await provider.generatePoster(input);
-        
+        const providerDuration = Date.now() - providerStart;
+
+        posterLogger.debug({
+          provider: providerName,
+          hasResult: !!result,
+          hasImageUrl: !!(result && result.imageUrl),
+          durationMs: providerDuration,
+        }, "[AI_MANAGER_POSTER] Provider returned result");
+
         // Reset circuit breaker on success
-        this.resetCircuit(provider.getName());
-        
-        return result;
+        this.resetCircuit(providerName);
+
+        if (result && result.imageUrl) {
+          const totalDuration = Date.now() - startTime;
+          posterLogger.info({
+            provider: providerName,
+            totalDurationMs: totalDuration,
+            imageUrlLength: result.imageUrl.length,
+          }, "[AI_MANAGER_POSTER] Successfully generated poster");
+          return result;
+        }
+
+        posterLogger.debug({
+          provider: providerName,
+        }, "[AI_MANAGER_POSTER] Provider returned null/empty, trying next provider");
       } catch (error) {
-        this.handleProviderFailure(provider.getName(), error);
-        
+        const providerDuration = Date.now() - startTime;
+        this.handleProviderFailure(providerName, error);
+
         // Log the error but continue to next provider
-        posterLogger.warn({ 
-          provider: provider.getName(), 
-          error: error instanceof Error ? error.message : String(error) 
-        }, "AI poster provider failed, trying next");
+        posterLogger.warn({
+          provider: providerName,
+          error: error instanceof Error ? error.message : String(error),
+          errorName: error instanceof Error ? error.name : 'Unknown',
+          durationMs: providerDuration,
+        }, "[AI_MANAGER_POSTER] AI poster provider failed, trying next");
       }
     }
+
+    const totalDuration = Date.now() - startTime;
+    posterLogger.warn({
+      totalDurationMs: totalDuration,
+      providersAttempted: this.providers.length,
+    }, "[AI_MANAGER_POSTER] All providers failed or returned null");
 
     // If all providers failed, return null
     return null;

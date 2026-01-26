@@ -39,7 +39,7 @@ export function TrackCard({ track, onSelect }: TrackCardProps) {
       data-testid={`card-track-${track.id}`}
       aria-label={`Select ${track.title} track: ${track.subtitle}. ${track.questions.length} questions.`}
     >
-      <div className={`absolute inset-0 bg-gradient-to-br ${track.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
+      <div className={`absolute inset-0 bg-gradient-to-br ${track.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500 pointer-events-none`} />
       
       {/* Subtle joystick decoration in corner */}
       <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-30 transition-opacity duration-300">
